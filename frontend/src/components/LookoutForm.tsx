@@ -18,6 +18,7 @@ import {
   LoaderIcon,
 } from "@/components/icons";
 import {ErrorBanner, FieldLabel, Panel} from "@/components/ui";
+import {UserAvatar} from "@/components/UserAvatar";
 
 type Status = "idle" | "loading" | "found" | "missing" | "error";
 
@@ -113,32 +114,31 @@ export function LookoutForm() {
       {status === "found" && user ? (
         <div
           key={`found-${resultKey}`}
-          className="sheet-spring space-y-5 rounded-[1.35rem] border border-fog/90 bg-gradient-to-b from-white to-paper/80 p-5 shadow-[0_16px_40px_-28px_rgba(10,10,10,0.35)]"
+          className="sheet-spring space-y-5 rounded-2xl border border-fog bg-paper/50 p-5"
         >
-          <div className="inline-flex items-center gap-2 rounded-full bg-signal/10 px-3 py-1.5 text-signal">
-            <CheckIcon className="h-4 w-4" />
-            <p className="text-xs font-semibold tracking-wide">Claimed</p>
-          </div>
-
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-graphite">
-              Handle
-            </p>
-            <p className="mt-2 flex items-center gap-2.5 text-3xl font-bold tracking-tight">
-              <span
-                key={`${searched}-${kind}`}
-                className="animate-amount-pop truncate motion-reduce:animate-none"
-              >
-                {formatRecipientLabel(
-                  kind === "email" ? searched : user.username,
-                  kind
-                )}
-              </span>
-              <RecipientKindIcon
-                kind={kind}
-                className="h-5 w-5 shrink-0 text-graphite"
-              />
-            </p>
+          <div className="flex items-center gap-4">
+            <UserAvatar address={user.wallet} size="lg" showName />
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full bg-signal/10 px-3 py-1.5 text-signal">
+                <CheckIcon className="h-4 w-4" />
+                <p className="text-xs font-semibold tracking-wide">Claimed</p>
+              </div>
+              <p className="mt-3 flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+                <span
+                  key={`${searched}-${kind}`}
+                  className="animate-amount-pop truncate motion-reduce:animate-none"
+                >
+                  {formatRecipientLabel(
+                    kind === "email" ? searched : user.username,
+                    kind
+                  )}
+                </span>
+                <RecipientKindIcon
+                  kind={kind}
+                  className="h-5 w-5 shrink-0 text-graphite"
+                />
+              </p>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-fog/80 bg-white/80 px-4 py-3">
@@ -173,7 +173,7 @@ export function LookoutForm() {
       {status === "missing" ? (
         <div
           key={`missing-${resultKey}`}
-          className="sheet-spring rounded-[1.35rem] border border-fog/90 bg-gradient-to-b from-white to-paper/80 p-5 shadow-[0_16px_40px_-28px_rgba(10,10,10,0.28)]"
+          className="sheet-spring rounded-2xl border border-fog bg-paper/50 p-5"
         >
           <p className="text-sm font-semibold tracking-tight text-ink">
             Not claimed

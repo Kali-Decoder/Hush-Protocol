@@ -5,6 +5,7 @@ import {usePathname} from "next/navigation";
 import {useAccount} from "wagmi";
 import {APP_CHROME_WIDTH} from "@/components/AppShell";
 import {ConnectButton} from "@/components/ConnectButton";
+import {UserAvatar} from "@/components/UserAvatar";
 import {useSession} from "@/hooks/useSession";
 
 function navActive(pathname: string, href: string) {
@@ -99,7 +100,20 @@ export default function IslandNav() {
               {tab("/send", "Send")}
               {tab("/inbox", "Inbox")}
               {tab("/lookout", "Lookout", {showOnMobile: false})}
-              {tab("/account", `@${user.username}`)}
+              <Link
+                href="/account"
+                aria-current={
+                  navActive(pathname, "/account") ? "page" : undefined
+                }
+                className={`relative inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-semibold transition-colors sm:pr-3.5 ${
+                  navActive(pathname, "/account")
+                    ? "bg-paper text-ink"
+                    : "text-paper/85 hover:bg-white/10 hover:text-paper"
+                }`}
+              >
+                <UserAvatar address={user.wallet} size="sm" />
+                @{user.username}
+              </Link>
             </>
           ) : showProfile ? (
             <>

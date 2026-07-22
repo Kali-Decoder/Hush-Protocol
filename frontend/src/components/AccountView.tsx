@@ -7,7 +7,8 @@ import {useSignOut} from "@/hooks/useSignOut";
 import {toast} from "@/lib/toast";
 import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
-import {CopyIcon, CheckIcon, ExternalLinkIcon} from "@/components/icons";
+import {UserAvatar} from "@/components/UserAvatar";
+import {CopyIcon, CheckIcon, ExternalLinkIcon, BadgeCheckIcon} from "@/components/icons";
 import {FieldLabel, Panel} from "@/components/ui";
 import {AccountBalances} from "@/hooks/useUsdcBalance";
 import {useState} from "react";
@@ -67,9 +68,26 @@ export function AccountView() {
         </div>
       ) : null}
 
-      <div>
-        <p className="text-xs text-graphite">Username</p>
-        <p className="mt-1 text-3xl font-bold tracking-tight">@{user.username}</p>
+      <div className="flex items-center gap-4">
+        <UserAvatar address={user.wallet} size="lg" showName />
+        <div className="min-w-0">
+          <p className="text-xs text-graphite">Username</p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="truncate text-3xl font-bold tracking-tight">
+              @{user.username}
+            </p>
+            <span
+              className="inline-flex shrink-0 text-signal"
+              title="Claimed username"
+              aria-label="Verified claimed username"
+            >
+              <BadgeCheckIcon className="h-6 w-6 sm:h-7 sm:w-7" />
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs text-graphite">
+            Claimed on Hussh Protocol
+          </p>
+        </div>
       </div>
 
       <NetworkGate>
