@@ -92,7 +92,7 @@ Protocol MVP does **not** require social delivery. Deposit → indexer → witne
 Build order (do not invert: backend depends on the ZK flow, not the reverse):
 
 ```
-Contracts → ZK circuit → Proof SDK → Frontend → Indexer → Backend
+Contracts → ZK circuit → Proof SDK → Indexer → Backend → Frontend
 ```
 
 Indexer is required before a full end-to-end withdraw against posted roots.
@@ -130,18 +130,19 @@ needs the indexer.
 - API: `/health`, `/root`, `/witness/:commitment`, `/deposit/:commitment`,
   `/stats`. Never returns secrets. Never proves.
 
-### P0.5 Frontend integration — NEXT
+### P0.5 Backend (auth / users / notes) — DONE
+
+- `POST /auth/wallet` — wallet personal_sign → JWT
+- `GET /users/:username` — resolve username → wallet + bulletPublicKey
+- `POST/GET /notes`, `PATCH /notes/:id/claim` — encrypted inbox only
+- Lives in `arc-contracts/backend/`. No proving, no Merkle, no chain calls.
+
+### P0.6 Frontend integration — NEXT
 
 - Arc wallet connect (EVM).
-- Deposit flow: SDK note → approve → `deposit`.
-- Withdraw flow: load note → fetch witness → prove → `withdraw`.
-- Local note storage and/or encrypted delivery hooks.
-
-### P0.6 Backend (resolver / inbox) — AFTER protocol e2e
-
-- Handle/email → published Hush key mapping.
-- Encrypted inbox, claim links, invites.
-- No proving on the server in the normal flow.
+- Deposit: SDK note → approve → `deposit` → `POST /notes`.
+- Withdraw: `GET /notes` → decrypt → indexer witness → prove → `withdraw`.
+- Local note storage fallback for unregistered recipients.
 
 ### P0.7 E2E on Arc Testnet
 
@@ -180,13 +181,13 @@ Reaching for any of these = stop and ask.
 
 | Layer | Tech | Notes |
 |-------|------|-------|
-| Network | Arc Testnet | chainId `5042002`, RPC `https://5042002.rpc.thirdweb.com`, explorer [arcscan.io](https://arcscan.io) |
+| Network | Arc Testnet | chainId `5042002`, RPC `https://rpc.testnet.arc.network`, explorer [testnet.arcscan.app](https://testnet.arcscan.app) |
 | Contracts | Solidity 0.8.28, Hardhat, OpenZeppelin | `arc-contracts/contracts/` |
 | ZK | Circom + snarkjs, Groth16 / BN254 | `arc-contracts/zk/` |
 | SDK | TypeScript, circomlibjs, snarkjs | `arc-contracts/sdk/` |
 | Indexer | Node, Fastify, viem, Postgres | `arc-contracts/indexer/` |
-| Frontend | Next.js + TS + Tailwind (planned) | EVM wallet, calls SDK |
-| Backend | Node + TS (planned) | resolver, inbox only |
+| Backend | Fastify + Prisma (SQLite) | `arc-contracts/backend/` — auth, users, notes |
+| Frontend | Next.js + TS + Tailwind | `frontend/` — types in `src/shared/`, EVM wallet next |
 | Asset | ERC-20 USDC (+ MockUSDC on testnet) | registry inside `BulletPool` |
 
 Active path: `arc-contracts/`. Legacy Stellar/Soroban trees are not binding.
@@ -292,8 +293,8 @@ Hard rules:
 Network name:  arcTestnet
 Chain ID:      5042002
 Currency:      USDC
-RPC:           https://5042002.rpc.thirdweb.com
-Explorer:      https://arcscan.io
+RPC:           https://rpc.testnet.arc.network
+Explorer:      https://testnet.arcscan.app
 ```
 
 Deploy: `pnpm deploy:all --network arcTestnet` from `arc-contracts/`.

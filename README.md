@@ -33,8 +33,8 @@ Privacy model (v1, stated plainly):
 | Network | Arc Testnet |
 | Chain ID | `5042002` |
 | Currency | USDC |
-| RPC | `https://5042002.rpc.thirdweb.com` |
-| Explorer | [arcscan.io](https://arcscan.io) |
+| RPC | `https://rpc.testnet.arc.network` |
+| Explorer | [testnet.arcscan.app](https://testnet.arcscan.app) |
 
 ## Architecture
 
@@ -45,11 +45,11 @@ ZK Circuit (Circom / BN254 Groth16)
       ↓
 Proof SDK (TypeScript)
       ↓
-Frontend
-      ↓
 Indexer (Merkle tree + postRoot + witness API)
       ↓
-Backend (resolver, inbox, notifications)
+Backend (auth, usernames, encrypted notes)
+      ↓
+Frontend
 ```
 
 | Component | Responsibility |
@@ -57,8 +57,8 @@ Backend (resolver, inbox, notifications)
 | **Smart contracts** | Hold funds, verify proofs, track nullifiers, accept roots |
 | **Indexer** | Watch deposits, build Poseidon Merkle tree, post roots, serve witnesses |
 | **SDK** | Secrets, commitments, nullifiers, Merkle proofs, Groth16 proving |
-| **Frontend** | Deposit / withdraw UX, local note management |
-| **Backend** | X/email resolver, encrypted inbox, claim links (no proving) |
+| **Backend** | Wallet auth, `@username` → wallet + Bullet key, encrypted inbox |
+| **Frontend** | Deposit / withdraw UX, calls SDK + backend + contracts |
 
 ### Contracts
 
@@ -98,17 +98,19 @@ Active stack lives in `arc-contracts/`:
 
 ```
 bullet/
+├── frontend/          Next.js app (self-contained; types in src/shared/)
 └── arc-contracts/
     ├── contracts/     Solidity (Hardhat)
     ├── zk/            Circom withdraw circuit + snarkjs
     ├── sdk/           Proof SDK (@bullet/sdk)
     ├── indexer/       Deposit watcher + witness API
+    ├── backend/       Wallet auth, usernames, encrypted notes
     ├── scripts/       Deploy, token ops, status
     ├── test/          Hardhat tests
     └── deployments/   Per-network addresses
 ```
 
-Legacy Stellar/Soroban packages (`contracts/`, `circuits/`, `frontend/`, `backend/`) are not the current target. Development continues on Arc + Solidity.
+Legacy Stellar/Soroban packages (`contracts/`, `circuits/`, root `backend/`) are not the current target. Development continues on Arc + Solidity.
 
 ---
 
@@ -134,8 +136,8 @@ pnpm sdk:install && pnpm sdk:build && pnpm sdk:test
 ### Deploy to Arc Testnet
 
 ```bash
-pnpm deploy:all --network arcTestnet
-pnpm status --network arcTestnet
+pnpm deploy          # Arc Testnet (needs PRIVATE_KEY in .env)
+pnpm status
 ```
 
 Writes `deployments/arcTestnet.json` (pool, root manager, verifier, MockUSDC).
@@ -146,7 +148,7 @@ Writes `deployments/arcTestnet.json` (pool, root manager, verifier, MockUSDC).
 pnpm indexer:install
 cp indexer/.env.example indexer/.env
 # BULLET_POOL_ADDRESS, MERKLE_ROOT_MANAGER_ADDRESS, RELAYER_PRIVATE_KEY, DATABASE_URL
-# RPC_URL=https://5042002.rpc.thirdweb.com  CHAIN_ID=5042002
+# RPC_URL=https://rpc.testnet.arc.network  CHAIN_ID=5042002
 
 createdb bullet_indexer
 pnpm indexer:migrate
@@ -155,21 +157,42 @@ pnpm indexer:dev                 # API :4010
 
 Witness API: `GET /witness/:commitment` (no secrets returned).
 
+### Backend
+
+```bash
+pnpm backend:install
+pnpm backend:db
+pnpm backend:dev                 # API :4020
+```
+
+Auth / resolve / inbox only. No proving. No Merkle. No chain calls.
+
+### Frontend env
+
+```bash
+cp frontend/.env.example frontend/.env
+# set NEXT_PUBLIC_BULLET_POOL_ADDRESS / USDC / etc from deployments/arcTestnet.json
+# NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4020
+# NEXT_PUBLIC_INDEXER_URL=http://127.0.0.1:4010
+```
+
 ---
 
 ## Protocol flow
 
 ```
 Deposit
-  SDK: secret → commitment
+  SDK: secret → commitment + encrypt note to recipient bulletPublicKey
   BulletPool.deposit(token, amount, commitment)
   Indexer: insert leaf → postRoot
-  Store note locally / deliver encrypted note
+  Backend: POST /notes (ciphertext only)
 
 Withdraw
+  Backend: GET /notes → decrypt locally
   Indexer: GET /witness/:commitment
   SDK: generateProof(note, merklePath)
   BulletPool.withdraw(proof, root, nullifier, recipientDigest, recipient, token, amount)
+  Backend: PATCH /notes/:id/claim
 ```
 
 ### SDK usage
@@ -201,8 +224,8 @@ Frontend should call the SDK. Never reimplement Poseidon / proving in the app.
 | Command | Purpose |
 |---------|---------|
 | `pnpm test` | Hardhat contract tests |
-| `pnpm deploy:all --network arcTestnet` | Full stack deploy + MockUSDC + addToken |
-| `pnpm deploy:token` | Deploy / register MockUSDC |
+| `pnpm deploy` | Full stack deploy to Arc Testnet |
+| `pnpm deploy:token` | Deploy / register MockUSDC on Arc |
 | `pnpm add:token` / `remove:token` | Token registry |
 | `pnpm mint:token` | Mint MockUSDC |
 | `pnpm post:root` | Manual root post |
@@ -211,29 +234,3 @@ Frontend should call the SDK. Never reimplement Poseidon / proving in the app.
 | `pnpm indexer:dev` | Run indexer API |
 
 ---
-
-## Milestone status
-
-| Milestone | Status |
-|-----------|--------|
-| Contracts (pool, roots, mock verifier) | Done |
-| Withdraw circuit + Groth16 verifier | Done |
-| Proof SDK | Done |
-| Merkle indexer + witness API | Done |
-| Frontend (Arc wallet + SDK) | Next |
-| Backend (resolver / inbox) | Later |
-| Production hardening (MPC setup, audits) | Later |
-
----
-
-## Team
-
-| Name | Role | GitHub |
-|------|------|--------|
-| Mark Daniels Aquino | Full Stack + ZK | [@mdla03](https://github.com/mdla03) |
-| Clarence Kyle Pagunsan | Full Stack + ZK | [@laughable-9](https://github.com/laughable-9) |
-| Elfritz Angelo Peralta | Product Manager | [@elfrtz](https://github.com/elfrtz) |
-
-## License
-
-MIT
