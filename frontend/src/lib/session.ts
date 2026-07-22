@@ -1,4 +1,5 @@
 import type {PublicUser} from "@/shared";
+import {clearStoredAuthSignature} from "@/lib/authSignature";
 
 const TOKEN_KEY = "hush.jwt";
 const USER_KEY = "hush.user";
@@ -33,13 +34,22 @@ export function setStoredUser(user: PublicUser | null) {
   notifySession();
 }
 
-export function clearSession() {
+export function clearSession(opts?: {wallet?: string}) {
+  const wallet = opts?.wallet || getStoredUser()?.wallet;
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  clearStoredAuthSignature(wallet);
+  notifySession();
+}
+
+/** Drop JWT + profile but keep the wallet auth signature for silent re-auth. */
+export function clearLiveSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   notifySession();
 }
 
-/** Drop JWT but keep cached profile (needs re-sign). */
+/** Drop JWT but keep cached profile (needs re-sign or cached signature). */
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
   notifySession();
