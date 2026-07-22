@@ -8,9 +8,9 @@
 
 ---
 
-## 1. What Bullet is
+## 1. What Hush is
 
-Bullet is a **ZK-private payment rail on Arc (EVM)**. It lets a sender deposit
+Hush is a **ZK-private payment rail on Arc (EVM)**. It lets a sender deposit
 USDC (and other registered ERC-20s) as fixed-denomination notes, and lets a
 recipient withdraw with a zero-knowledge proof, while hiding the
 **deposit↔withdraw link** on-chain.
@@ -76,7 +76,7 @@ carries the nullifier (and recipient), never the commitment.
 How the recipient learns they were paid (after the protocol MVP works):
 
 - **Registered user (hero flow).** Encrypted inbox note. User opens the app,
-  decrypts with their Bullet key, sees claimable notes, proves in-browser.
+  decrypts with their Hush key, sees claimable notes, proves in-browser.
 - **Unregistered, paid by email.** Claim link via email (P1). Provider sees the
   link.
 - **Unregistered, paid by X handle.** Copy-paste claim link by design. No
@@ -139,7 +139,7 @@ needs the indexer.
 
 ### P0.6 Backend (resolver / inbox) — AFTER protocol e2e
 
-- Handle/email → published Bullet key mapping.
+- Handle/email → published Hush key mapping.
 - Encrypted inbox, claim links, invites.
 - No proving on the server in the normal flow.
 

@@ -1,4 +1,4 @@
-# Bullet
+# Hush
 
 ZK-private payment rail on **Arc Testnet** (EVM). Send USDC without leaving an on-chain link between deposit and withdraw.
 
@@ -10,9 +10,9 @@ Tagline: send silently.
 
 Public blockchains leave a visible trail. Every transfer creates a `sender → recipient` edge anyone can follow. That makes salary, donations, remittances, and contractor payments uncomfortable when the relationship itself should stay private.
 
-## What Bullet is
+## What Hush is
 
-Bullet is a **shielded note pool**:
+Hush is a **shielded note pool**:
 
 1. Sender deposits a fixed-size ERC-20 note under a Poseidon commitment.
 2. An off-chain indexer inserts the commitment into a Merkle tree and posts the root on-chain.
