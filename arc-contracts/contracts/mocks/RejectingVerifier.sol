@@ -9,8 +9,8 @@ contract RejectingVerifier is IVerifier {
         bytes calldata,
         bytes32,
         bytes32,
-        address,
-        address,
+        bytes32,
+        uint256,
         uint256
     ) external pure returns (bool) {
         return false;
