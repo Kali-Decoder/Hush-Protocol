@@ -37,14 +37,7 @@ export async function createNote(params: {
     },
   });
 
-  return {
-    id: note.id,
-    recipientId: note.recipientId,
-    commitment: note.commitment,
-    encryptedPayload: note.encryptedPayload,
-    claimed: note.claimed,
-    createdAt: note.createdAt,
-  };
+  return serializeNote(note);
 }
 
 export async function listNotesForUser(userId: string) {
@@ -52,17 +45,14 @@ export async function listNotesForUser(userId: string) {
     where: {recipientId: userId},
     orderBy: {createdAt: "desc"},
   });
-  return notes.map((n) => ({
-    id: n.id,
-    recipientId: n.recipientId,
-    commitment: n.commitment,
-    encryptedPayload: n.encryptedPayload,
-    claimed: n.claimed,
-    createdAt: n.createdAt,
-  }));
+  return notes.map(serializeNote);
 }
 
-export async function markClaimed(noteId: string, userId: string) {
+export async function markClaimed(
+  noteId: string,
+  userId: string,
+  claimTxHash?: string
+) {
   const note = await prisma.note.findUnique({where: {id: noteId}});
   if (!note) {
     throw Object.assign(new Error("not_found"), {statusCode: 404});
@@ -70,21 +60,62 @@ export async function markClaimed(noteId: string, userId: string) {
   if (note.recipientId !== userId) {
     throw Object.assign(new Error("forbidden"), {statusCode: 403});
   }
+
+  const txHash = normalizeTxHash(claimTxHash);
+
   if (note.claimed) {
-    return {
-      id: note.id,
-      claimed: true,
-      commitment: note.commitment,
-    };
+    // Backfill explorer hash if an older claim had none.
+    if (txHash && !note.claimTxHash) {
+      const updated = await prisma.note.update({
+        where: {id: noteId},
+        data: {claimTxHash: txHash},
+      });
+      return serializeClaim(updated);
+    }
+    return serializeClaim(note);
   }
+
   const updated = await prisma.note.update({
     where: {id: noteId},
-    data: {claimed: true},
+    data: {
+      claimed: true,
+      ...(txHash ? {claimTxHash: txHash} : {}),
+    },
   });
+  return serializeClaim(updated);
+}
+
+function serializeNote(note: {
+  id: string;
+  recipientId: string;
+  commitment: string;
+  encryptedPayload: string;
+  claimed: boolean;
+  claimTxHash: string | null;
+  createdAt: Date;
+}) {
   return {
-    id: updated.id,
-    claimed: updated.claimed,
-    commitment: updated.commitment,
+    id: note.id,
+    recipientId: note.recipientId,
+    commitment: note.commitment,
+    encryptedPayload: note.encryptedPayload,
+    claimed: note.claimed,
+    claimTxHash: note.claimTxHash ?? undefined,
+    createdAt: note.createdAt,
+  };
+}
+
+function serializeClaim(note: {
+  id: string;
+  claimed: boolean;
+  commitment: string;
+  claimTxHash: string | null;
+}) {
+  return {
+    id: note.id,
+    claimed: note.claimed,
+    commitment: note.commitment,
+    claimTxHash: note.claimTxHash ?? undefined,
   };
 }
 
@@ -93,4 +124,11 @@ function normalizeCommitment(raw: string | undefined): string {
   const c = raw.trim().toLowerCase();
   const hex = c.startsWith("0x") ? c : `0x${c}`;
   return /^0x[0-9a-f]{64}$/.test(hex) ? hex : "";
+}
+
+function normalizeTxHash(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const c = raw.trim().toLowerCase();
+  const hex = c.startsWith("0x") ? c : `0x${c}`;
+  return /^0x[0-9a-f]{64}$/.test(hex) ? hex : undefined;
 }

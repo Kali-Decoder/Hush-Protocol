@@ -142,6 +142,13 @@ pnpm status
 
 Writes `deployments/arcTestnet.json` (pool, root manager, verifier, MockUSDC).
 
+| Contract | Address |
+|----------|---------|
+| BulletPool | `0x9E65584C6ACE76cEFde4FD5f50E6bB9763999dCe` |
+| MerkleRootManager | `0x6D6530A1fC908792DA2aa533a5F299283E6F062a` |
+| BulletVerifier | `0x0A95c430Bf6AA3140A4Bf04C8D5982472331008d` |
+| MockUSDC | `0x7d7aF5715e5671e0E3126b2428Dc2629bD9061e3` |
+
 ### Indexer
 
 ```bash
@@ -171,7 +178,7 @@ Auth / resolve / inbox only. No proving. No Merkle. No chain calls.
 
 ```bash
 cp frontend/.env.example frontend/.env
-# set NEXT_PUBLIC_BULLET_POOL_ADDRESS / USDC / etc from deployments/arcTestnet.json
+# addresses already filled from deployments/arcTestnet.json
 # NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4020
 # NEXT_PUBLIC_INDEXER_URL=http://127.0.0.1:4010
 ```

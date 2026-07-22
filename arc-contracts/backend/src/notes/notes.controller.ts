@@ -38,16 +38,15 @@ export async function notesRoutes(app: FastifyInstance) {
   });
 
   /** Mark note claimed after successful on-chain withdraw. */
-  app.patch<{Params: {id: string}}>(
-    "/notes/:id/claim",
-    {preHandler: requireAuth},
-    async (req, reply) => {
-      try {
-        if (!req.user) return reply.code(401).send({error: "unauthorized"});
-        return await markClaimed(req.params.id, req.user.sub);
-      } catch (err) {
-        return sendError(reply, err);
-      }
+  app.patch<{
+    Params: {id: string};
+    Body: {txHash?: string};
+  }>("/notes/:id/claim", {preHandler: requireAuth}, async (req, reply) => {
+    try {
+      if (!req.user) return reply.code(401).send({error: "unauthorized"});
+      return await markClaimed(req.params.id, req.user.sub, req.body?.txHash);
+    } catch (err) {
+      return sendError(reply, err);
     }
-  );
+  });
 }

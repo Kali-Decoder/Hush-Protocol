@@ -24,6 +24,8 @@ model Note {
   commitment       String
   encryptedPayload String
   claimed          Boolean  @default(false)
+  /** Withdraw tx hash on Arc (set when claimed). */
+  claimTxHash      String?
   createdAt        DateTime @default(now())
 
   @@index([recipientId])
