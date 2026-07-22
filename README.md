@@ -1,128 +1,239 @@
 # Bullet
 
+ZK-private payment rail on **Arc Testnet** (EVM). Send USDC without leaving an on-chain link between deposit and withdraw.
+
+Tagline: send silently.
+
+---
+
 ## Problem
 
-Sending crypto on Stellar leaves a public trail. Every transaction creates a visible `sender -> recipient` edge on-chain. Anyone watching the chain learns who paid whom, how much, and how often. This lack of payment privacy makes Stellar unsuitable for salary payments, donations, remittances, and any transfer where the sender-recipient relationship should stay confidential.
+Public blockchains leave a visible trail. Every transfer creates a `sender → recipient` edge anyone can follow. That makes salary, donations, remittances, and contractor payments uncomfortable when the relationship itself should stay private.
 
-## Vision
+## What Bullet is
 
-A world where sending money on Stellar is as private as handing someone cash. Bullet is the foundation for a full shielded payment layer on Stellar, starting with unlinkable fixed-denomination notes today and evolving toward encrypted balances with Pedersen commitments and range proofs. The long-term goal is private, compliant payments at scale, with selective disclosure so users can prove payments to auditors without making them public.
+Bullet is a **shielded note pool**:
 
-## Purpose
+1. Sender deposits a fixed-size ERC-20 note under a Poseidon commitment.
+2. An off-chain indexer inserts the commitment into a Merkle tree and posts the root on-chain.
+3. Recipient withdraws with a Groth16 proof of membership. The nullifier prevents double-spend.
+4. Nothing on-chain connects the deposit transaction to the withdraw transaction.
 
-We built Bullet because privacy is a prerequisite for real financial inclusion. Workers sending money home, individuals receiving donations, and businesses paying contractors all deserve payment privacy. Stellar has the speed and cost structure for global payments but lacks privacy infrastructure. Bullet fills that gap using zero-knowledge proofs that are verified directly on-chain using Soroban's native BLS12-381 host functions.
+Privacy model (v1, stated plainly):
 
-## Target Users
+- **Unlinkability** of deposit ↔ withdraw (Tornado-style membership + nullifier).
+- **Fixed denominations** for amount-matching resistance. Amounts are standardized, not encrypted.
+- **Not** a full shielded pool with hidden balances. That is future work.
+- Merkle roots are posted by a relayer (Option B). Decentralizing the indexer is future work.
 
-- **Individuals** sending private payments to friends, family, or contacts via X handle or email, without exposing the sender-recipient relationship on-chain.
-- **Freelancers and contractors** receiving payments where the payer-payee link should not be publicly visible on a block explorer.
-- **Remittance senders** who want to send stablecoins (USDC/USDT) or XLM to recipients identified by social handle rather than wallet address, with no public trace connecting the two parties.
+## Network
 
-## Features
-
-- **ZK-private claims** -- Groth16 proofs verified on-chain via Soroban's native BLS12-381 host functions. Nothing on-chain connects a deposit to its claim.
-- **Social-handle addressing** -- Send to an X handle or email. The resolver maps handles to recipient keys. No wallet address exchange needed.
-- **Multi-token support** -- USDC, XLM, and USDT. Token ID is bound in the ZK circuit to prevent cross-token drains.
-- **Browser-side proving** -- The secret never leaves the browser. snarkjs generates Groth16 proofs in-browser via WASM in ~15-30 seconds.
-- **Private inbox** -- Sender-authored encrypted notes (X25519 ECDH) let recipients discover claimable payments without any server seeing the plaintext.
-- **Invite flow** -- Send to unregistered users via claim link. Custody keypair handles the claim, then forwards tokens to the recipient's real wallet.
-- **Nullifier-based double-spend protection** -- Each note can only be claimed once. The contract stores every nullifier permanently.
-
-## Tech Stack
-
-- **Frontend:** Next.js 15, Tailwind CSS 4, Freighter wallet integration
-- **Backend:** Node.js, Express, TypeScript, Supabase (Postgres + Auth)
-- **Blockchain:** Stellar Soroban (Rust), native BLS12-381 host functions, Stellar SDK v16
-- **ZK:** Circom 2.2.3, snarkjs 0.7.5, Groth16 over BLS12-381, depth-20 Poseidon Merkle tree
-- **Auth:** Supabase Auth (Google + X OAuth), cookie sessions via `@supabase/ssr`
-
-## How to Run Locally
-
-```bash
-git clone https://github.com/mdla03/bullet.git
-cd bullet
-cp .env.example .env    # fill in values
-pnpm install
-pnpm dev                # starts backend + frontend
-```
-
-Circuit regeneration (only needed if you change `circuits/claim.circom`):
-
-```bash
-pnpm build:circuits     # circom -> r1cs -> Groth16 setup -> vk -> fixture
-```
-
-Requirements: Node 20+, pnpm 9. Rust + Soroban toolchain for contracts.
-
-## Deployment
-
-### Testnet
-
-- **Contract Address:** [`CB5HPNJOZ3ULPNPRL5FJBHSDCHYWFAWXO6TY3JL6URZSYXMRTFQ3LUIB`](https://stellar.expert/explorer/testnet/contract/CB5HPNJOZ3ULPNPRL5FJBHSDCHYWFAWXO6TY3JL6URZSYXMRTFQ3LUIB)
-- **USDC SAC:** [`CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`](https://stellar.expert/explorer/testnet/contract/CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA)
-- **XLM SAC:** [`CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC)
-- **USDT SAC:** [`CBL6KD2LFMLAUKFFWNNXWOXFN73GAXLEA4WMJRLQ5L76DMYTM3KWQVJN`](https://stellar.expert/explorer/testnet/contract/CBL6KD2LFMLAUKFFWNNXWOXFN73GAXLEA4WMJRLQ5L76DMYTM3KWQVJN)
-- **Frontend:** Vercel
-- **Backend:** Railway
-
-![Stellar Expert Testnet](./screenshots/testnet.png)
-
-### Mainnet
-
-Not deployed. Testnet only. Own (non-MPC) trusted setup. Not audited.
-
-## Demo
-
-- Live App: https://sendbullet.xyz
-- Demo Video: https://drive.google.com/file/d/12_d1DzgBn8U-fFspGnOv7UIbnBoLdGGI/view?usp=sharing
-- Pitch Deck: https://canva.link/r7v03xtursupg3u
+| Setting | Value |
+|---------|--------|
+| Network | Arc Testnet |
+| Chain ID | `5042002` |
+| Currency | USDC |
+| RPC | `https://5042002.rpc.thirdweb.com` |
+| Explorer | [arcscan.io](https://arcscan.io) |
 
 ## Architecture
 
-See `architecture_diagram.svg` for the full system diagram and `bullet_zk_architecture.pdf` for detailed technical documentation.
+```
+Contracts (Solidity)
+      ↓
+ZK Circuit (Circom / BN254 Groth16)
+      ↓
+Proof SDK (TypeScript)
+      ↓
+Frontend
+      ↓
+Indexer (Merkle tree + postRoot + witness API)
+      ↓
+Backend (resolver, inbox, notifications)
+```
 
-### How the ZK proof works
+| Component | Responsibility |
+|-----------|----------------|
+| **Smart contracts** | Hold funds, verify proofs, track nullifiers, accept roots |
+| **Indexer** | Watch deposits, build Poseidon Merkle tree, post roots, serve witnesses |
+| **SDK** | Secrets, commitments, nullifiers, Merkle proofs, Groth16 proving |
+| **Frontend** | Deposit / withdraw UX, local note management |
+| **Backend** | X/email resolver, encrypted inbox, claim links (no proving) |
 
-Bullet's zero-knowledge proof is load-bearing. Without it, the contract has no way to authorize a claim without revealing which deposit is being claimed.
+### Contracts
 
-The Groth16 circuit (`circuits/claim.circom`) proves:
+```
+BulletPool.sol           deposit / withdraw, nullifiers, embedded token registry
+MerkleRootManager.sol    rolling window of 64 valid roots
+WithdrawVerifier.sol     Groth16 verifier (replaces mock after zk:build)
+MockUSDC.sol             test ERC-20
+```
 
-1. **Merkle membership** -- `Poseidon(secret, recipientDigest, amount, tokenId)` hashes up through a depth-20 Poseidon path to a known root.
-2. **Nullifier derivation** -- `nullifier = Poseidon(secret)`, domain-separated from the commitment (arity-1 vs arity-4).
-3. **Value binding** -- `amount` and `tokenId` are inside the commitment, so a deposit of token A cannot be claimed as token B, and the claimed amount must match.
+### ZK circuit
 
-Five public inputs `[root, nullifier, recipientDigest, amount, tokenId]` are verified on-chain. The secret and Merkle path stay private. Verification uses Soroban's native `bls12_381` pairing_check at ~70% of the per-tx CPU budget.
+Only **withdraw** needs a circuit. Deposit is commitment + ERC-20 transfer + event.
+
+```
+nullifier  = Poseidon([secret])
+commitment = Poseidon([secret, recipientDigest, amount, tokenHash])
+```
+
+Public inputs (locked): `[root, nullifier, recipientDigest, amount, tokenHash]`
+
+`tokenHash = uint256(uint160(tokenAddress))`
 
 ### Honest privacy limits
 
-- **Fixed denominations, not encrypted balances.** Amounts are standardized (1, 10, 50, 100 USDC), not hidden. Privacy comes from every payment looking the same size. Encrypted balances are future work.
-- **Anonymity scales with pool size.** At demo scale the set is small.
-- **Merkle root posted by a relayer.** On-chain Poseidon insertion exceeds the per-tx budget, so the tree is built off-chain and an admin posts roots. Decentralizing this is future work.
-- **Trusted setup is single-contributor.** Production path is an MPC ceremony.
-- **Delivery channels can be non-private.** Claim links and email delivery are trusted at the sender's discretion. On-chain unlinkability holds regardless.
+- Fixed denominations, not encrypted balances.
+- Anonymity scales with pool size. Demo volume is thin.
+- Root posting is permissioned (indexer / relayer).
+- Trusted setup is single-contributor until an MPC ceremony.
+- Off-chain delivery (claim links, email) can leak metadata; on-chain unlinkability still holds.
+
+---
 
 ## Repo layout
 
+Active stack lives in `arc-contracts/`:
+
 ```
 bullet/
-├── SPEC.md              full spec, binding P0 scope
-├── contracts/            Cargo workspace: zeekpay (main), verifier (Groth16)
-├── circuits/             Circom source, build artifacts, scripts
-├── backend/              resolver + indexer + Merkle tree + Supabase store
-├── frontend/             Next.js app
-├── shared/               shared TS types
-└── scripts/              deploy + e2e demo scripts
+└── arc-contracts/
+    ├── contracts/     Solidity (Hardhat)
+    ├── zk/            Circom withdraw circuit + snarkjs
+    ├── sdk/           Proof SDK (@bullet/sdk)
+    ├── indexer/       Deposit watcher + witness API
+    ├── scripts/       Deploy, token ops, status
+    ├── test/          Hardhat tests
+    └── deployments/   Per-network addresses
 ```
+
+Legacy Stellar/Soroban packages (`contracts/`, `circuits/`, `frontend/`, `backend/`) are not the current target. Development continues on Arc + Solidity.
+
+---
+
+## Quick start
+
+Requirements: Node 22+, pnpm 9+, Circom (for circuit builds), Postgres (for indexer).
+
+```bash
+cd arc-contracts
+pnpm install --ignore-workspace
+cp .env.example .env          # set PRIVATE_KEY
+pnpm test
+```
+
+### Build ZK + SDK
+
+```bash
+# Circom: cargo install --git https://github.com/iden3/circom.git circom --locked
+pnpm zk:install && pnpm zk:build
+pnpm sdk:install && pnpm sdk:build && pnpm sdk:test
+```
+
+### Deploy to Arc Testnet
+
+```bash
+pnpm deploy:all --network arcTestnet
+pnpm status --network arcTestnet
+```
+
+Writes `deployments/arcTestnet.json` (pool, root manager, verifier, MockUSDC).
+
+### Indexer
+
+```bash
+pnpm indexer:install
+cp indexer/.env.example indexer/.env
+# BULLET_POOL_ADDRESS, MERKLE_ROOT_MANAGER_ADDRESS, RELAYER_PRIVATE_KEY, DATABASE_URL
+# RPC_URL=https://5042002.rpc.thirdweb.com  CHAIN_ID=5042002
+
+createdb bullet_indexer
+pnpm indexer:migrate
+pnpm indexer:dev                 # API :4010
+```
+
+Witness API: `GET /witness/:commitment` (no secrets returned).
+
+---
+
+## Protocol flow
+
+```
+Deposit
+  SDK: secret → commitment
+  BulletPool.deposit(token, amount, commitment)
+  Indexer: insert leaf → postRoot
+  Store note locally / deliver encrypted note
+
+Withdraw
+  Indexer: GET /witness/:commitment
+  SDK: generateProof(note, merklePath)
+  BulletPool.withdraw(proof, root, nullifier, recipientDigest, recipient, token, amount)
+```
+
+### SDK usage
+
+```ts
+import {
+  createNote,
+  MerkleTree,
+  generateProof,
+  encodeProof,
+  tokenHash,
+} from "@bullet/sdk";
+
+const note = await createNote({
+  recipientDigest,
+  amount: 10_000_000n, // 10 USDC (6 decimals)
+  token: usdcAddress,
+});
+// deposit(note.commitmentBytes32) …
+// later: generateProof(note, witness, { wasmPath, zkeyPath })
+```
+
+Frontend should call the SDK. Never reimplement Poseidon / proving in the app.
+
+---
+
+## Scripts (`arc-contracts`)
+
+| Command | Purpose |
+|---------|---------|
+| `pnpm test` | Hardhat contract tests |
+| `pnpm deploy:all --network arcTestnet` | Full stack deploy + MockUSDC + addToken |
+| `pnpm deploy:token` | Deploy / register MockUSDC |
+| `pnpm add:token` / `remove:token` | Token registry |
+| `pnpm mint:token` | Mint MockUSDC |
+| `pnpm post:root` | Manual root post |
+| `pnpm status` | Print deployment file + on-chain status |
+| `pnpm zk:build` | Circuit → zkey → Verifier.sol |
+| `pnpm indexer:dev` | Run indexer API |
+
+---
+
+## Milestone status
+
+| Milestone | Status |
+|-----------|--------|
+| Contracts (pool, roots, mock verifier) | Done |
+| Withdraw circuit + Groth16 verifier | Done |
+| Proof SDK | Done |
+| Merkle indexer + witness API | Done |
+| Frontend (Arc wallet + SDK) | Next |
+| Backend (resolver / inbox) | Later |
+| Production hardening (MPC setup, audits) | Later |
+
+---
 
 ## Team
 
-| Name                     | Role             | GitHub          |
-|--------------------------|------------------|-----------------|
-| Mark Daniels Aquino      | Full Stack + ZK  | @mdla03         |
-| Clarence Kyle Pagunsan   | Full Stack + ZK  | @laughable-9    |
-| Elfritz Angelo Peralta   | Product Manager  | @elfrtz         |
+| Name | Role | GitHub |
+|------|------|--------|
+| Mark Daniels Aquino | Full Stack + ZK | [@mdla03](https://github.com/mdla03) |
+| Clarence Kyle Pagunsan | Full Stack + ZK | [@laughable-9](https://github.com/laughable-9) |
+| Elfritz Angelo Peralta | Product Manager | [@elfrtz](https://github.com/elfrtz) |
 
 ## License
 
 MIT
-# Hush-
