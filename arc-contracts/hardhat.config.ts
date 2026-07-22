@@ -7,7 +7,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const accounts = PRIVATE_KEY ? [PRIVATE_KEY] : [];
 
 const ARC_TESTNET_RPC =
-  process.env.ARC_TESTNET_RPC_URL || "https://5042002.rpc.thirdweb.com";
+  process.env.ARC_TESTNET_RPC_URL || "https://rpc.testnet.arc.network";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -40,7 +40,9 @@ const config: HardhatUserConfig = {
       url: ARC_TESTNET_RPC,
       accounts,
       chainId: 5042002,
-    }
+      timeout: 120_000,
+      httpHeaders: {},
+    },
   },
   sourcify: {
     enabled: false,
@@ -48,17 +50,17 @@ const config: HardhatUserConfig = {
   etherscan: {
     enabled: true,
     apiKey: {
-      arcTestnet: process.env.ARCSCAN_API_KEY || "empty"
+      arcTestnet: process.env.ARCSCAN_API_KEY || "empty",
     },
     customChains: [
       {
         network: "arcTestnet",
         chainId: 5042002,
         urls: {
-          apiURL: "https://arcscan.io/api",
-          browserURL: "https://arcscan.io",
+          apiURL: "https://testnet.arcscan.app/api",
+          browserURL: "https://testnet.arcscan.app",
         },
-      }
+      },
     ],
   },
 };

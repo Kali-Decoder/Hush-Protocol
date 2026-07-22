@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  wallet          String   @unique
+  username        String   @unique
+  bulletPublicKey String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  notes           Note[]   @relation("RecipientNotes")
+}
+
+model Note {
+  id               String   @id @default(cuid())
+  recipientId      String
+  recipient        User     @relation("RecipientNotes", fields: [recipientId], references: [id])
+  commitment       String
+  encryptedPayload String
+  claimed          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([recipientId])
+  @@index([commitment])
+}
