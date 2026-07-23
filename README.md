@@ -1,4 +1,4 @@
-# Hush
+# Hushh Protocol
 
 ZK-private payment rail on **Arc Testnet** (EVM). Send USDC without leaving an on-chain link between deposit and withdraw.
 
@@ -6,13 +6,60 @@ Tagline: send silently.
 
 ---
 
+## User journey
+
+End-to-end path for a private USDC payment on Arc Testnet. Scores are relative effort / friction (5 = light, 1 = heavy).
+
+```mermaid
+journey
+  title Hushh Protocol · silent USDC payment
+  section Setup
+    Open app: 5: Sender, Recipient
+    Connect MetaMask on Arc Testnet: 4: Sender, Recipient
+    Claim @username and sign in: 4: Sender, Recipient
+    Receive MockUSDC for demos: 5: Sender
+  section Send
+    Open Send and pick @recipient: 5: Sender
+    Choose fixed note size: 5: Sender
+    Approve USDC: 3: Sender
+    Deposit commitment on BulletPool: 3: Sender
+    Seal encrypted note to inbox: 4: Sender, Backend
+  section Pool holds
+    Indexer inserts Poseidon leaf: 5: Indexer
+    Indexer posts Merkle root: 4: Indexer, Pool
+    Chain shows hash and size only: 5: Pool
+  section Claim
+    Open Inbox and decrypt note: 4: Recipient
+    Fetch Merkle witness: 4: Recipient, Indexer
+    Prove membership with Groth16: 2: Recipient
+    Withdraw USDC from pool: 3: Recipient, Pool
+    Mark note claimed: 5: Recipient, Backend
+  section Optional
+    Look up a handle on Lookout: 5: Anyone
+    View profile avatar and wallet: 5: Recipient
+```
+
+Actors in this journey:
+
+| Actor | Role |
+|-------|------|
+| **Sender** | Connects, deposits a fixed USDC note to a username |
+| **Recipient** | Decrypts inbox note, proves membership, withdraws |
+| **Backend** | Auth, username resolution, encrypted note storage |
+| **Indexer** | Watches deposits, builds tree, posts roots, serves witnesses |
+| **Pool** | On-chain `BulletPool` / `MerkleRootManager` on Arc Testnet |
+
+Nothing on-chain links the sender's deposit transaction to the recipient's withdraw.
+
+---
+
 ## Problem
 
 Public blockchains leave a visible trail. Every transfer creates a `sender → recipient` edge anyone can follow. That makes salary, donations, remittances, and contractor payments uncomfortable when the relationship itself should stay private.
 
-## What Hush is
+## What Hushh Protocol is
 
-Hush is a **shielded note pool**:
+Hushh Protocol is a **shielded note pool**:
 
 1. Sender deposits a fixed-size ERC-20 note under a Poseidon commitment.
 2. An off-chain indexer inserts the commitment into a Merkle tree and posts the root on-chain.

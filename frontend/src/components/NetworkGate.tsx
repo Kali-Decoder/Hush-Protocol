@@ -81,7 +81,7 @@ export function NetworkGate({
       <div className="rounded-xl border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-ink">
         <p className="font-medium">Wrong network</p>
         <p className="mt-1 text-graphite">
-          Hussh runs on {targetName} (chain {arcTestnet.id}). Switch your wallet
+          Hushh Protocol runs on {targetName} (chain {arcTestnet.id}). Switch your wallet
           to continue.
         </p>
       </div>

@@ -1,7 +1,7 @@
 import {LookoutForm} from "@/components/LookoutForm";
 import {PageHeader, Shell} from "@/components/ui";
 
-export const metadata = {title: "Lookout · Hussh"};
+export const metadata = {title: "Lookout · Hushh Protocol"};
 
 export default function LookoutPage() {
   return (

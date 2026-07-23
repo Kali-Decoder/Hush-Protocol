@@ -1,7 +1,7 @@
 import {RegisterFlow} from "@/components/RegisterFlow";
 import {PageHeader, Shell} from "@/components/ui";
 
-export const metadata = {title: "Sign in · Hussh"};
+export const metadata = {title: "Sign in · Hushh Protocol"};
 
 export default function RegisterPage() {
   return (

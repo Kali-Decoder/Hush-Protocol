@@ -5,7 +5,7 @@ export function ClaimView({ encoded }: { encoded: string }) {
   return (
     <div className="space-y-4 rounded-2xl border border-fog bg-white p-6 text-left">
       <p className="text-sm text-graphite">
-        Claim link withdraw will prove membership and pull USDC from the Hussh
+        Claim link withdraw will prove membership and pull USDC from the Hushh Protocol
         pool on Arc.
       </p>
       {encoded ? (

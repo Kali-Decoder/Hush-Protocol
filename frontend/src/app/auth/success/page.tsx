@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckIcon } from "@/components/icons";
 
-export const metadata = { title: "Signed in · Hussh" };
+export const metadata = { title: "Signed in · Hushh Protocol" };
 
 export default function AuthSuccessPage() {
   return (

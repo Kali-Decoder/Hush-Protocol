@@ -67,7 +67,7 @@ export default function LandingHero() {
         }`}
       >
         <span className="h-px w-6 bg-fog" aria-hidden />
-        Hussh Protocol
+        Hushh Protocol
         <span className="h-px w-6 bg-fog" aria-hidden />
       </p>
 
@@ -86,7 +86,7 @@ export default function LandingHero() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/wordmark.svg"
-          alt="Hussh"
+          alt="Hushh Protocol"
           className="h-8 w-auto sm:h-10"
         />
       </div>

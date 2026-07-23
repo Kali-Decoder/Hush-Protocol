@@ -2,7 +2,7 @@
 
 import {useEffect, useId, useRef, useState} from "react";
 
-/** Renders a Mermaid chart with Hush paper-theme colors. */
+/** Renders a Mermaid chart with Hushh Protocol paper-theme colors. */
 export function MermaidDiagram({
   chart,
   className = "",

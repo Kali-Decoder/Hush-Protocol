@@ -1,7 +1,7 @@
 import {SendForm} from "@/components/SendForm";
 import {PageHeader, Shell} from "@/components/ui";
 
-export const metadata = {title: "Send · Hussh"};
+export const metadata = {title: "Send · Hushh Protocol"};
 
 export default async function SendPage({
   searchParams,

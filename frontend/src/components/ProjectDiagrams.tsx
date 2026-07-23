@@ -5,7 +5,7 @@ import Reveal from "@/components/Reveal";
 
 const FLOW_CHART = `
 flowchart LR
-  A["You"] -->|pay @username| B["Hussh pool"]
+  A["You"] -->|pay @username| B["Hushh Protocol pool"]
   B -->|claim with proof| C["They"]
   style A fill:#0A0A0A,stroke:#0A0A0A,color:#F5F3EE
   style B fill:#FFFFFF,stroke:#0A0A0A,color:#0A0A0A
@@ -15,7 +15,7 @@ flowchart LR
 const SEQUENCE_CHART = `
 sequenceDiagram
   participant You
-  participant App as Hussh app
+  participant App as Hushh Protocol app
   participant Pool as Arc pool
   participant Them as Recipient
 
@@ -66,7 +66,7 @@ export default function ProjectDiagrams() {
     <Reveal className="w-full max-w-4xl text-left">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          How Hussh works
+          How Hushh Protocol works
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-graphite sm:text-base">
           Three pictures. No jargon required.

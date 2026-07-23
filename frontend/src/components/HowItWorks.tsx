@@ -10,7 +10,7 @@ const PICKED = 50;
 const STEPS = [
   {
     title: "Type a username.",
-    body: "@maria. Hussh resolves it to their wallet and encryption key. No address paste required.",
+    body: "@maria. Hushh Protocol resolves it to their wallet and encryption key. No address paste required.",
   },
   {
     title: "Pick an amount. Deposit.",
@@ -113,7 +113,7 @@ export default function HowItWorks() {
       className="flex min-h-screen w-full flex-col justify-center"
     >
       <h2 className="text-left text-3xl font-bold tracking-tight sm:text-4xl">
-        How Hussh works
+        How Hushh Protocol works
       </h2>
 
       <div className="mt-12 grid gap-12 text-left md:grid-cols-[300px_1fr] md:items-center">
@@ -219,7 +219,7 @@ export default function HowItWorks() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/wordmark.svg"
-                alt="Hussh"
+                alt="Hushh Protocol"
                 className="h-5 w-auto sm:h-6"
               />
             </div>

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hussh Protocol · send silently.",
+  title: "Hushh Protocol · send silently.",
   description:
     "ZK-private USDC payments on Arc. Deposit a note, withdraw with a Groth16 proof. Nothing on-chain connects the two.",
 };
@@ -41,7 +41,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                     aria-hidden
                   />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/wordmark.svg" alt="Hussh" className="h-4 w-auto" />
+                  <img src="/wordmark.svg" alt="Hushh Protocol" className="h-4 w-auto" />
                 </Link>
                 <nav className="flex items-center gap-6 text-sm text-graphite">
                   <Link
@@ -54,7 +54,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                     href="https://x.com/BulletPayFi"
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Hussh on X"
+                    aria-label="Hushh Protocol on X"
                     className="transition-colors hover:text-ink"
                   >
                     <XBrandIcon className="h-4 w-4" />
@@ -63,7 +63,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                     href="https://github.com/Kali-Decoder/Hush-"
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Hussh on GitHub"
+                    aria-label="Hushh Protocol on GitHub"
                     className="transition-colors hover:text-ink"
                   >
                     <GithubIcon className="h-4 w-4" />

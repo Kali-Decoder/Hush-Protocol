@@ -24,7 +24,7 @@ const PILLARS = [
   },
   {
     title: "Username send",
-    body: "Pay @someone. Hussh resolves wallet and encryption key for you.",
+    body: "Pay @someone. Hushh Protocol resolves wallet and encryption key for you.",
   },
 ] as const;
 
@@ -43,7 +43,7 @@ export default function Home() {
           Privacy with honest limits
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-graphite sm:text-base">
-          Hussh Protocol hides the link between deposit and claim. It does not
+          Hushh Protocol hides the link between deposit and claim. It does not
           hide that you used the pool.
         </p>
         <div className="mt-12 grid gap-4 text-left sm:grid-cols-3">
@@ -116,7 +116,7 @@ export default function Home() {
             className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-signal/10 blur-3xl"
           />
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-graphite">
-            Hussh Protocol
+            Hushh Protocol
           </p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">
             Ready when you are.

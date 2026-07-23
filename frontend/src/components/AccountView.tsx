@@ -22,7 +22,7 @@ export function AccountView() {
   function copy(value: string, kind: "wallet" | "key") {
     void navigator.clipboard.writeText(value);
     setCopied(kind);
-    toast.success(kind === "wallet" ? "Wallet copied." : "Hussh key copied.");
+    toast.success(kind === "wallet" ? "Wallet copied." : "Hushh Protocol key copied.");
     setTimeout(() => setCopied(null), 1500);
   }
 
@@ -85,7 +85,7 @@ export function AccountView() {
             </span>
           </div>
           <p className="mt-1.5 text-xs text-graphite">
-            Claimed on Hussh Protocol
+            Claimed on Hushh Protocol
           </p>
         </div>
       </div>
@@ -123,7 +123,7 @@ export function AccountView() {
         </div>
 
         <div className="mt-6">
-          <FieldLabel>Hussh key</FieldLabel>
+          <FieldLabel>Hushh Protocol key</FieldLabel>
           <div className="flex items-center gap-2 rounded-xl bg-paper/80 px-3 py-2.5">
             <p className="min-w-0 flex-1 truncate font-mono text-xs">
               {user.bulletPublicKey}
@@ -132,7 +132,7 @@ export function AccountView() {
               type="button"
               onClick={() => copy(user.bulletPublicKey, "key")}
               className="rounded-full border border-fog bg-white p-2 hover:border-graphite"
-              aria-label="Copy Hussh key"
+              aria-label="Copy Hushh Protocol key"
             >
               {copied === "key" ? (
                 <CheckIcon className="h-3.5 w-3.5 text-signal" />

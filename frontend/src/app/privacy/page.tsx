@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy · Hussh",
+  title: "Privacy · Hushh Protocol",
   description:
-    "What Hussh hides on Arc, and what it does not. ZK membership proofs, fixed notes, honest limits.",
+    "What Hushh Protocol hides on Arc, and what it does not. ZK membership proofs, fixed notes, honest limits.",
 };
 
 export default function Privacy() {
@@ -11,7 +11,7 @@ export default function Privacy() {
     <div className="mx-auto max-w-2xl py-12 text-left">
       <h1 className="text-4xl font-bold tracking-tight">Privacy</h1>
       <p className="mt-4 text-lg text-graphite">
-        What Hussh hides on Arc, and what it does not. Stated plainly, because
+        What Hushh Protocol hides on Arc, and what it does not. Stated plainly, because
         privacy claims you can not check are worthless.
       </p>
 
@@ -61,7 +61,7 @@ export default function Privacy() {
             Username resolution is off-chain.
           </span>{" "}
           Looking up <span className="font-mono text-ink">@username</span> hits
-          the Hussh backend. The server can see who looked up whom. It does not
+          the Hushh Protocol backend. The server can see who looked up whom. It does not
           learn which on-chain note resulted.
         </li>
         <li>

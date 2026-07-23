@@ -185,7 +185,7 @@ export function LookoutForm() {
               </span>
               <RecipientKindIcon kind={kind} className="h-3.5 w-3.5" />
             </span>{" "}
-            is not registered on Hussh yet. No wallet is linked.
+            is not registered on Hushh Protocol yet. No wallet is linked.
           </p>
         </div>
       ) : null}

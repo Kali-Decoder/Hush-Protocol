@@ -17,7 +17,7 @@ const PHASES = [
     id: "deposit",
     n: "02",
     title: "Deposit note",
-    body: "You send a fixed USDC size to a username. Hussh seals an encrypted note and deposits a Poseidon commitment into the pool.",
+    body: "You send a fixed USDC size to a username. Hushh Protocol seals an encrypted note and deposits a Poseidon commitment into the pool.",
     nodes: ["you", "app", "note", "pool", "commitment"],
     edges: ["you-hussh", "hussh-pool", "within-pool"],
     lane: "Deposit path",
@@ -193,11 +193,11 @@ export default function ProtocolFlow() {
                 label={active === 0 ? "connect" : "send USDC"}
               />
 
-              <Column label="Hussh">
+              <Column label="Hushh Protocol">
                 <ArchNode
                   tone={nodeTone("app")}
                   kicker="App"
-                  title="Hussh client"
+                  title="Hushh Protocol client"
                   detail="Resolve @username"
                   onClick={() => selectNode("app", "identity")}
                 />
@@ -306,11 +306,11 @@ export default function ProtocolFlow() {
                     onClick={() => selectNode("you", "deposit")}
                   />
                 </Column>
-                <Column label="Hussh">
+                <Column label="Hushh Protocol">
                   <ArchNode
                     tone={nodeTone("app")}
                     kicker="App"
-                    title="Hussh client"
+                    title="Hushh Protocol client"
                     detail="Resolve @username"
                     onClick={() => selectNode("app", "identity")}
                   />
@@ -383,12 +383,12 @@ export default function ProtocolFlow() {
                   onClick={() => selectNode("you", "deposit")}
                 />
               </Lane>
-              <DownArrow lit={edgeLit("you-hussh")} label="to Hussh" />
-              <Lane label="Hussh">
+              <DownArrow lit={edgeLit("you-hussh")} label="to Hushh Protocol" />
+              <Lane label="Hushh Protocol">
                 <ArchNode
                   tone={nodeTone("app")}
                   kicker="App"
-                  title="Hussh client"
+                  title="Hushh Protocol client"
                   detail="Resolve @username"
                   onClick={() => selectNode("app", "identity")}
                 />
@@ -658,7 +658,7 @@ function FlowStrip({
 }) {
   const steps = [
     {label: "You", lit: active <= 1 || edgeLit("you-hussh")},
-    {label: "Hussh", lit: edgeLit("you-hussh") || edgeLit("hussh-pool")},
+    {label: "Hushh Protocol", lit: edgeLit("you-hussh") || edgeLit("hussh-pool")},
     {label: "Pool", lit: edgeLit("hussh-pool") || edgeLit("within-pool")},
     {label: "Them", lit: edgeLit("pool-them") || active === 3},
   ];

@@ -1,4 +1,4 @@
-# Hush frontend
+# Hushh Protocol frontend
 
 Self-contained Next.js app for Arc Testnet. Wired to backend auth / notes and on-chain deposit.
 

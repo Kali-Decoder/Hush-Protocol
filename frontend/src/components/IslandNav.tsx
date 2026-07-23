@@ -89,7 +89,7 @@ export default function IslandNav() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/wordmark.svg"
-            alt="Hussh"
+            alt="Hushh Protocol"
             className="h-4 w-auto brightness-0 invert"
           />
         </Link>

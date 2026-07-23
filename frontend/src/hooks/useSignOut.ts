@@ -4,7 +4,7 @@ import {useDisconnect} from "wagmi";
 import {clearSession} from "@/lib/session";
 import {toast} from "@/lib/toast";
 
-/** Sign out of Hush and disconnect the wallet together. */
+/** Sign out of Hushh Protocol and disconnect the wallet together. */
 export function useSignOut() {
   const {disconnect} = useDisconnect();
 

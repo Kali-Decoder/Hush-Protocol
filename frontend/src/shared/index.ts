@@ -1,7 +1,7 @@
 /**
  * API types used by the frontend against backend + indexer.
  *
- * Crypto / proving: Hush SDK (linked later).
+ * Crypto / proving: Hushh Protocol SDK (linked later).
  * Chain calls: viem / contracts on Arc.
  */
 
@@ -14,7 +14,7 @@ export interface PublicUser {
   wallet: string;
   /** Lowercase, no leading @. */
   username: string;
-  /** 0x-prefixed 32-byte hex Hush public key (encryption). */
+  /** 0x-prefixed 32-byte hex Hushh Protocol public key (encryption). */
   bulletPublicKey: string;
   createdAt?: string | Date;
 }
