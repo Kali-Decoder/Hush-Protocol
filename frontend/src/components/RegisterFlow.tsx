@@ -245,7 +245,8 @@ export function RegisterFlow() {
         <WarnBanner>
           Backend not reachable at{" "}
           <span className="font-mono text-xs">
-            {process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:4020"}
+            {process.env.NEXT_PUBLIC_BACKEND_URL ||
+              "https://hush-protocol-backend.onrender.com"}
           </span>
           . Run <span className="font-mono">pnpm backend:dev</span> in
           arc-contracts.

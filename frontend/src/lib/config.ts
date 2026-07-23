@@ -4,7 +4,8 @@ import {arcTestnet} from "@/lib/chains";
 export {arcTestnet};
 
 export const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:4020";
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "https://hush-protocol-backend.onrender.com";
 export const INDEXER_URL =
   process.env.NEXT_PUBLIC_INDEXER_URL || "http://127.0.0.1:4010";
 export const EXPLORER_URL =
