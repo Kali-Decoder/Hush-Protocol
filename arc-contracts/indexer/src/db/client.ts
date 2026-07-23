@@ -24,7 +24,15 @@ export async function closePool(): Promise<void> {
 
 export async function migrate(): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  const sql = fs.readFileSync(path.join(here, "schema.sql"), "utf8");
+  const candidates = [
+    path.join(here, "schema.sql"), // dist/db or src/db (tsx)
+    path.join(here, "..", "..", "src", "db", "schema.sql"), // dist/db → src/db
+  ];
+  const schemaPath = candidates.find((p) => fs.existsSync(p));
+  if (!schemaPath) {
+    throw new Error(`schema.sql not found. Tried: ${candidates.join(", ")}`);
+  }
+  const sql = fs.readFileSync(schemaPath, "utf8");
   await getPool().query(sql);
   console.log("[db] schema applied");
 }

@@ -33,10 +33,7 @@ export const config = {
     )
   ),
   relayerPrivateKey: (process.env.RELAYER_PRIVATE_KEY?.trim() || "") as Hex | "",
-  databaseUrl: optionalEnv(
-    "DATABASE_URL",
-    "postgres://postgres:postgres@127.0.0.1:5432/bullet_indexer"
-  ),
+  databaseUrl: requireEnv("DATABASE_URL"),
   confirmations: Number(optionalEnv("CONFIRMATIONS", "8")),
   pollIntervalMs: Number(optionalEnv("POLL_INTERVAL_MS", "4000")),
   startBlock: Number(optionalEnv("START_BLOCK", "0")),

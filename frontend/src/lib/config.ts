@@ -7,7 +7,8 @@ export const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   "https://hush-protocol-backend.onrender.com";
 export const INDEXER_URL =
-  process.env.NEXT_PUBLIC_INDEXER_URL || "http://127.0.0.1:4010";
+  process.env.NEXT_PUBLIC_INDEXER_URL ||
+  "https://hush-protocol-indexer.onrender.com";
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://testnet.arcscan.app";
 
