@@ -33,6 +33,8 @@ model Note {
   depositTxHash      String?
   /** Human USDC amount for history UI (e.g. "10" or "1.5"). */
   amount             String?
+  /** Token symbol at send time (USDC, EURC, cirBTC). */
+  tokenSymbol        String?
   /** Recipient username snapshot at send time. */
   recipientUsername  String?
   createdAt          DateTime @default(now())

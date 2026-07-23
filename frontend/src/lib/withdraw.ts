@@ -8,7 +8,7 @@ import {
   type NoteJSON,
 } from "@bullet/sdk";
 import {fetchWitness} from "@/lib/api";
-import {addresses} from "@/lib/config";
+import {resolvePoolToken} from "@/lib/config";
 
 export type ClaimStep =
   | "idle"
@@ -87,7 +87,7 @@ export async function prepareWithdraw(params: {
   params.onStep?.("proving");
   const proved = await generateProof(note, merkle, CIRCUITS);
   const pub = publicInputBytes32(proved.publicInputs);
-  const {usdc} = addresses();
+  const poolToken = resolvePoolToken({tokenHash: payload.tokenHash});
 
   return {
     proof: proved.proofBytes,
@@ -95,7 +95,7 @@ export async function prepareWithdraw(params: {
     nullifier: pub.nullifier,
     recipientDigest: pub.recipientDigest,
     recipient,
-    token: usdc,
+    token: poolToken.address,
     amount: BigInt(payload.amount),
   };
 }

@@ -19,6 +19,7 @@ export async function notesRoutes(app: FastifyInstance) {
       encryptedPayload: string;
       depositTxHash?: string;
       amount?: string;
+      tokenSymbol?: string;
     };
   }>("/notes", {preHandler: requireAuth}, async (req, reply) => {
     try {
@@ -31,6 +32,7 @@ export async function notesRoutes(app: FastifyInstance) {
         encryptedPayload: req.body?.encryptedPayload,
         depositTxHash: req.body?.depositTxHash,
         amount: req.body?.amount,
+        tokenSymbol: req.body?.tokenSymbol,
       });
     } catch (err) {
       return sendError(reply, err);

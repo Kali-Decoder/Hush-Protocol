@@ -8,7 +8,7 @@ export default function InboxPage() {
     <Shell>
       <PageHeader
         title="Inbox"
-        subtitle="Decrypt notes sealed to your key, then claim USDC on Arc."
+        subtitle="Decrypt notes sealed to your key, then claim tokens on Arc."
       />
       <Inbox />
     </Shell>

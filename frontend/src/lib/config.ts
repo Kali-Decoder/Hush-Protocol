@@ -1,7 +1,24 @@
 import {ARC_TESTNET_DEPLOYMENT, getDeployments} from "@/shared";
 import {arcTestnet} from "@/lib/chains";
+import {
+  DEFAULT_POOL_TOKEN,
+  fromTokenUnits,
+  getPoolToken,
+  POOL_TOKENS,
+  resolvePoolToken,
+  toTokenUnits,
+} from "@/lib/tokens";
 
 export {arcTestnet};
+export {
+  POOL_TOKENS,
+  DEFAULT_POOL_TOKEN,
+  toTokenUnits,
+  fromTokenUnits,
+  getPoolToken,
+  resolvePoolToken,
+};
+export type {PoolToken} from "@/lib/tokens";
 
 export const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:4020";
@@ -10,6 +27,7 @@ export const INDEXER_URL =
 export const EXPLORER_URL =
   process.env.NEXT_PUBLIC_EXPLORER_URL || "https://testnet.arcscan.app";
 
+/** @deprecated Prefer token.decimals from POOL_TOKENS */
 export const USDC_DECIMALS = 6;
 export const AMOUNT_PRESETS = [1, 10, 50, 100] as const;
 
@@ -19,7 +37,9 @@ export function addresses() {
     pool: d.bulletPool,
     rootManager: d.merkleRootManager,
     verifier: d.verifier,
-    usdc: (d.mockUsdc || ARC_TESTNET_DEPLOYMENT.mockUsdc) as `0x${string}`,
+    usdc: (d.mockUsdc ||
+      DEFAULT_POOL_TOKEN.address ||
+      ARC_TESTNET_DEPLOYMENT.mockUsdc) as `0x${string}`,
   };
 }
 
@@ -32,13 +52,9 @@ export function explorerAddress(addr: string) {
 }
 
 export function toUsdcUnits(amount: number): bigint {
-  return BigInt(Math.round(amount * 10 ** USDC_DECIMALS));
+  return toTokenUnits(amount, USDC_DECIMALS);
 }
 
 export function fromUsdcUnits(raw: bigint | string): string {
-  const n = typeof raw === "bigint" ? raw : BigInt(raw);
-  const whole = n / 10n ** BigInt(USDC_DECIMALS);
-  const frac = n % 10n ** BigInt(USDC_DECIMALS);
-  if (frac === 0n) return whole.toString();
-  return `${whole}.${frac.toString().padStart(USDC_DECIMALS, "0").replace(/0+$/, "")}`;
+  return fromTokenUnits(raw, USDC_DECIMALS);
 }

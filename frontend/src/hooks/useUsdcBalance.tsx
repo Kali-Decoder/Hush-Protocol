@@ -4,45 +4,58 @@ import {formatUnits} from "viem";
 import {useAccount, useBalance, useReadContract} from "wagmi";
 import {erc20Abi} from "@/abi/erc20";
 import {
-  addresses,
   arcTestnet,
-  fromUsdcUnits,
-  toUsdcUnits,
+  DEFAULT_POOL_TOKEN,
+  fromTokenUnits,
+  POOL_TOKENS,
+  toTokenUnits,
+  type PoolToken,
 } from "@/lib/config";
 import {LoaderIcon} from "@/components/icons";
 
-export function useUsdcBalance(owner?: `0x${string}`) {
+export function useTokenBalance(
+  token: PoolToken = DEFAULT_POOL_TOKEN,
+  owner?: `0x${string}`
+) {
   const {address, isConnected} = useAccount();
   const account = owner ?? address;
-  const {usdc} = addresses();
 
   const {data, isLoading, isFetching, refetch, error} = useReadContract({
-    address: usdc,
+    address: token.address,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: account ? [account] : undefined,
     chainId: arcTestnet.id,
     query: {
-      enabled: !!account && isConnected,
+      enabled: !!account && isConnected && !!token.address,
       refetchInterval: 12_000,
     },
   });
 
   const raw = typeof data === "bigint" ? data : 0n;
-  const formatted = fromUsdcUnits(raw);
+  const formatted = fromTokenUnits(raw, token.decimals);
 
   return {
     raw,
     formatted,
+    symbol: token.symbol,
+    decimals: token.decimals,
+    token,
     isLoading: isConnected && !!account && isLoading,
     isFetching,
     error,
     refetch,
-    hasEnough: (amountUsdc: number) => raw >= toUsdcUnits(amountUsdc),
+    hasEnough: (amountHuman: number) =>
+      raw >= toTokenUnits(amountHuman, token.decimals),
   };
 }
 
-/** Native Arc Testnet balance (USDC gas token, 18 decimals). */
+/** @deprecated Prefer useTokenBalance */
+export function useUsdcBalance(owner?: `0x${string}`) {
+  return useTokenBalance(DEFAULT_POOL_TOKEN, owner);
+}
+
+/** Native Arc Testnet balance (gas token). */
 export function useArcBalance(owner?: `0x${string}`) {
   const {address, isConnected} = useAccount();
   const account = owner ?? address;
@@ -134,24 +147,27 @@ function BalanceRow({
 }
 
 export function TokenBalance({
-  label = "USDC balance",
+  token = DEFAULT_POOL_TOKEN,
+  label,
   className = "",
   compact = false,
 }: {
+  token?: PoolToken;
   label?: string;
   className?: string;
   compact?: boolean;
 }) {
   const {isConnected} = useAccount();
-  const {formatted, isLoading, refetch, isFetching} = useUsdcBalance();
+  const {formatted, symbol, isLoading, refetch, isFetching} =
+    useTokenBalance(token);
 
   if (!isConnected) return null;
 
   return (
     <BalanceRow
-      label={label}
+      label={label ?? `${symbol} balance`}
       amount={formatted}
-      symbol="USDC"
+      symbol={symbol}
       isLoading={isLoading}
       isFetching={isFetching}
       onRefresh={() => void refetch()}
@@ -189,7 +205,7 @@ export function ArcBalance({
   );
 }
 
-/** Native Arc + pool ERC-20 balances for the account screen. */
+/** Native Arc + all pool ERC-20 balances for the account screen. */
 export function AccountBalances({className = ""}: {className?: string}) {
   const {isConnected} = useAccount();
   if (!isConnected) return null;
@@ -197,7 +213,9 @@ export function AccountBalances({className = ""}: {className?: string}) {
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
       <ArcBalance />
-      <TokenBalance label="Pool USDC" />
+      {POOL_TOKENS.filter((t) => t.enabled).map((t) => (
+        <TokenBalance key={t.address} token={t} label={`Pool ${t.symbol}`} />
+      ))}
     </div>
   );
 }

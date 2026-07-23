@@ -80,6 +80,7 @@ export function AmountPills({
   onChange,
   disabled,
   canAfford,
+  symbol = "USDC",
 }: {
   amounts: readonly number[];
   value: number | null;
@@ -87,6 +88,7 @@ export function AmountPills({
   disabled?: boolean;
   /** When false, pill is disabled (e.g. balance too low). */
   canAfford?: (amount: number) => boolean;
+  symbol?: string;
 }) {
   return (
     <div
@@ -95,7 +97,7 @@ export function AmountPills({
       className="flex rounded-2xl border border-fog bg-paper/70 p-1"
     >
       {amounts.map((a) => {
-      const selected = value != null && Math.abs(value - a) < 1e-9;
+        const selected = value != null && Math.abs(value - a) < 1e-9;
         const affordable = canAfford ? canAfford(a) : true;
         const locked = disabled || !affordable;
         return (
@@ -106,7 +108,7 @@ export function AmountPills({
             aria-checked={selected}
             disabled={locked}
             onClick={() => onChange(a)}
-            title={!affordable ? "Insufficient USDC balance" : undefined}
+            title={!affordable ? `Insufficient ${symbol} balance` : undefined}
             className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2.5 text-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:cursor-not-allowed disabled:opacity-35 ${
               selected
                 ? "bg-ink text-paper shadow-[0_1px_2px_rgba(10,10,10,0.18)]"
@@ -121,7 +123,7 @@ export function AmountPills({
                 selected ? "text-paper/65" : "text-graphite/70"
               }`}
             >
-              USDC
+              {symbol}
             </span>
           </button>
         );

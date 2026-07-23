@@ -10,6 +10,7 @@ export async function createNote(params: {
   encryptedPayload: string;
   depositTxHash?: string;
   amount?: string;
+  tokenSymbol?: string;
 }) {
   const commitment = normalizeCommitment(params.commitment);
   const encryptedPayload = params.encryptedPayload?.trim();
@@ -43,6 +44,7 @@ export async function createNote(params: {
 
   const depositTxHash = normalizeTxHash(params.depositTxHash);
   const amount = normalizeAmount(params.amount);
+  const tokenSymbol = normalizeTokenSymbol(params.tokenSymbol);
 
   const note = await prisma.note.create({
     data: {
@@ -52,6 +54,7 @@ export async function createNote(params: {
       encryptedPayload,
       depositTxHash: depositTxHash ?? null,
       amount: amount ?? null,
+      tokenSymbol: tokenSymbol ?? null,
       recipientUsername: recipientUsername ?? null,
     },
   });
@@ -156,6 +159,7 @@ function serializeNote(note: {
   claimTxHash: string | null;
   depositTxHash?: string | null;
   amount?: string | null;
+  tokenSymbol?: string | null;
   recipientUsername?: string | null;
   createdAt: Date;
 }) {
@@ -169,6 +173,7 @@ function serializeNote(note: {
     claimTxHash: note.claimTxHash ?? undefined,
     depositTxHash: note.depositTxHash ?? undefined,
     amount: note.amount ?? undefined,
+    tokenSymbol: note.tokenSymbol ?? undefined,
     recipientUsername: note.recipientUsername ?? undefined,
     createdAt: note.createdAt,
   };
@@ -184,6 +189,7 @@ function serializeHistoryNote(
     claimTxHash: string | null;
     depositTxHash: string | null;
     amount: string | null;
+    tokenSymbol: string | null;
     recipientUsername: string | null;
     createdAt: Date;
     sender: {username: string; wallet: string} | null;
@@ -203,12 +209,12 @@ function serializeHistoryNote(
     claimTxHash: note.claimTxHash ?? undefined,
     depositTxHash: note.depositTxHash ?? undefined,
     amount: note.amount ?? undefined,
+    tokenSymbol: note.tokenSymbol ?? undefined,
     createdAt: note.createdAt,
     fromUsername,
     toUsername,
     fromWallet: note.sender?.wallet,
     toWallet: note.recipient.wallet,
-    /** @deprecated prefer fromUsername / toUsername */
     counterpartyUsername:
       direction === "sent" ? toUsername : fromUsername,
     counterpartyWallet:
@@ -247,6 +253,13 @@ function normalizeTxHash(raw: string | undefined): string | undefined {
 function normalizeAmount(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
   const t = raw.trim();
-  if (!/^\d+(\.\d{1,6})?$/.test(t)) return undefined;
+  if (!/^\d+(\.\d{1,8})?$/.test(t)) return undefined;
+  return t;
+}
+
+function normalizeTokenSymbol(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const t = raw.trim();
+  if (!/^[A-Za-z0-9]{2,12}$/.test(t)) return undefined;
   return t;
 }

@@ -159,7 +159,9 @@ export function TransactionHistory() {
                       {atName(to)}
                     </td>
                     <td className="px-4 py-3.5 font-bold tabular-nums text-ink">
-                      {item.amount != null ? `${item.amount} USDC` : "—"}
+                      {item.amount != null
+                        ? `${item.amount} ${item.tokenSymbol ?? "USDC"}`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3.5">
                       <span

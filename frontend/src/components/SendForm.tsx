@@ -12,8 +12,10 @@ import {
   AMOUNT_PRESETS,
   addresses,
   arcTestnet,
+  DEFAULT_POOL_TOKEN,
   explorerTx,
-  toUsdcUnits,
+  toTokenUnits,
+  type PoolToken,
 } from "@/lib/config";
 import {sealPayload} from "@/lib/crypto";
 import {getToken, getStoredUser} from "@/lib/session";
@@ -30,7 +32,8 @@ import {
   type RecipientKind,
 } from "@/components/RecipientKind";
 import {useSession} from "@/hooks/useSession";
-import {TokenBalance, useUsdcBalance} from "@/hooks/useUsdcBalance";
+import {useTokenBalance} from "@/hooks/useUsdcBalance";
+import {TokenBalanceSelect} from "@/components/TokenSelect";
 import {UserAvatar} from "@/components/UserAvatar";
 import {
   AmountPills,
@@ -53,11 +56,11 @@ type Step =
 const FLOW_STEPS = ["Note", "Approve", "Deposit", "Deliver"] as const;
 const SUCCESS_MODAL_MS = 5000;
 const AMOUNT_STEP = 1;
-const AMOUNT_DECIMALS = 6;
 
-/** Allow empty, digits, optional one `.`, up to 6 fractional digits. */
-function isValidAmountInput(raw: string): boolean {
-  return raw === "" || /^\d*\.?\d{0,6}$/.test(raw);
+function isValidAmountInput(raw: string, maxDecimals: number): boolean {
+  if (raw === "") return true;
+  const re = new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}$`);
+  return re.test(raw);
 }
 
 function parseAmountInput(raw: string): number | null {
@@ -67,15 +70,15 @@ function parseAmountInput(raw: string): number | null {
   return n;
 }
 
-function formatAmountDisplay(n: number): string {
+function formatAmountDisplay(n: number, decimals: number): string {
   return n
-    .toFixed(AMOUNT_DECIMALS)
+    .toFixed(decimals)
     .replace(/(\.\d*?[1-9])0+$/, "$1")
     .replace(/\.0+$/, "");
 }
 
-function roundAmount(n: number): number {
-  const f = 10 ** AMOUNT_DECIMALS;
+function roundAmount(n: number, decimals: number): number {
+  const f = 10 ** decimals;
   return Math.round(n * f) / f;
 }
 
@@ -100,8 +103,13 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   const {address, isConnected} = useAccount();
   const {writeContractAsync} = useWriteContract();
   const {isSignedIn, user: me} = useSession();
-  const {hasEnough, formatted: usdcBalance, refetch: refetchBalance} =
-    useUsdcBalance();
+  const [selectedToken, setSelectedToken] =
+    useState<PoolToken>(DEFAULT_POOL_TOKEN);
+  const {
+    hasEnough,
+    formatted: tokenBalance,
+    refetch: refetchBalance,
+  } = useTokenBalance(selectedToken);
 
   const [recipient, setRecipient] = useState(initialRecipient ?? "");
   const [recipientKind, setRecipientKind] = useState<
@@ -114,6 +122,9 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   const [error, setError] = useState("");
   const [txHash, setTxHash] = useState("");
   const [commitment, setCommitment] = useState("");
+  const [sentTokenSymbol, setSentTokenSymbol] = useState(
+    DEFAULT_POOL_TOKEN.symbol
+  );
 
   const busy =
     step === "resolving" ||
@@ -122,31 +133,46 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     step === "depositing" ||
     step === "posting";
 
+  const amountDecimals = selectedToken.decimals;
+
   function applyAmount(n: number | null) {
     if (n == null || !Number.isFinite(n) || n <= 0) {
       setAmount(null);
       setAmountText("");
       return;
     }
-    const rounded = roundAmount(n);
+    const rounded = roundAmount(n, amountDecimals);
     setAmount(rounded);
-    setAmountText(formatAmountDisplay(rounded));
+    setAmountText(formatAmountDisplay(rounded, amountDecimals));
   }
 
   function onAmountTextChange(raw: string) {
-    if (!isValidAmountInput(raw)) return;
+    if (!isValidAmountInput(raw, amountDecimals)) return;
     setAmountText(raw);
     const parsed = parseAmountInput(raw);
-    setAmount(parsed != null && parsed > 0 ? roundAmount(parsed) : null);
+    setAmount(
+      parsed != null && parsed > 0
+        ? roundAmount(parsed, amountDecimals)
+        : null
+    );
   }
 
   function bumpAmount(delta: number) {
-    const next = roundAmount((amount ?? 0) + delta);
+    const next = roundAmount((amount ?? 0) + delta, amountDecimals);
     if (next <= 0) {
       applyAmount(null);
       return;
     }
     applyAmount(next);
+  }
+
+  function onTokenChange(token: PoolToken) {
+    setSelectedToken(token);
+    if (amount != null) {
+      const rounded = roundAmount(amount, token.decimals);
+      setAmount(rounded);
+      setAmountText(formatAmountDisplay(rounded, token.decimals));
+    }
   }
 
   function resetAfterSuccess() {
@@ -187,22 +213,27 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   async function handleSend() {
     setError("");
     if (!address || !resolved || amount == null) return;
-    const token = getToken();
-    const me = getStoredUser();
-    if (!token || !me) {
+    const authToken = getToken();
+    const meUser = getStoredUser();
+    if (!authToken || !meUser) {
       setError("Sign in at /register first so we can deliver the encrypted note.");
       setStep("error");
       return;
     }
-    if (amount != null && !hasEnough(amount)) {
-      setError(`Insufficient USDC. Balance is ${usdcBalance} USDC.`);
+    if (!hasEnough(amount)) {
+      setError(
+        `Insufficient ${selectedToken.symbol}. Balance is ${tokenBalance} ${selectedToken.symbol}.`
+      );
       setStep("error");
-      toast.error(`Insufficient USDC. Balance is ${usdcBalance} USDC.`);
+      toast.error(
+        `Insufficient ${selectedToken.symbol}. Balance is ${tokenBalance} ${selectedToken.symbol}.`
+      );
       return;
     }
 
-    const {pool, usdc} = addresses();
-    const units = toUsdcUnits(amount);
+    const {pool} = addresses();
+    const tokenAddr = selectedToken.address;
+    const units = toTokenUnits(amount, selectedToken.decimals);
 
     try {
       setStep("creating");
@@ -210,7 +241,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       const note = await createNote({
         recipientDigest: digest,
         amount: units,
-        token: usdc,
+        token: tokenAddr,
       });
       const json = noteToJSON(note);
       const commitmentBytes32 = json.commitmentBytes32;
@@ -218,7 +249,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
 
       setStep("approving");
       const approveHash = await writeContractAsync({
-        address: usdc,
+        address: tokenAddr,
         abi: erc20Abi,
         functionName: "approve",
         args: [pool, units],
@@ -231,7 +262,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         address: pool,
         abi: bulletPoolAbi,
         functionName: "deposit",
-        args: [usdc, units, commitmentBytes32],
+        args: [tokenAddr, units, commitmentBytes32],
         chainId: arcTestnet.id,
       });
       await waitTx(depositHash);
@@ -239,14 +270,16 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
 
       setStep("posting");
       const sealed = sealPayload(JSON.stringify(json), resolved.bulletPublicKey);
-      await postNote(token, {
+      await postNote(authToken, {
         recipientUsername: resolved.username,
         commitment: commitmentBytes32,
         encryptedPayload: sealed,
         depositTxHash: depositHash,
         amount: String(amount),
+        tokenSymbol: selectedToken.symbol,
       });
 
+      setSentTokenSymbol(selectedToken.symbol);
       setStep("done");
       void refetchBalance();
     } catch (e) {
@@ -265,7 +298,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         {!isConnected ? (
           <div className="space-y-4 py-2 text-center">
             <p className="text-sm text-graphite">
-              Connect an Arc wallet to deposit a fixed USDC note.
+              Connect an Arc wallet to deposit a private note.
             </p>
             <ConnectButton label="Connect wallet" />
           </div>
@@ -284,7 +317,11 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
               </div>
             ) : showRecipientLookup ? (
               <>
-                <TokenBalance />
+                <TokenBalanceSelect
+                  value={selectedToken}
+                  onChange={onTokenChange}
+                  disabled={busy}
+                />
                 <div className="space-y-4">
                   <div className="flex items-end justify-between gap-3">
                     <FieldLabel>To</FieldLabel>
@@ -429,7 +466,11 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
               </>
             ) : (
               <>
-                <TokenBalance />
+                <TokenBalanceSelect
+                  value={selectedToken}
+                  onChange={onTokenChange}
+                  disabled={busy}
+                />
                 <div className="animate-soft-rise space-y-5 motion-reduce:animate-none">
                 <div className="rounded-2xl border border-fog bg-white px-4 py-3.5 transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(10,10,10,0.18)] sm:px-5">
                   <div className="flex items-center gap-3 sm:gap-3.5">
@@ -489,7 +530,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                   <div className="flex items-end justify-between gap-3">
                     <FieldLabel>Amount</FieldLabel>
                     <p className="pb-0.5 font-mono text-[11px] text-graphite">
-                      Up to 6 decimals
+                      Up to {amountDecimals} decimals
                     </p>
                   </div>
                   <div className="rounded-2xl border border-fog bg-white px-4 py-5 transition-shadow duration-300 sm:px-5">
@@ -513,14 +554,14 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                             disabled={busy}
                             onChange={(e) => onAmountTextChange(e.target.value)}
                             className="w-full min-w-0 bg-transparent text-center text-5xl font-bold tracking-tight tabular-nums text-ink outline-none transition-colors duration-200 placeholder:text-fog focus:text-ink disabled:opacity-50"
-                            aria-label="Amount in USDC"
+                            aria-label={`Amount in ${selectedToken.symbol}`}
                           />
                           <span
                             className={`shrink-0 text-lg font-semibold transition-colors duration-200 ${
                               amount != null ? "text-graphite" : "text-fog"
                             }`}
                           >
-                            USDC
+                            {selectedToken.symbol}
                           </span>
                         </div>
                       </div>
@@ -541,12 +582,13 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                     onChange={applyAmount}
                     disabled={busy}
                     canAfford={hasEnough}
+                    symbol={selectedToken.symbol}
                   />
                 </div>
 
                 {amount != null && !hasEnough(amount) ? (
                   <p className="animate-fade text-sm text-amber motion-reduce:animate-none">
-                    Not enough USDC. Balance {usdcBalance}.
+                    Not enough {selectedToken.symbol}. Balance {tokenBalance}.
                   </p>
                 ) : null}
 
@@ -568,7 +610,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                   className="btn-primary transition-transform duration-200 active:scale-[0.98]"
                 >
                   {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
-                  {stepLabel(step, amount)}
+                  {stepLabel(step, amount, selectedToken.symbol)}
                 </button>
                 </div>
               </>
@@ -584,6 +626,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       {step === "done" ? (
         <PaymentSuccessModal
           amount={amount}
+          tokenSymbol={sentTokenSymbol}
           username={resolved?.username ?? ""}
           recipientKind={recipientKind}
           recipientInput={recipient}
@@ -598,6 +641,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
 
 function PaymentSuccessModal({
   amount,
+  tokenSymbol,
   username,
   recipientKind,
   recipientInput,
@@ -606,6 +650,7 @@ function PaymentSuccessModal({
   onClose,
 }: {
   amount: number | null;
+  tokenSymbol: string;
   username: string;
   recipientKind: Exclude<RecipientKind, "unknown">;
   recipientInput: string;
@@ -638,7 +683,9 @@ function PaymentSuccessModal({
         </h2>
         <p className="mt-3 text-4xl font-bold tracking-tight">
           {amount}{" "}
-          <span className="text-xl font-semibold text-graphite">USDC</span>
+          <span className="text-xl font-semibold text-graphite">
+            {tokenSymbol}
+          </span>
         </p>
         <p className="mt-2 flex items-center justify-center gap-2 text-base text-graphite">
           to{" "}
@@ -677,18 +724,22 @@ function PaymentSuccessModal({
   );
 }
 
-function stepLabel(step: Step, amount: number | null): string {
+function stepLabel(
+  step: Step,
+  amount: number | null,
+  symbol: string
+): string {
   switch (step) {
     case "creating":
       return "Creating note…";
     case "approving":
-      return "Approve USDC…";
+      return `Approve ${symbol}…`;
     case "depositing":
       return "Depositing on Arc…";
     case "posting":
       return "Delivering note…";
     default:
-      return amount != null ? `Pay ${amount} USDC` : "Select an amount";
+      return amount != null ? `Pay ${amount} ${symbol}` : "Select an amount";
   }
 }
 

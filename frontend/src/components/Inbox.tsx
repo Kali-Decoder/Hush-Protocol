@@ -11,7 +11,8 @@ import {
   addresses,
   arcTestnet,
   explorerTx,
-  fromUsdcUnits,
+  fromTokenUnits,
+  resolvePoolToken,
 } from "@/lib/config";
 import {getOrCreateHushKeys, openPayload} from "@/lib/crypto";
 import {getToken, getStoredUser} from "@/lib/session";
@@ -181,7 +182,7 @@ export function Inbox() {
       rememberClaimTx(row.note.id, hash);
 
       setClaimStep("done");
-      toast.success("Claimed. USDC sent to your wallet.", {
+      toast.success("Claimed. Tokens sent to your wallet.", {
         href: explorerTx(hash),
         hrefLabel: "View on explorer",
       });
@@ -253,7 +254,7 @@ export function Inbox() {
       <div className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <p className="text-sm leading-relaxed text-graphite">
-            Decrypt notes, then claim USDC on Arc. Needs the indexer for a
+            Decrypt notes, then claim on Arc. Needs the indexer for a
             Merkle witness.
           </p>
           <button
@@ -359,10 +360,20 @@ export function Inbox() {
                     <div className="min-w-0">
                       {payload ? (
                         <p className="text-2xl font-bold tracking-tight">
-                          {fromUsdcUnits(payload.amount)}{" "}
-                          <span className="text-base font-semibold text-graphite">
-                            USDC
-                          </span>
+                          {(() => {
+                            const tok = resolvePoolToken({
+                              tokenSymbol: note.tokenSymbol,
+                              tokenHash: payload.tokenHash,
+                            });
+                            return (
+                              <>
+                                {fromTokenUnits(payload.amount, tok.decimals)}{" "}
+                                <span className="text-base font-semibold text-graphite">
+                                  {tok.symbol}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </p>
                       ) : (
                         <p className="text-sm text-graphite">Could not decrypt</p>

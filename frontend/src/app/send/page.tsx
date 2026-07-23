@@ -13,7 +13,7 @@ export default async function SendPage({
     <Shell>
       <PageHeader
         title="Send"
-        subtitle="Pay a username. Deposit a fixed USDC note. Nothing on-chain links you to their claim."
+        subtitle="Pay a username. Pick a pool token, deposit a note. Nothing on-chain links you to their claim."
       />
       <SendForm initialRecipient={to} />
     </Shell>

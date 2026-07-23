@@ -61,8 +61,10 @@ export interface Note {
   claimTxHash?: string;
   /** Deposit tx hash when sent. */
   depositTxHash?: string;
-  /** Human USDC amount for history UI. */
+  /** Human amount for history UI. */
   amount?: string;
+  /** Pool token symbol (USDC, EURC, cirBTC, …). */
+  tokenSymbol?: string;
   recipientUsername?: string;
   createdAt: string | Date;
 }
@@ -75,6 +77,7 @@ export interface NoteHistoryItem {
   claimTxHash?: string;
   depositTxHash?: string;
   amount?: string;
+  tokenSymbol?: string;
   createdAt: string | Date;
   /** Sender @username */
   fromUsername?: string;
@@ -102,6 +105,7 @@ export interface CreateNoteRequest {
   encryptedPayload: string;
   depositTxHash?: string;
   amount?: string;
+  tokenSymbol?: string;
 }
 
 export interface ClaimNoteResponse {
