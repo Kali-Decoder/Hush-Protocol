@@ -5,6 +5,8 @@
   "description": "Hushh Protocol frontend: Next.js + Tailwind on Arc Testnet (EVM) with ZK withdraw proofs.",
   "scripts": {
     "dev": "next dev",
+    "sdk:build": "pnpm --dir ../arc-contracts/sdk install --ignore-workspace && pnpm --dir ../arc-contracts/sdk build",
+    "prebuild": "pnpm run sdk:build",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
