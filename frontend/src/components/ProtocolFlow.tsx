@@ -55,8 +55,8 @@ export default function ProtocolFlow() {
   const [focusNode, setFocusNode] = useState<string | null>(null);
 
   const phase = PHASES[active];
-  const litNodes = new Set(phase.nodes);
-  const litEdges = new Set(phase.edges);
+  const litNodes = new Set<string>(phase.nodes);
+  const litEdges = new Set<string>(phase.edges);
 
   useEffect(() => {
     const el = ref.current;
