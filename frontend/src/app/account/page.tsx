@@ -8,7 +8,7 @@ export default function AccountPage() {
     <Shell>
       <PageHeader
         title="Account"
-        subtitle="Your username, Arc balance, wallet, and Hushh Protocol key."
+        subtitle="Your identity, balances, and silent payment history on Arc."
       />
       <AccountView />
     </Shell>
