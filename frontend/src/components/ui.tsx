@@ -95,7 +95,7 @@ export function AmountPills({
       className="flex rounded-2xl border border-fog bg-paper/70 p-1"
     >
       {amounts.map((a) => {
-        const selected = value === a;
+      const selected = value != null && Math.abs(value - a) < 1e-9;
         const affordable = canAfford ? canAfford(a) : true;
         const locked = disabled || !affordable;
         return (

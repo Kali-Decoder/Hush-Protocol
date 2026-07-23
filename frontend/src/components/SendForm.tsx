@@ -22,16 +22,16 @@ import {formatError, formatErrorTitle} from "@/lib/errors";
 import type {PublicUser} from "@/shared";
 import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
-import {CheckIcon, ExternalLinkIcon, LoaderIcon} from "@/components/icons";
+import {CheckIcon, ExternalLinkIcon, LoaderIcon, MinusIcon, PlusIcon} from "@/components/icons";
 import {
   formatRecipientLabel,
   normalizeRecipient,
   RecipientKindIcon,
   type RecipientKind,
 } from "@/components/RecipientKind";
-import {RecipientKindSelect} from "@/components/RecipientKindSelect";
 import {useSession} from "@/hooks/useSession";
 import {TokenBalance, useUsdcBalance} from "@/hooks/useUsdcBalance";
+import {UserAvatar} from "@/components/UserAvatar";
 import {
   AmountPills,
   ErrorBanner,
@@ -52,6 +52,32 @@ type Step =
 
 const FLOW_STEPS = ["Note", "Approve", "Deposit", "Deliver"] as const;
 const SUCCESS_MODAL_MS = 5000;
+const AMOUNT_STEP = 1;
+const AMOUNT_DECIMALS = 6;
+
+/** Allow empty, digits, optional one `.`, up to 6 fractional digits. */
+function isValidAmountInput(raw: string): boolean {
+  return raw === "" || /^\d*\.?\d{0,6}$/.test(raw);
+}
+
+function parseAmountInput(raw: string): number | null {
+  if (!raw || raw === ".") return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
+
+function formatAmountDisplay(n: number): string {
+  return n
+    .toFixed(AMOUNT_DECIMALS)
+    .replace(/(\.\d*?[1-9])0+$/, "$1")
+    .replace(/\.0+$/, "");
+}
+
+function roundAmount(n: number): number {
+  const f = 10 ** AMOUNT_DECIMALS;
+  return Math.round(n * f) / f;
+}
 
 function flowIndex(step: Step): number {
   switch (step) {
@@ -83,6 +109,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   >("twitter");
   const [resolved, setResolved] = useState<PublicUser | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [amountText, setAmountText] = useState("");
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState("");
   const [txHash, setTxHash] = useState("");
@@ -95,10 +122,38 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     step === "depositing" ||
     step === "posting";
 
+  function applyAmount(n: number | null) {
+    if (n == null || !Number.isFinite(n) || n <= 0) {
+      setAmount(null);
+      setAmountText("");
+      return;
+    }
+    const rounded = roundAmount(n);
+    setAmount(rounded);
+    setAmountText(formatAmountDisplay(rounded));
+  }
+
+  function onAmountTextChange(raw: string) {
+    if (!isValidAmountInput(raw)) return;
+    setAmountText(raw);
+    const parsed = parseAmountInput(raw);
+    setAmount(parsed != null && parsed > 0 ? roundAmount(parsed) : null);
+  }
+
+  function bumpAmount(delta: number) {
+    const next = roundAmount((amount ?? 0) + delta);
+    if (next <= 0) {
+      applyAmount(null);
+      return;
+    }
+    applyAmount(next);
+  }
+
   function resetAfterSuccess() {
     setStep("idle");
     setResolved(null);
     setAmount(null);
+    setAmountText("");
     setRecipient("");
     setTxHash("");
     setCommitment("");
@@ -228,25 +283,124 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
             ) : showRecipientLookup ? (
               <>
                 <TokenBalance />
-                <div>
-                  <FieldLabel>To</FieldLabel>
-                  <div className="input-shell">
-                    <RecipientKindSelect
-                      value={recipientKind}
-                      onChange={setRecipientKind}
-                      disabled={busy || step === "done"}
-                      variant="inline"
-                    />
-                    <span className="input-shell-divider" aria-hidden />
+                <div className="space-y-4">
+                  <div className="flex items-end justify-between gap-3">
+                    <FieldLabel>To</FieldLabel>
+                    <p className="pb-0.5 font-mono text-[11px] text-graphite">
+                      {recipientKind === "email" ? "Email" : "Username"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-fog bg-white px-5 py-5">
+                    <p className="flex items-center gap-2.5 text-5xl font-bold tracking-tight">
+                      {recipientKind !== "email" ? (
+                        <span
+                          className={`text-3xl font-semibold ${
+                            recipient.trim() ? "text-graphite" : "text-fog"
+                          }`}
+                        >
+                          @
+                        </span>
+                      ) : null}
+                      {recipient.trim() ? (
+                        <span
+                          key={recipient.trim()}
+                          className="animate-amount-pop min-w-0 truncate motion-reduce:animate-none"
+                        >
+                          {recipientKind === "email"
+                            ? recipient.trim()
+                            : recipient.trim().replace(/^@/, "")}
+                        </span>
+                      ) : (
+                        <span className="text-fog">
+                          {recipientKind === "email" ? "—" : "username"}
+                        </span>
+                      )}
+                    </p>
+                    <p className="mt-2 text-sm text-graphite">
+                      Who gets the silent note. We resolve their wallet and
+                      encryption key.
+                    </p>
+                  </div>
+
+                  <div
+                    role="radiogroup"
+                    aria-label="Recipient type"
+                    className="flex rounded-2xl border border-fog bg-paper/70 p-1"
+                  >
+                    {(
+                      [
+                        {id: "twitter" as const, label: "Username"},
+                        {id: "email" as const, label: "Email"},
+                      ] as const
+                    ).map((opt) => {
+                      const selected = recipientKind === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          disabled={busy || step === "done"}
+                          onClick={() => {
+                            setRecipientKind(opt.id);
+                            setRecipient("");
+                            setError("");
+                          }}
+                          className={`relative flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 ${
+                            selected
+                              ? "bg-ink text-paper shadow-[0_1px_2px_rgba(10,10,10,0.18)]"
+                              : "bg-transparent text-graphite hover:bg-white/80 hover:text-ink"
+                          }`}
+                        >
+                          <RecipientKindIcon
+                            kind={opt.id}
+                            className="h-3.5 w-3.5"
+                          />
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div
+                    className={`field flex items-center gap-1.5 !py-0 ${
+                      busy || step === "done" ? "opacity-50" : ""
+                    }`}
+                  >
+                    {recipientKind !== "email" ? (
+                      <span
+                        className="shrink-0 select-none pl-1 text-lg font-semibold text-graphite"
+                        aria-hidden
+                      >
+                        @
+                      </span>
+                    ) : null}
                     <input
                       type="text"
+                      inputMode={
+                        recipientKind === "email" ? "email" : "text"
+                      }
+                      autoCapitalize="none"
+                      autoCorrect="off"
                       placeholder={
                         recipientKind === "email"
                           ? "name@email.com"
-                          : "@username"
+                          : "username"
                       }
-                      value={recipient}
-                      onChange={(e) => setRecipient(e.target.value.trimStart())}
+                      value={
+                        recipientKind === "email"
+                          ? recipient
+                          : recipient.replace(/^@/, "")
+                      }
+                      onChange={(e) => {
+                        const raw = e.target.value.trimStart();
+                        setRecipient(
+                          recipientKind === "email"
+                            ? raw
+                            : raw.replace(/^@+/g, "")
+                        );
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && recipient.trim())
                           void handleResolve();
@@ -254,10 +408,11 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                       disabled={busy || step === "done"}
                       autoComplete="off"
                       spellCheck={false}
-                      className="input-shell-field"
+                      className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none placeholder:text-fog disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
+
                 <button
                   type="button"
                   disabled={busy || step === "done" || !recipient.trim()}
@@ -273,84 +428,122 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
             ) : (
               <>
                 <TokenBalance />
-                <div className="flex items-start justify-between gap-3 rounded-xl bg-paper/80 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-graphite">Paying</p>
-                    <p className="mt-0.5 flex items-center gap-2 text-lg font-semibold tracking-tight">
-                      <span className="truncate">
-                        {formatRecipientLabel(
-                          recipientKind === "email"
-                            ? recipient
-                            : resolved.username,
-                          recipientKind
-                        )}
-                      </span>
-                      <RecipientKindIcon
-                        kind={recipientKind}
-                        className="h-4 w-4 shrink-0 text-graphite"
-                      />
-                    </p>
-                    <p className="mt-0.5 truncate font-mono text-[11px] text-graphite">
-                      {resolved.wallet}
-                    </p>
+                <div className="animate-soft-rise space-y-5 motion-reduce:animate-none">
+                <div className="rounded-2xl border border-fog bg-white px-4 py-3.5 transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(10,10,10,0.18)] sm:px-5">
+                  <div className="flex items-center gap-3 sm:gap-3.5">
+                    <UserAvatar
+                      address={resolved.wallet}
+                      size="md"
+                      className="animate-avatar-in shrink-0 motion-reduce:animate-none"
+                    />
+                    <div
+                      className="min-w-0 flex-1 animate-soft-rise motion-reduce:animate-none"
+                      style={{animationDelay: "80ms"}}
+                    >
+                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-graphite">
+                        Paying
+                      </p>
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                        <span
+                          key={resolved.username}
+                          className="animate-amount-pop truncate text-xl font-bold tracking-tight sm:text-2xl motion-reduce:animate-none"
+                        >
+                          {formatRecipientLabel(
+                            recipientKind === "email"
+                              ? recipient
+                              : resolved.username,
+                            recipientKind
+                          )}
+                        </span>
+                        <RecipientKindIcon
+                          kind={recipientKind}
+                          className="h-4 w-4 shrink-0 text-graphite"
+                        />
+                      </p>
+                      <p className="mt-0.5 truncate font-mono text-[11px] leading-snug text-graphite">
+                        {resolved.wallet}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setResolved(null);
+                        setAmount(null);
+                        setAmountText("");
+                        setError("");
+                      }}
+                      className="shrink-0 self-center rounded-full border border-fog bg-paper px-3 py-1.5 text-xs font-semibold text-graphite transition-all duration-200 hover:border-graphite hover:text-ink active:scale-95 disabled:opacity-50"
+                    >
+                      Change
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      setResolved(null);
-                      setAmount(null);
-                      setError("");
-                    }}
-                    className="shrink-0 text-xs font-medium text-graphite hover:text-ink disabled:opacity-50"
-                  >
-                    Change
-                  </button>
                 </div>
 
-                <div className="space-y-4">
+                <div
+                  className="animate-soft-rise space-y-4 motion-reduce:animate-none"
+                  style={{animationDelay: "120ms"}}
+                >
                   <div className="flex items-end justify-between gap-3">
                     <FieldLabel>Amount</FieldLabel>
                     <p className="pb-0.5 font-mono text-[11px] text-graphite">
-                      Fixed sizes
+                      Up to 6 decimals
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-fog bg-white px-5 py-5">
-                    <p className="flex items-baseline gap-2 text-5xl font-bold tracking-tight">
-                      {amount != null ? (
-                        <span
-                          key={amount}
-                          className="animate-amount-pop inline-block tabular-nums motion-reduce:animate-none"
-                        >
-                          {amount}
-                        </span>
-                      ) : (
-                        <span className="text-fog">—</span>
-                      )}
-                      <span
-                        className={`text-lg font-semibold ${
-                          amount != null ? "text-graphite" : "text-fog"
-                        }`}
+                  <div className="rounded-2xl border border-fog bg-white px-4 py-5 transition-shadow duration-300 sm:px-5">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <button
+                        type="button"
+                        disabled={busy || (amount ?? 0) <= 0}
+                        onClick={() => bumpAmount(-AMOUNT_STEP)}
+                        aria-label="Decrease amount"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-fog bg-paper text-ink transition-all duration-200 hover:border-graphite hover:bg-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-35"
                       >
-                        USDC
-                      </span>
-                    </p>
-                    <p className="mt-2 text-sm text-graphite">
-                      Pick a note size. Larger amounts unlock when you have
-                      balance.
-                    </p>
+                        <MinusIcon className="h-5 w-5" />
+                      </button>
+                      <div className="min-w-0 flex-1 text-center">
+                        <div className="flex items-baseline justify-center gap-2">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="0"
+                            value={amountText}
+                            disabled={busy}
+                            onChange={(e) => onAmountTextChange(e.target.value)}
+                            className="w-full min-w-0 bg-transparent text-center text-5xl font-bold tracking-tight tabular-nums text-ink outline-none transition-colors duration-200 placeholder:text-fog focus:text-ink disabled:opacity-50"
+                            aria-label="Amount in USDC"
+                          />
+                          <span
+                            className={`shrink-0 text-lg font-semibold transition-colors duration-200 ${
+                              amount != null ? "text-graphite" : "text-fog"
+                            }`}
+                          >
+                            USDC
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => bumpAmount(AMOUNT_STEP)}
+                        aria-label="Increase amount"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-fog bg-paper text-ink transition-all duration-200 hover:border-graphite hover:bg-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <PlusIcon className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                   <AmountPills
                     amounts={AMOUNT_PRESETS}
                     value={amount}
-                    onChange={setAmount}
+                    onChange={applyAmount}
                     disabled={busy}
                     canAfford={hasEnough}
                   />
                 </div>
 
                 {amount != null && !hasEnough(amount) ? (
-                  <p className="text-sm text-amber">
+                  <p className="animate-fade text-sm text-amber motion-reduce:animate-none">
                     Not enough USDC. Balance {usdcBalance}.
                   </p>
                 ) : null}
@@ -370,11 +563,12 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                     (amount != null && !hasEnough(amount))
                   }
                   onClick={handleSend}
-                  className="btn-primary"
+                  className="btn-primary transition-transform duration-200 active:scale-[0.98]"
                 >
                   {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
                   {stepLabel(step, amount)}
                 </button>
+                </div>
               </>
             )}
           </NetworkGate>

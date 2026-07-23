@@ -2,7 +2,7 @@ import type {Metadata} from "next";
 import {Geist_Mono, Inter} from "next/font/google";
 import Link from "next/link";
 import IslandNav from "@/components/IslandNav";
-import {GithubIcon, XBrandIcon} from "@/components/icons";
+import {GithubIcon} from "@/components/icons";
 import {Web3Provider} from "@/providers/Web3Provider";
 import "./globals.css";
 
@@ -50,15 +50,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                   >
                     Privacy
                   </Link>
-                  <a
-                    href="https://x.com/BulletPayFi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Hushh Protocol on X"
-                    className="transition-colors hover:text-ink"
-                  >
-                    <XBrandIcon className="h-4 w-4" />
-                  </a>
                   <a
                     href="https://github.com/Kali-Decoder/Hush-"
                     target="_blank"

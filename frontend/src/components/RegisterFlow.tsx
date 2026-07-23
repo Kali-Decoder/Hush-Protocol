@@ -5,11 +5,10 @@ import {useAccount, useSignMessage} from "wagmi";
 import {
   getAuthMessage,
   walletAuth,
-  backendHealth,
   resolveUserByWallet,
 } from "@/lib/api";
 import {getOrCreateHushKeys} from "@/lib/crypto";
-import {setSession, walletsMatch} from "@/lib/session";
+import {setSession, setWalletLookup, walletsMatch} from "@/lib/session";
 import {
   clearStoredAuthSignature,
   getStoredAuthSignature,
@@ -21,12 +20,7 @@ import {useSignOut} from "@/hooks/useSignOut";
 import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
 import {LoaderIcon, CheckIcon} from "@/components/icons";
-import {
-  ErrorBanner,
-  FieldLabel,
-  Panel,
-  WarnBanner,
-} from "@/components/ui";
+import {ErrorBanner, FieldLabel, Panel} from "@/components/ui";
 import {formatError, formatErrorTitle} from "@/lib/errors";
 
 const USERNAME_RE = /^[a-z0-9_]{3,24}$/;
@@ -69,7 +63,8 @@ function AuthSteps({step}: {step: 1 | 2}) {
 export function RegisterFlow() {
   const {address, isConnected} = useAccount();
   const {signMessageAsync} = useSignMessage();
-  const {user, isSignedIn, ready} = useSession();
+  const {user, isSignedIn, ready, hasCachedSignature, needsUsername} =
+    useSession();
   const signOut = useSignOut();
 
   const [username, setUsername] = useState("");
@@ -77,16 +72,6 @@ export function RegisterFlow() {
   const [known, setKnown] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [backendOk, setBackendOk] = useState<boolean | null>(null);
-  const [hasCachedSig, setHasCachedSig] = useState(false);
-
-  useEffect(() => {
-    backendHealth().then(setBackendOk);
-  }, []);
-
-  useEffect(() => {
-    setHasCachedSig(!!address && !!getStoredAuthSignature(address));
-  }, [address, isSignedIn]);
 
   useEffect(() => {
     if (!isConnected || !address) {
@@ -104,9 +89,11 @@ export function RegisterFlow() {
         if (profile) {
           setKnown(true);
           setUsername(profile.username);
+          setWalletLookup({wallet: address, username: profile.username});
         } else {
           setKnown(false);
           setUsername("");
+          setWalletLookup({wallet: address, username: null});
         }
       } catch (e) {
         if (!cancelled) {
@@ -151,6 +138,8 @@ export function RegisterFlow() {
           bulletPublicKey: keys.publicKey,
         });
         signature = await signMessageAsync({message});
+        // Persist immediately so reconnect / silent-auth can reuse it.
+        setStoredAuthSignature(address, signature);
       }
 
       let res;
@@ -171,6 +160,7 @@ export function RegisterFlow() {
           bulletPublicKey: keys.publicKey,
         });
         signature = await signMessageAsync({message});
+        setStoredAuthSignature(address, signature);
         res = await walletAuth({
           wallet: address,
           username: clean,
@@ -241,18 +231,6 @@ export function RegisterFlow() {
     <Panel className="space-y-5 text-left">
       <AuthSteps step={step} />
 
-      {backendOk === false ? (
-        <WarnBanner>
-          Backend not reachable at{" "}
-          <span className="font-mono text-xs">
-            {process.env.NEXT_PUBLIC_BACKEND_URL ||
-              "https://hush-protocol-backend.onrender.com"}
-          </span>
-          . Run <span className="font-mono">pnpm backend:dev</span> in
-          arc-contracts.
-        </WarnBanner>
-      ) : null}
-
       {!isConnected ? (
         <div className="space-y-4 py-1 text-center">
           <p className="text-sm leading-relaxed text-graphite">
@@ -275,37 +253,18 @@ export function RegisterFlow() {
                 </p>
               </div>
 
-              {known || user ? (
+              {needsUsername || !(known || user) ? (
                 <>
-                  <div>
-                    <p className="text-xs text-graphite">Account found</p>
-                    <p className="mt-1 text-2xl font-bold tracking-tight">
-                      @{(user?.username || username).replace(/^@/, "")}
+                  <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                    <span
+                      className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"
+                      aria-hidden
+                    />
+                    <p className="text-sm text-graphite">
+                      No username for this wallet. Choose one and sign — your
+                      signature is saved in local storage.
                     </p>
                   </div>
-                  <p className="text-sm text-graphite">
-                    {hasCachedSig
-                      ? "Finish signing in. Your saved signature will be used."
-                      : "Sign a message to finish signing in."}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => signInOrRegister("signin")}
-                    className="btn-primary"
-                  >
-                    {busy ? (
-                      <LoaderIcon className="h-5 w-5 animate-spin" />
-                    ) : null}
-                    {busy
-                      ? "Signing in…"
-                      : hasCachedSig
-                        ? "Continue"
-                        : "Sign in"}
-                  </button>
-                </>
-              ) : (
-                <>
                   <div>
                     <FieldLabel>Choose a username</FieldLabel>
                     <div className="relative">
@@ -335,6 +294,41 @@ export function RegisterFlow() {
                       <LoaderIcon className="h-5 w-5 animate-spin" />
                     ) : null}
                     {busy ? "Confirm in wallet…" : "Sign and register"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs text-graphite">Account found</p>
+                    <p className="mt-1 text-2xl font-bold tracking-tight">
+                      @{(user?.username || username).replace(/^@/, "")}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                    <span
+                      className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"
+                      aria-hidden
+                    />
+                    <p className="text-sm text-graphite">
+                      {hasCachedSignature
+                        ? "Finish signing in. Your saved signature will be used."
+                        : "Sign a message to finish signing in. Signature is stored in local storage."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => signInOrRegister("signin")}
+                    className="btn-primary"
+                  >
+                    {busy ? (
+                      <LoaderIcon className="h-5 w-5 animate-spin" />
+                    ) : null}
+                    {busy
+                      ? "Signing in…"
+                      : hasCachedSignature
+                        ? "Continue"
+                        : "Sign in"}
                   </button>
                 </>
               )}

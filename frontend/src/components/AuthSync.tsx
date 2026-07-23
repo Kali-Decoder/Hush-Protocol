@@ -6,22 +6,26 @@ import {resolveUserByWallet, walletAuth} from "@/lib/api";
 import {
   clearStoredAuthSignature,
   getStoredAuthSignature,
+  setStoredAuthSignature,
 } from "@/lib/authSignature";
 import {getOrCreateHushKeys} from "@/lib/crypto";
 import {
   clearLiveSession,
   clearSession,
+  clearWalletLookup,
   getStoredUser,
   getToken,
   notifySession,
   setSession,
   setStoredUser,
+  setWalletLookup,
   walletsMatch,
 } from "@/lib/session";
 import {toast} from "@/lib/toast";
 
 /**
  * Keeps local session aligned with the connected wallet.
+ * On connect: fetch user by address → store profile / mark missing username.
  * Disconnect clears JWT/profile but keeps the cached signature so reconnect
  * can silent-auth. Explicit logout (clearSession) removes the signature.
  */
@@ -40,8 +44,8 @@ export function AuthSync() {
           wasConnected.current = false;
           last.current = null;
           const hadSession = !!(getToken() || getStoredUser());
+          clearWalletLookup();
           if (hadSession) {
-            // Keep auth signature for this wallet; only drop live session.
             clearLiveSession();
             toast.info("Wallet disconnected. Reconnect to continue.");
           } else {
@@ -68,11 +72,15 @@ export function AuthSync() {
       try {
         const profile = await resolveUserByWallet(address);
         if (!profile) {
+          // No username for this wallet — red-dot / claim flow.
+          setWalletLookup({wallet: address, username: null});
           const current = getStoredUser();
           if (current) clearLiveSession();
           else notifySession();
           return;
         }
+
+        setWalletLookup({wallet: address, username: profile.username});
 
         const token = getToken();
         if (token) {
@@ -92,6 +100,8 @@ export function AuthSync() {
               bulletPublicKey: keys.publicKey,
               signature: cached,
             });
+            // Refresh stored signature + session.
+            setStoredAuthSignature(address, cached);
             setSession(res.token, res.user);
             return;
           } catch {

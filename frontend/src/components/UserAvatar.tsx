@@ -23,7 +23,11 @@ export function UserAvatar({
         : "h-14 w-14";
 
   return (
-    <div className={`inline-flex flex-col items-center gap-1.5 ${className}`}>
+    <div
+      className={`inline-flex items-center ${
+        showName ? "flex-col gap-1.5" : ""
+      } ${className}`}
+    >
       <div
         className={`overflow-hidden rounded-full border border-fog/80 ${dim}`}
         style={{backgroundColor: bgColor}}

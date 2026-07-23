@@ -283,10 +283,14 @@ Auth / resolve / inbox only. No proving. No Merkle. No chain calls.
 ```bash
 cp frontend/.env.example frontend/.env
 # addresses already filled from deployments/arcTestnet.json
+# Local:
+# NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+# NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4020
+# NEXT_PUBLIC_INDEXER_URL=http://127.0.0.1:4010
+# Hosted:
 # NEXT_PUBLIC_FRONTEND_URL=https://hush-protocol-zeta.vercel.app
 # NEXT_PUBLIC_BACKEND_URL=https://hush-protocol-backend.onrender.com
 # NEXT_PUBLIC_INDEXER_URL=https://hush-protocol-indexer.onrender.com
-# Local overrides: http://localhost:3000 / http://127.0.0.1:4020 / http://127.0.0.1:4010
 ```
 
 ---

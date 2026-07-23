@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {usePathname} from "next/navigation";
-import {useAccount} from "wagmi";
 import {APP_CHROME_WIDTH} from "@/components/AppShell";
 import {ConnectButton} from "@/components/ConnectButton";
 import {UserAvatar} from "@/components/UserAvatar";
@@ -25,17 +24,15 @@ function PendingDot({show}: {show: boolean}) {
 
 export default function IslandNav() {
   const pathname = usePathname();
-  const {isConnected} = useAccount();
-  const {user, isSignedIn, hasProfile} = useSession();
-  const needsSignIn = isConnected && !isSignedIn;
+  const {user, isSignedIn, needsUsername, showPendingDot} = useSession();
   const showApp = isSignedIn && !!user;
-  const showProfile = showApp || hasProfile || isConnected;
   const matchChrome =
     showApp ||
     pathname.startsWith("/lookout") ||
     pathname.startsWith("/send") ||
     pathname.startsWith("/inbox") ||
-    pathname.startsWith("/account");
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/register");
 
   function tab(
     href: string,
@@ -58,7 +55,11 @@ export default function IslandNav() {
         {label}
         <PendingDot show={!!opts?.pending} />
         {opts?.pending ? (
-          <span className="sr-only">Sign in required</span>
+          <span className="sr-only">
+            {needsUsername
+              ? "Claim a username — signature required"
+              : "Sign in required"}
+          </span>
         ) : null}
       </Link>
     );
@@ -115,18 +116,15 @@ export default function IslandNav() {
                 @{user.username}
               </Link>
             </>
-          ) : showProfile ? (
-            <>
-              {tab("/lookout", "Lookout")}
-              {tab("/account", user ? `@${user.username}` : "Account", {
-                pending: needsSignIn,
-              })}
-              {tab("/register", "Sign in", {pending: needsSignIn})}
-            </>
           ) : (
             <>
               {tab("/lookout", "Lookout")}
-              {tab("/register", "Sign in")}
+              {/* One pending CTA only — wallet address lives on ConnectButton. */}
+              {tab(
+                "/register",
+                needsUsername ? "Claim username" : "Sign in",
+                {pending: showPendingDot}
+              )}
             </>
           )}
 

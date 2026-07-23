@@ -16,8 +16,19 @@ const connectSrc = [
   originOf(process.env.NEXT_PUBLIC_RPC_URL),
   originOf(process.env.NEXT_PUBLIC_BACKEND_URL),
   originOf(process.env.NEXT_PUBLIC_INDEXER_URL),
+  // Always allow local backend / indexer during development.
+  ...(isDev
+    ? [
+        "http://127.0.0.1:4020",
+        "http://localhost:4020",
+        "http://127.0.0.1:4010",
+        "http://localhost:4010",
+      ]
+    : []),
   "https://rpc.testnet.arc.network",
   "https://arc-testnet.drpc.org",
+  "https://hush-protocol-backend.onrender.com",
+  "https://hush-protocol-indexer.onrender.com",
   "https://*.walletconnect.com",
   "https://*.walletconnect.org",
   "wss://*.walletconnect.com",

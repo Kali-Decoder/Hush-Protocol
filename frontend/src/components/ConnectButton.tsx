@@ -43,11 +43,9 @@ export function ConnectButton({
         type="button"
         onClick={disconnectWallet}
         className={className}
-        title="Disconnect wallet"
+        title={`Disconnect ${address}`}
       >
-        {compact
-          ? `${address.slice(0, 6)}…${address.slice(-4)}`
-          : `Connected ${address.slice(0, 6)}…${address.slice(-4)}`}
+        {compact ? "Sign out" : "Disconnect wallet"}
       </button>
     );
   }

@@ -26,6 +26,8 @@
   --animate-sheet-in: sheet-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-menu-in: menu-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-press: press 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-avatar-in: avatar-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-soft-rise: soft-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 
   @keyframes rise {
     from {
@@ -138,6 +140,30 @@
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes avatar-in {
+    from {
+      opacity: 0;
+      transform: scale(0.72);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes soft-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
