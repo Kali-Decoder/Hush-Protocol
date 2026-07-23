@@ -4,6 +4,16 @@ ZK-private payment rail on **Arc Testnet** (EVM). Send USDC without leaving an o
 
 Tagline: send silently.
 
+### Live
+
+| Service | URL |
+|---------|-----|
+| **App** | [https://hush-protocol-zeta.vercel.app](https://hush-protocol-zeta.vercel.app) |
+| **Backend** | [https://hush-protocol-backend.onrender.com](https://hush-protocol-backend.onrender.com) |
+| **Indexer** | [https://hush-protocol-indexer.onrender.com](https://hush-protocol-indexer.onrender.com) |
+| **Explorer** | [https://testnet.arcscan.app](https://testnet.arcscan.app) |
+| **RPC** | `https://rpc.testnet.arc.network` (chain id `5042002`) |
+
 ---
 
 ## User flow
@@ -273,8 +283,10 @@ Auth / resolve / inbox only. No proving. No Merkle. No chain calls.
 ```bash
 cp frontend/.env.example frontend/.env
 # addresses already filled from deployments/arcTestnet.json
-# NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4020
-# NEXT_PUBLIC_INDEXER_URL=http://127.0.0.1:4010
+# NEXT_PUBLIC_FRONTEND_URL=https://hush-protocol-zeta.vercel.app
+# NEXT_PUBLIC_BACKEND_URL=https://hush-protocol-backend.onrender.com
+# NEXT_PUBLIC_INDEXER_URL=https://hush-protocol-indexer.onrender.com
+# Local overrides: http://localhost:3000 / http://127.0.0.1:4020 / http://127.0.0.1:4010
 ```
 
 ---
