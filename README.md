@@ -6,48 +6,95 @@ Tagline: send silently.
 
 ---
 
-## User journey
+## User flow
 
-End-to-end path for a private USDC payment on Arc Testnet. Scores are relative effort / friction (5 = light, 1 = heavy).
+Domain model for a silent USDC payment: who acts, what is stored, and what never links on-chain.
 
 ```mermaid
-journey
-  title Hushh Protocol · silent USDC payment
-  section Setup
-    Open app: 5: Sender, Recipient
-    Connect MetaMask on Arc Testnet: 4: Sender, Recipient
-    Claim @username and sign in: 4: Sender, Recipient
-    Receive MockUSDC for demos: 5: Sender
-  section Send
-    Open Send and pick @recipient: 5: Sender
-    Choose fixed note size: 5: Sender
-    Approve USDC: 3: Sender
-    Deposit commitment on BulletPool: 3: Sender
-    Seal encrypted note to inbox: 4: Sender, Backend
-  section Pool holds
-    Indexer inserts Poseidon leaf: 5: Indexer
-    Indexer posts Merkle root: 4: Indexer, Pool
-    Chain shows hash and size only: 5: Pool
-  section Claim
-    Open Inbox and decrypt note: 4: Recipient
-    Fetch Merkle witness: 4: Recipient, Indexer
-    Prove membership with Groth16: 2: Recipient
-    Withdraw USDC from pool: 3: Recipient, Pool
-    Mark note claimed: 5: Recipient, Backend
-  section Optional
-    Look up a handle on Lookout: 5: Anyone
-    View profile avatar and wallet: 5: Recipient
+---
+title: Hushh Protocol · user flow
+---
+classDiagram
+    note "From connect wallet till ZK withdraw"
+    User <|-- Sender
+    User <|-- Recipient
+    note for Sender "connects wallet<br>claims @username<br>deposits fixed USDC note"
+    note for Recipient "opens inbox<br>proves membership<br>withdraws USDC"
+    User : +String username
+    User : +Address wallet
+    User : +Bytes32 hushhPublicKey
+    User : +connect()
+    User : +signIn()
+    class Sender{
+        +Address from
+        +pickRecipient()
+        +approveUsdc()
+        +depositNote()
+    }
+    class Recipient{
+        +Address to
+        +decryptInbox()
+        +proveWithdraw()
+        +claimUsdc()
+    }
+    Sender --> App : pays via
+    Recipient --> App : claims via
+    App --> Backend : auth · resolve · notes
+    App --> BulletPool : deposit · withdraw
+    App --> Indexer : witness
+    Sender ..> EncryptedNote : seals
+    EncryptedNote --> Backend : stored ciphertext
+    Backend --> Recipient : inbox delivery
+    Sender --> Commitment : creates
+    Commitment --> BulletPool : on-chain leaf event
+    BulletPool --> Indexer : Deposit watched
+    Indexer --> MerkleRootManager : postRoot
+    Recipient --> Groth16Proof : builds
+    Groth16Proof --> BulletPool : verify + nullifier
+    note for Commitment "Poseidon hash only<br>fixed amount visible<br>no sender↔claim link"
+    note for Groth16Proof "membership + nullifier<br>breaks deposit↔withdraw link"
+    class App{
+        +Send
+        +Inbox
+        +Lookout
+        +Account
+    }
+    class Backend{
+        +authWallet()
+        +resolveUsername()
+        +storeNote()
+        +listInbox()
+    }
+    class EncryptedNote{
+        +Bytes32 commitment
+        +String ciphertext
+        +bool claimed
+    }
+    class Commitment{
+        +Bytes32 hash
+        +uint amount
+        +Address token
+    }
+    class Indexer{
+        +insertLeaf()
+        +postRoot()
+        +getWitness()
+    }
+    class BulletPool{
+        +deposit()
+        +withdraw()
+        +nullifiers
+    }
+    class MerkleRootManager{
+        +postRoot()
+        +isKnownRoot()
+    }
+    class Groth16Proof{
+        +Bytes32 root
+        +Bytes32 nullifier
+        +verify()
+    }
 ```
-
-Actors in this journey:
-
-| Actor | Role |
-|-------|------|
-| **Sender** | Connects, deposits a fixed USDC note to a username |
-| **Recipient** | Decrypts inbox note, proves membership, withdraws |
-| **Backend** | Auth, username resolution, encrypted note storage |
-| **Indexer** | Watches deposits, builds tree, posts roots, serves witnesses |
-| **Pool** | On-chain `BulletPool` / `MerkleRootManager` on Arc Testnet |
 
 Nothing on-chain links the sender's deposit transaction to the recipient's withdraw.
 
