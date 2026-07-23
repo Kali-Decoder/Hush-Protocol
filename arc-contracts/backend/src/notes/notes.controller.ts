@@ -1,7 +1,13 @@
 import type {FastifyInstance} from "fastify";
 import {requireAuth} from "../middleware/auth.js";
 import {sendError} from "../auth/auth.controller.js";
-import {createNote, listNotesForUser, markClaimed} from "./notes.service.js";
+import {
+  createNote,
+  listNoteHistory,
+  listNotesForUser,
+  markClaimed,
+  type NoteDirection,
+} from "./notes.service.js";
 
 export async function notesRoutes(app: FastifyInstance) {
   /** Create an encrypted note for a recipient (auth required). */
@@ -11,6 +17,8 @@ export async function notesRoutes(app: FastifyInstance) {
       recipientId?: string;
       commitment: string;
       encryptedPayload: string;
+      depositTxHash?: string;
+      amount?: string;
     };
   }>("/notes", {preHandler: requireAuth}, async (req, reply) => {
     try {
@@ -21,6 +29,8 @@ export async function notesRoutes(app: FastifyInstance) {
         recipientId: req.body?.recipientId,
         commitment: req.body?.commitment,
         encryptedPayload: req.body?.encryptedPayload,
+        depositTxHash: req.body?.depositTxHash,
+        amount: req.body?.amount,
       });
     } catch (err) {
       return sendError(reply, err);
@@ -32,6 +42,31 @@ export async function notesRoutes(app: FastifyInstance) {
     try {
       if (!req.user) return reply.code(401).send({error: "unauthorized"});
       return await listNotesForUser(req.user.sub);
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
+  /**
+   * Paginated send/receive history for the account page.
+   * GET /notes/history?direction=sent|received&page=1&limit=5
+   */
+  app.get<{
+    Querystring: {direction?: string; page?: string; limit?: string};
+  }>("/notes/history", {preHandler: requireAuth}, async (req, reply) => {
+    try {
+      if (!req.user) return reply.code(401).send({error: "unauthorized"});
+      const directionRaw = (req.query.direction || "received").toLowerCase();
+      const direction: NoteDirection =
+        directionRaw === "sent" ? "sent" : "received";
+      const page = Number(req.query.page || "1");
+      const pageSize = Number(req.query.limit || "5");
+      return await listNoteHistory({
+        userId: req.user.sub,
+        direction,
+        page: Number.isFinite(page) ? page : 1,
+        pageSize: Number.isFinite(pageSize) ? pageSize : 5,
+      });
     } catch (err) {
       return sendError(reply, err);
     }

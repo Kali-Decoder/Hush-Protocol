@@ -16,6 +16,7 @@ import {
 } from "@/components/icons";
 import {FieldLabel, Panel} from "@/components/ui";
 import {AccountBalances} from "@/hooks/useUsdcBalance";
+import {TransactionHistory} from "@/components/TransactionHistory";
 import {useState} from "react";
 
 export function AccountView() {
@@ -217,6 +218,12 @@ export function AccountView() {
           </p>
         )}
       </NetworkGate>
+
+      {isSignedIn ? (
+        <div className="border-t border-fog pt-6">
+          <TransactionHistory />
+        </div>
+      ) : null}
 
       <button
         type="button"

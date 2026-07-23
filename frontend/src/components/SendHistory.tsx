@@ -1,5 +1,3 @@
 "use client";
 
-export function SendHistory() {
-  return null;
-}
+export {TransactionHistory as SendHistory} from "@/components/TransactionHistory";

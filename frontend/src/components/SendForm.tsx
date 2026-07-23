@@ -243,6 +243,8 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         recipientUsername: resolved.username,
         commitment: commitmentBytes32,
         encryptedPayload: sealed,
+        depositTxHash: depositHash,
+        amount: String(amount),
       });
 
       setStep("done");

@@ -51,6 +51,7 @@ export interface ResolveResult {
 export interface Note {
   id: string;
   recipientId: string;
+  senderId?: string;
   /** 0x-prefixed 32-byte Poseidon commitment. */
   commitment: string;
   /** Client-sealed ciphertext (base64 or hex). Backend never decrypts. */
@@ -58,7 +59,40 @@ export interface Note {
   claimed: boolean;
   /** Withdraw tx hash when claimed. */
   claimTxHash?: string;
+  /** Deposit tx hash when sent. */
+  depositTxHash?: string;
+  /** Human USDC amount for history UI. */
+  amount?: string;
+  recipientUsername?: string;
   createdAt: string | Date;
+}
+
+export interface NoteHistoryItem {
+  id: string;
+  direction: "sent" | "received";
+  commitment: string;
+  claimed: boolean;
+  claimTxHash?: string;
+  depositTxHash?: string;
+  amount?: string;
+  createdAt: string | Date;
+  /** Sender @username */
+  fromUsername?: string;
+  /** Recipient @username */
+  toUsername?: string;
+  fromWallet?: string;
+  toWallet?: string;
+  counterpartyUsername?: string;
+  counterpartyWallet?: string;
+}
+
+export interface NoteHistoryPage {
+  items: NoteHistoryItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  direction: "sent" | "received";
 }
 
 export interface CreateNoteRequest {
@@ -66,6 +100,8 @@ export interface CreateNoteRequest {
   recipientId?: string;
   commitment: string;
   encryptedPayload: string;
+  depositTxHash?: string;
+  amount?: string;
 }
 
 export interface ClaimNoteResponse {

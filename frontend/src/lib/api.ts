@@ -4,6 +4,7 @@ import type {
   ClaimNoteResponse,
   CreateNoteRequest,
   Note,
+  NoteHistoryPage,
   PublicUser,
   WalletAuthRequest,
   WalletAuthResponse,
@@ -76,6 +77,25 @@ export async function postNote(
 
 export async function listNotes(token: string): Promise<Note[]> {
   const res = await fetch(`${BACKEND_URL}/notes`, {
+    headers: {Authorization: `Bearer ${token}`},
+  });
+  return parseJson(res);
+}
+
+export async function listNoteHistory(
+  token: string,
+  opts: {
+    direction: "sent" | "received";
+    page?: number;
+    limit?: number;
+  }
+): Promise<NoteHistoryPage> {
+  const q = new URLSearchParams({
+    direction: opts.direction,
+    page: String(opts.page ?? 1),
+    limit: String(opts.limit ?? 5),
+  });
+  const res = await fetch(`${BACKEND_URL}/notes/history?${q}`, {
     headers: {Authorization: `Bearer ${token}`},
   });
   return parseJson(res);

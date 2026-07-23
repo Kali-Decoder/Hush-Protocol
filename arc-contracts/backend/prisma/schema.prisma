@@ -14,20 +14,30 @@ model User {
   bulletPublicKey String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  notes           Note[]   @relation("RecipientNotes")
+  receivedNotes   Note[]   @relation("RecipientNotes")
+  sentNotes       Note[]   @relation("SenderNotes")
 }
 
 model Note {
-  id               String   @id @default(cuid())
-  recipientId      String
-  recipient        User     @relation("RecipientNotes", fields: [recipientId], references: [id])
-  commitment       String
-  encryptedPayload String
-  claimed          Boolean  @default(false)
+  id                 String   @id @default(cuid())
+  recipientId        String
+  recipient          User     @relation("RecipientNotes", fields: [recipientId], references: [id])
+  senderId           String?
+  sender             User?    @relation("SenderNotes", fields: [senderId], references: [id])
+  commitment         String
+  encryptedPayload   String
+  claimed            Boolean  @default(false)
   /** Withdraw tx hash on Arc (set when claimed). */
-  claimTxHash      String?
-  createdAt        DateTime @default(now())
+  claimTxHash        String?
+  /** Deposit tx hash on Arc (set at send). */
+  depositTxHash      String?
+  /** Human USDC amount for history UI (e.g. "10" or "1.5"). */
+  amount             String?
+  /** Recipient username snapshot at send time. */
+  recipientUsername  String?
+  createdAt          DateTime @default(now())
 
   @@index([recipientId])
+  @@index([senderId])
   @@index([commitment])
 }
