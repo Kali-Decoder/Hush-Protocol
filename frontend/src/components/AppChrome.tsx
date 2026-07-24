@@ -3,6 +3,7 @@
 import type {ReactNode} from "react";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
+import {ClickSoundProvider} from "@/components/ClickSoundProvider";
 import IslandNav from "@/components/IslandNav";
 import {GithubIcon, XBrandIcon} from "@/components/icons";
 
@@ -22,6 +23,7 @@ export function AppChrome({children}: {children: ReactNode}) {
 
   return (
     <div className="flex min-h-dvh flex-col">
+      <ClickSoundProvider />
       <IslandNav />
       <main
         className={
