@@ -156,7 +156,7 @@ export default function LandingHero() {
               className="btn-primary max-w-xs"
             />
             <p className="text-sm text-graphite">
-              Connect first, then send or claim a username.
+              Connect first, then claim your Twitter handle.
             </p>
           </div>
         ) : (
@@ -168,7 +168,7 @@ export default function LandingHero() {
               href="/register"
               className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition hover:bg-ink/90 active:scale-[0.98]"
             >
-              Claim a username
+              Connect Twitter
             </Link>
           ) : null}
           <a

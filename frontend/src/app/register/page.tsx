@@ -8,7 +8,7 @@ export default function RegisterPage() {
     <Shell>
       <PageHeader
         title="Sign in"
-        subtitle="Connect your wallet first, then sign a message. Sign out disconnects both."
+        subtitle="Connect wallet → connect Twitter → sign. Your X handle is your Hushh username."
         align="center"
       />
       <RegisterFlow />

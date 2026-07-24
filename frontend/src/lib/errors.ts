@@ -7,7 +7,7 @@ const API_MESSAGES: Record<string, string> = {
   unauthorized: "Session expired. Sign in again.",
   invalid_wallet: "That wallet address is not valid.",
   invalid_username:
-    "Username must be 3-24 characters: lowercase letters, numbers, underscore.",
+    "Username must match your Twitter handle (1-15 chars: letters, numbers, underscore).",
   invalid_bullet_public_key: "Encryption key is invalid. Try reconnecting.",
   invalid_signature: "Signature format is invalid.",
   bad_signature: "Signature check failed. Sign the message again.",
@@ -25,6 +25,14 @@ const API_MESSAGES: Record<string, string> = {
   http_404: "Not found.",
   http_409: "Conflict with an existing account.",
   http_500: "Server error. Try again in a moment.",
+  privy_not_configured: "Twitter linking is not configured on the server.",
+  privy_token_required: "Privy session missing. Try Connect with Twitter again.",
+  invalid_privy_token: "Twitter session expired. Connect with Twitter again.",
+  twitter_not_linked_in_privy:
+    "No Twitter account on this Privy session. Try again.",
+  twitter_username_missing: "Twitter did not return a username.",
+  twitter_already_linked:
+    "That Twitter account is already linked to another wallet.",
 };
 
 const CONTRACT_HINTS: Array<{match: RegExp; message: string}> = [

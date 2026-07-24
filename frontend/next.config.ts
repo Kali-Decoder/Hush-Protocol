@@ -37,6 +37,12 @@ const connectSrc = [
   "https://*.web3modal.org",
   "https://pulse.walletconnect.org",
   "https://rpc.walletconnect.org",
+  // Privy (Twitter OAuth)
+  "https://auth.privy.io",
+  "https://*.privy.io",
+  "https://api.privy.io",
+  "https://privy.auth0.com",
+  "https://explorer-api.walletconnect.com",
   isDev ? "ws:" : null,
   isDev ? "wss:" : null,
 ].filter(Boolean);
@@ -56,7 +62,7 @@ const csp = [
   `font-src 'self' data:`,
   `connect-src ${connectSrc.join(" ")}`,
   `worker-src 'self' blob:`,
-  `frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org https://secure.walletconnect.com https://secure.walletconnect.org`,
+  `frame-src 'self' https://verify.walletconnect.com https://verify.walletconnect.org https://secure.walletconnect.com https://secure.walletconnect.org https://auth.privy.io https://*.privy.io`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
@@ -79,7 +85,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@bullet/sdk"],
+  transpilePackages: ["@bullet/sdk", "@privy-io/react-auth"],
   webpack: (config, {isServer, webpack}) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,

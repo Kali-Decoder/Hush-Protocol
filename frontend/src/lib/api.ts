@@ -117,6 +117,29 @@ export async function claimNote(
   return parseJson(res);
 }
 
+export async function linkTwitter(
+  token: string,
+  body: {privyAccessToken: string}
+): Promise<PublicUser> {
+  const res = await fetch(`${BACKEND_URL}/users/me/twitter`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  return parseJson(res);
+}
+
+export async function unlinkTwitter(token: string): Promise<PublicUser> {
+  const res = await fetch(`${BACKEND_URL}/users/me/twitter`, {
+    method: "DELETE",
+    headers: {Authorization: `Bearer ${token}`},
+  });
+  return parseJson(res);
+}
+
 export async function fetchWitness(
   commitment: string
 ): Promise<WitnessResponse | null> {

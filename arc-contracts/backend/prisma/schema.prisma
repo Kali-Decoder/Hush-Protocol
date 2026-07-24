@@ -8,14 +8,20 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  wallet          String   @unique
-  username        String   @unique
-  bulletPublicKey String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  receivedNotes   Note[]   @relation("RecipientNotes")
-  sentNotes       Note[]   @relation("SenderNotes")
+  id               String   @id @default(cuid())
+  wallet           String   @unique
+  username         String   @unique
+  bulletPublicKey  String
+  /** Linked X handle (no @), from Privy Twitter OAuth. */
+  twitterUsername  String?  @unique
+  /** Privy DID for the linked Twitter session. */
+  privyDid         String?
+  /** Twitter subject id from Privy. */
+  twitterSubject   String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  receivedNotes    Note[]   @relation("RecipientNotes")
+  sentNotes        Note[]   @relation("SenderNotes")
 }
 
 model Note {

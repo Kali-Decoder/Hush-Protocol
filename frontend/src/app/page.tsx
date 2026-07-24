@@ -122,7 +122,7 @@ export default function Home() {
             Ready when you are.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-graphite sm:text-base">
-            Claim a username, connect an Arc wallet, and send a silent note.
+            Connect Twitter, link an Arc wallet, and send a silent note.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link

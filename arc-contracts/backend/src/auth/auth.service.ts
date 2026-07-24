@@ -2,7 +2,7 @@ import {verifyMessage, isAddress, getAddress} from "viem";
 import {SignJWT, jwtVerify} from "jose";
 import {prisma} from "../db/prisma.js";
 
-const USERNAME_RE = /^[a-z0-9_]{3,24}$/;
+const USERNAME_RE = /^[a-z0-9_]{1,15}$/;
 const KEY_RE = /^(0x)?[0-9a-fA-F]{64}$/;
 
 const jwtSecret = () =>
@@ -132,6 +132,7 @@ export function publicUser(user: {
   wallet: string;
   username: string;
   bulletPublicKey: string;
+  twitterUsername?: string | null;
   createdAt?: Date;
 }) {
   return {
@@ -139,6 +140,7 @@ export function publicUser(user: {
     wallet: user.wallet,
     username: user.username,
     bulletPublicKey: user.bulletPublicKey,
+    twitterUsername: user.twitterUsername ?? null,
     createdAt: user.createdAt,
   };
 }

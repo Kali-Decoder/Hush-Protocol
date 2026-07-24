@@ -16,6 +16,8 @@ export interface PublicUser {
   username: string;
   /** 0x-prefixed 32-byte hex Hushh Protocol public key (encryption). */
   bulletPublicKey: string;
+  /** Linked X/Twitter handle (no @), from Privy. */
+  twitterUsername?: string | null;
   createdAt?: string | Date;
 }
 

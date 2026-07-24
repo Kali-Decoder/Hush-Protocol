@@ -57,7 +57,7 @@ export default function IslandNav() {
         {opts?.pending ? (
           <span className="sr-only">
             {needsUsername
-              ? "Claim a username — signature required"
+              ? "Connect Twitter to claim your username"
               : "Sign in required"}
           </span>
         ) : null}
@@ -122,7 +122,7 @@ export default function IslandNav() {
               {/* One pending CTA only — wallet address lives on ConnectButton. */}
               {tab(
                 "/register",
-                needsUsername ? "Claim username" : "Sign in",
+                needsUsername ? "Connect Twitter" : "Sign in",
                 {pending: showPendingDot}
               )}
             </>

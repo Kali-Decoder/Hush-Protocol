@@ -26,6 +26,7 @@ import {
   useTokenBalance,
 } from "@/hooks/useUsdcBalance";
 import {TransactionHistory} from "@/components/TransactionHistory";
+import {ConnectTwitterCard} from "@/components/ConnectTwitterCard";
 import {useState} from "react";
 import {getAvatarByAddress} from "@/utils/getAvatarByAddress";
 
@@ -327,15 +328,15 @@ export function AccountView() {
         <PendingBanner
           title={
             needsUsername
-              ? "Claim a username to finish setup"
+              ? "Connect Twitter to claim your username"
               : "Sign in to unlock your account"
           }
           body={
             needsUsername
-              ? "This wallet has no @username yet. Claim one and sign once — we keep the signature for next time."
+              ? "Connect Twitter, then sign with this wallet. Your X handle becomes your @username."
               : "Wallet is connected. Sign a message to unlock send, inbox, and history."
           }
-          cta={needsUsername ? "Claim username" : "Sign in now"}
+          cta={needsUsername ? "Connect Twitter" : "Sign in now"}
           href="/register"
         />
 
@@ -372,7 +373,7 @@ export function AccountView() {
               <UserAvatar
                 address={user.wallet}
                 size="lg"
-                className="shrink-0 shadow-[0_12px_30px_-16px_rgba(10,10,10,0.35)]"
+                className="shrink-0"
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -444,6 +445,13 @@ export function AccountView() {
 
           <NetworkGate>
             <ProfileBalances />
+
+            <section className="mt-6 space-y-2.5">
+              <h2 className="text-[10px] font-medium uppercase tracking-[0.14em] text-graphite">
+                Social
+              </h2>
+              <ConnectTwitterCard />
+            </section>
 
             <section className="mt-6 space-y-2.5">
               <h2 className="text-[10px] font-medium uppercase tracking-[0.14em] text-graphite">

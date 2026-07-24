@@ -10,7 +10,7 @@ export async function buildApp() {
   app.addHook("onRequest", async (req, reply) => {
     reply.header("Access-Control-Allow-Origin", origin);
     reply.header("Access-Control-Allow-Headers", "Authorization, Content-Type");
-    reply.header("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
+    reply.header("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
     if (req.method === "OPTIONS") {
       return reply.code(204).send();
     }
