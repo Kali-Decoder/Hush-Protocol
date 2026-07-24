@@ -21,6 +21,7 @@ import {
   twitterHandleFromPrivyUser,
 } from "@/lib/twitter";
 import {toast} from "@/lib/toast";
+import {celebrateUsernameClaim} from "@/lib/celebrate";
 import {useSession} from "@/hooks/useSession";
 import {useSignOut} from "@/hooks/useSignOut";
 import {ConnectButton} from "@/components/ConnectButton";
@@ -85,6 +86,7 @@ function RegisterFlowInner() {
   const [knownUsername, setKnownUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [justClaimed, setJustClaimed] = useState(false);
 
   useEffect(() => {
     if (!isConnected || !address) {
@@ -215,6 +217,10 @@ function RegisterFlowInner() {
             ? `Welcome back @${res.user.username}`
             : `Signed in as @${res.user.username}`
       );
+      if (mode === "register") {
+        setJustClaimed(true);
+        celebrateUsernameClaim();
+      }
     } catch (e) {
       const msg = formatError(e);
       setError(msg);
@@ -237,13 +243,28 @@ function RegisterFlowInner() {
       <Panel className="animate-rise space-y-5 text-left">
         <div className="flex items-center gap-2 text-signal">
           <CheckIcon className="h-5 w-5" />
-          <p className="text-sm font-medium text-ink">Signed in</p>
+          <p className="text-sm font-medium text-ink">
+            {justClaimed ? "Username claimed" : "Signed in"}
+          </p>
         </div>
         <div>
-          <p className="text-3xl font-bold tracking-tight">@{user.username}</p>
+          <p
+            className={`text-3xl font-bold tracking-tight ${
+              justClaimed
+                ? "animate-amount-pop motion-reduce:animate-none"
+                : ""
+            }`}
+          >
+            @{user.username}
+          </p>
           <p className="mt-2 truncate font-mono text-xs text-graphite">
             {user.wallet}
           </p>
+          {justClaimed ? (
+            <p className="mt-2 text-sm text-graphite">
+              Your Twitter handle is now your Hushh username.
+            </p>
+          ) : null}
         </div>
         <NetworkGate>
           <a href="/send" className="btn-primary">

@@ -12,19 +12,9 @@ function navActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function PendingDot({show}: {show: boolean}) {
-  if (!show) return null;
-  return (
-    <span
-      className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-ink"
-      aria-hidden
-    />
-  );
-}
-
 export default function IslandNav() {
   const pathname = usePathname();
-  const {user, isSignedIn, needsUsername, showPendingDot} = useSession();
+  const {user, isSignedIn} = useSession();
   const showApp = isSignedIn && !!user;
   const matchChrome =
     showApp ||
@@ -37,7 +27,7 @@ export default function IslandNav() {
   function tab(
     href: string,
     label: string,
-    opts?: {showOnMobile?: boolean; pending?: boolean}
+    opts?: {showOnMobile?: boolean}
   ) {
     const active = navActive(pathname, href);
     return (
@@ -53,14 +43,6 @@ export default function IslandNav() {
         }`}
       >
         {label}
-        <PendingDot show={!!opts?.pending} />
-        {opts?.pending ? (
-          <span className="sr-only">
-            {needsUsername
-              ? "Connect Twitter to claim your username"
-              : "Sign in required"}
-          </span>
-        ) : null}
       </Link>
     );
   }
@@ -117,15 +99,7 @@ export default function IslandNav() {
               </Link>
             </>
           ) : (
-            <>
-              {tab("/lookout", "Lookout")}
-              {/* One pending CTA only — wallet address lives on ConnectButton. */}
-              {tab(
-                "/register",
-                needsUsername ? "Connect Twitter" : "Sign in",
-                {pending: showPendingDot}
-              )}
-            </>
+            <>{tab("/lookout", "Lookout")}</>
           )}
 
           <ConnectButton
