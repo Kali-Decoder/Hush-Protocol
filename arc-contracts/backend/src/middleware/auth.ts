@@ -1,5 +1,6 @@
 import type {FastifyReply, FastifyRequest} from "fastify";
 import {verifyToken, type AuthTokenPayload} from "../auth/auth.service.js";
+import {prisma} from "../db/prisma.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -17,7 +18,16 @@ export async function requireAuth(
     return reply.code(401).send({error: "unauthorized"});
   }
   try {
-    req.user = await verifyToken(header.slice(7));
+    const claims = await verifyToken(header.slice(7));
+    // Reject JWTs whose user was deleted (e.g. after a DB wipe).
+    const exists = await prisma.user.findUnique({
+      where: {id: claims.sub},
+      select: {id: true},
+    });
+    if (!exists) {
+      return reply.code(401).send({error: "session_expired"});
+    }
+    req.user = claims;
   } catch {
     return reply.code(401).send({error: "unauthorized"});
   }

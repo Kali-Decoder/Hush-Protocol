@@ -1,16 +1,15 @@
 import {Inbox} from "@/components/Inbox";
-import {PageHeader, Shell} from "@/components/ui";
+import {AppShell} from "@/components/AppShell";
 
 export const metadata = {title: "Inbox · Hushh Protocol"};
 
 export default function InboxPage() {
   return (
-    <Shell>
-      <PageHeader
-        title="Inbox"
-        subtitle="Decrypt notes sealed to your key, then claim tokens on Arc."
-      />
+    <AppShell
+      title="Inbox"
+      subtitle="Decrypt notes sealed to your key, then claim tokens on Arc."
+    >
       <Inbox />
-    </Shell>
+    </AppShell>
   );
 }

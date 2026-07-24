@@ -5,6 +5,9 @@
 
 const API_MESSAGES: Record<string, string> = {
   unauthorized: "Session expired. Sign in again.",
+  session_expired: "Session expired. Sign in again at /register.",
+  recipient_not_found: "Recipient not found. They need to claim a username first.",
+  recipient_required: "Recipient username is required.",
   invalid_wallet: "That wallet address is not valid.",
   invalid_username:
     "Username must match your Twitter handle (1-15 chars: letters, numbers, underscore).",

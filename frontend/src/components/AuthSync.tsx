@@ -23,6 +23,20 @@ import {
 } from "@/lib/session";
 import {toast} from "@/lib/toast";
 
+/** Read JWT `sub` without verifying (server still verifies). */
+function jwtSubject(token: string): string | null {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    const json = JSON.parse(
+      atob(part.replace(/-/g, "+").replace(/_/g, "/"))
+    ) as {sub?: string};
+    return typeof json.sub === "string" ? json.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Keeps local session aligned with the connected wallet.
  * On connect: fetch user by address → store profile / mark missing username.
@@ -83,12 +97,18 @@ export function AuthSync() {
         setWalletLookup({wallet: address, username: profile.username});
 
         const token = getToken();
-        if (token) {
+        const tokenSub = token ? jwtSubject(token) : null;
+        // Keep JWT only if it still points at this DB user (avoids FK errors after wipe).
+        if (token && tokenSub === profile.id) {
           setSession(token, profile);
           return;
         }
 
-        // No JWT: try cached signature so MetaMask is not needed again.
+        if (token && tokenSub !== profile.id) {
+          clearLiveSession();
+        }
+
+        // Refresh JWT via cached signature so MetaMask is not needed again.
         const cached = getStoredAuthSignature(address);
         if (cached && !silentAuthing.current) {
           silentAuthing.current = true;
@@ -100,7 +120,6 @@ export function AuthSync() {
               bulletPublicKey: keys.publicKey,
               signature: cached,
             });
-            // Refresh stored signature + session.
             setStoredAuthSignature(address, cached);
             setSession(res.token, res.user);
             return;

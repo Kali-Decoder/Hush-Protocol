@@ -1,5 +1,5 @@
 import {SendForm} from "@/components/SendForm";
-import {PageHeader, Shell} from "@/components/ui";
+import {AppShell} from "@/components/AppShell";
 
 export const metadata = {title: "Send · Hushh Protocol"};
 
@@ -10,12 +10,11 @@ export default async function SendPage({
 }) {
   const {to} = await searchParams;
   return (
-    <Shell>
-      <PageHeader
-        title="Send"
-        subtitle="Pay a username. Pick a pool token, deposit a note. Nothing on-chain links you to their claim."
-      />
+    <AppShell
+      title="Send"
+      subtitle="Pay a username. Pick a pool token, deposit a note. Nothing on-chain links you to their claim."
+    >
       <SendForm initialRecipient={to} />
-    </Shell>
+    </AppShell>
   );
 }

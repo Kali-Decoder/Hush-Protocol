@@ -43,7 +43,7 @@ export default function LandingHero() {
   const active = SEND_WORDS[wordIndex];
 
   return (
-    <section className="relative flex min-h-[calc(100svh-7rem)] w-full max-w-4xl flex-col items-center justify-center overflow-hidden pb-8 pt-4 text-center">
+    <section className="relative flex min-h-[calc(100svh-5.5rem)] w-full max-w-4xl flex-col items-center justify-center overflow-hidden pb-8 pt-2 text-center sm:min-h-[calc(100svh-7rem)] sm:pt-4">
       <div
         aria-hidden
         className={`pointer-events-none absolute inset-0 -z-10 transition-opacity duration-1000 ${
@@ -92,7 +92,7 @@ export default function LandingHero() {
       </div>
 
       <h1
-        className={`mt-8 text-5xl font-extrabold leading-[0.92] tracking-tighter sm:text-7xl md:text-8xl ${
+        className={`mt-8 text-[2.75rem] font-extrabold leading-[0.92] tracking-tighter sm:text-7xl md:text-8xl ${
           ready ? "" : "opacity-0"
         }`}
       >

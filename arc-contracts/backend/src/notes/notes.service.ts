@@ -21,6 +21,14 @@ export async function createNote(params: {
     throw Object.assign(new Error("invalid_encrypted_payload"), {statusCode: 400});
   }
 
+  const sender = await prisma.user.findUnique({
+    where: {id: params.senderUserId},
+    select: {id: true},
+  });
+  if (!sender) {
+    throw Object.assign(new Error("session_expired"), {statusCode: 401});
+  }
+
   let recipientId = params.recipientId?.trim();
   let recipientUsername: string | undefined;
   if (!recipientId && params.recipientUsername) {
@@ -36,7 +44,10 @@ export async function createNote(params: {
     recipientUsername = recipient.username;
   } else if (recipientId) {
     const recipient = await prisma.user.findUnique({where: {id: recipientId}});
-    recipientUsername = recipient?.username;
+    if (!recipient) {
+      throw Object.assign(new Error("recipient_not_found"), {statusCode: 404});
+    }
+    recipientUsername = recipient.username;
   }
   if (!recipientId) {
     throw Object.assign(new Error("recipient_required"), {statusCode: 400});
@@ -49,7 +60,7 @@ export async function createNote(params: {
   const note = await prisma.note.create({
     data: {
       recipientId,
-      senderId: params.senderUserId,
+      senderId: sender.id,
       commitment,
       encryptedPayload,
       depositTxHash: depositTxHash ?? null,

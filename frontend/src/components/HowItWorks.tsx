@@ -110,7 +110,7 @@ export default function HowItWorks() {
   return (
     <section
       ref={ref}
-      className="flex min-h-screen w-full flex-col justify-center"
+      className="flex min-h-[min(100dvh,56rem)] w-full flex-col justify-center py-10 sm:min-h-screen sm:py-0"
     >
       <h2 className="text-left text-3xl font-bold tracking-tight sm:text-4xl">
         How Hushh Protocol works
@@ -204,7 +204,7 @@ export default function HowItWorks() {
           </div>
 
           <div
-            className={`panel w-[340px] p-7 transition-all duration-700 ease-out sm:w-[480px] sm:p-9 ${
+            className={`panel w-full max-w-[340px] p-6 transition-all duration-700 ease-out sm:max-w-[480px] sm:p-9 ${
               cardIn ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
             }`}
           >

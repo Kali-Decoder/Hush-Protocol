@@ -34,7 +34,7 @@ export default function IslandNav() {
       <Link
         href={href}
         aria-current={active ? "page" : undefined}
-        className={`relative shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors sm:px-3.5 sm:py-2 ${
+        className={`relative shrink-0 rounded-full px-2.5 py-1.5 text-[13px] font-semibold transition-colors sm:px-3.5 sm:py-2 sm:text-sm ${
           opts?.showOnMobile === false ? "hidden sm:inline-flex" : "inline-flex"
         } ${
           active
@@ -48,17 +48,17 @@ export default function IslandNav() {
   }
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:top-4 sm:px-4 sm:pt-0">
       <nav
         aria-label="Primary"
-        className={`pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-ink/95 px-3 py-2 text-paper shadow-lg shadow-ink/15 backdrop-blur-md sm:gap-3 sm:px-4 sm:py-2.5 ${
-          matchChrome ? APP_CHROME_WIDTH : "w-auto max-w-full"
+        className={`pointer-events-auto flex max-w-full items-center gap-1.5 rounded-full border border-white/10 bg-ink/95 px-2.5 py-1.5 text-paper shadow-lg shadow-ink/15 backdrop-blur-md sm:gap-3 sm:px-4 sm:py-2.5 ${
+          matchChrome ? APP_CHROME_WIDTH : "w-auto"
         }`}
       >
         <Link
           href="/"
           aria-current={pathname === "/" ? "page" : undefined}
-          className={`flex shrink-0 items-center gap-2 rounded-full pl-1 pr-1 transition-opacity sm:pr-2 ${
+          className={`flex shrink-0 items-center gap-2 rounded-full pl-0.5 pr-0.5 transition-opacity sm:pr-2 ${
             pathname === "/" ? "opacity-100" : "opacity-90 hover:opacity-100"
           }`}
         >
@@ -73,11 +73,11 @@ export default function IslandNav() {
           <img
             src="/wordmark.svg"
             alt="Hushh Protocol"
-            className="h-4 w-auto brightness-0 invert"
+            className="hidden h-4 w-auto brightness-0 invert sm:block"
           />
         </Link>
 
-        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1 sm:gap-1.5">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-1.5 [&::-webkit-scrollbar]:hidden">
           {showApp ? (
             <>
               {tab("/send", "Send")}
@@ -88,14 +88,15 @@ export default function IslandNav() {
                 aria-current={
                   navActive(pathname, "/account") ? "page" : undefined
                 }
-                className={`relative inline-flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-semibold transition-colors sm:pr-3.5 ${
+                title={`@${user.username}`}
+                className={`relative inline-flex max-w-[7.5rem] shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 pr-2 text-[13px] font-semibold transition-colors sm:max-w-none sm:gap-2 sm:pr-3.5 sm:text-sm ${
                   navActive(pathname, "/account")
                     ? "bg-paper text-ink"
                     : "text-paper/85 hover:bg-white/10 hover:text-paper"
                 }`}
               >
                 <UserAvatar address={user.wallet} size="sm" />
-                @{user.username}
+                <span className="truncate">@{user.username}</span>
               </Link>
             </>
           ) : (
@@ -105,7 +106,7 @@ export default function IslandNav() {
           <ConnectButton
             compact
             label="Connect"
-            className="shrink-0 rounded-full border border-paper/25 px-3 py-1.5 text-sm font-medium text-paper transition-colors hover:bg-white/10"
+            className="shrink-0 rounded-full border border-paper/25 px-2.5 py-1.5 text-[13px] font-medium text-paper transition-colors hover:bg-white/10 sm:px-3 sm:text-sm"
           />
         </div>
       </nav>
