@@ -3,7 +3,7 @@
 import {useEffect, useState} from "react";
 import {useAccount, useWriteContract} from "wagmi";
 import {createNote, noteToJSON} from "@bullet/sdk";
-import {createPublicClient, http} from "viem";
+import {createPublicClient, http, maxUint256} from "viem";
 import {bulletPoolAbi} from "@/abi/BulletPool";
 import {erc20Abi} from "@/abi/erc20";
 import {postNote, resolveUser} from "@/lib/api";
@@ -248,15 +248,29 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       const commitmentBytes32 = json.commitmentBytes32;
       setCommitment(commitmentBytes32);
 
-      setStep("approving");
-      const approveHash = await writeContractAsync({
+      const client = createPublicClient({
+        chain: arcTestnet,
+        transport: http(),
+      });
+      const allowance = await client.readContract({
         address: tokenAddr,
         abi: erc20Abi,
-        functionName: "approve",
-        args: [pool, units],
-        chainId: arcTestnet.id,
+        functionName: "allowance",
+        args: [address, pool],
       });
-      await waitTx(approveHash);
+
+      // Approve max once when short; skip wallet prompt if allowance already covers.
+      if (allowance < units) {
+        setStep("approving");
+        const approveHash = await writeContractAsync({
+          address: tokenAddr,
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [pool, maxUint256],
+          chainId: arcTestnet.id,
+        });
+        await client.waitForTransactionReceipt({hash: approveHash});
+      }
 
       setStep("depositing");
       const depositHash = await writeContractAsync({
@@ -266,7 +280,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         args: [tokenAddr, units, commitmentBytes32],
         chainId: arcTestnet.id,
       });
-      await waitTx(depositHash);
+      await client.waitForTransactionReceipt({hash: depositHash});
       setTxHash(depositHash);
 
       setStep("posting");
@@ -737,7 +751,7 @@ function stepLabel(
     case "creating":
       return "Creating note…";
     case "approving":
-      return `Approve ${symbol}…`;
+      return `Approve ${symbol} (one-time)…`;
     case "depositing":
       return "Depositing on Arc…";
     case "posting":
@@ -747,10 +761,3 @@ function stepLabel(
   }
 }
 
-async function waitTx(hash: `0x${string}`) {
-  const client = createPublicClient({
-    chain: arcTestnet,
-    transport: http(),
-  });
-  await client.waitForTransactionReceipt({hash});
-}
