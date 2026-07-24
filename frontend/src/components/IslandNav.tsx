@@ -69,7 +69,7 @@ export default function IslandNav() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logomark.svg"
+            src="/logomark.png"
             alt=""
             className="h-7 w-7 shrink-0 rounded-[9px] ring-1 ring-white/10"
             aria-hidden

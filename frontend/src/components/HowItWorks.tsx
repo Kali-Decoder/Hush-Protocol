@@ -211,7 +211,7 @@ export default function HowItWorks() {
             <div className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logomark.svg"
+                src="/logomark.png"
                 alt=""
                 className="h-8 w-8 rounded-[10px]"
                 aria-hidden

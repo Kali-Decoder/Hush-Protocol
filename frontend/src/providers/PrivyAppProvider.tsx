@@ -21,7 +21,7 @@ export function PrivyAppProvider({children}: {children: ReactNode}) {
         appearance: {
           theme: "light",
           accentColor: "#0a0a0a",
-          logo: "/logomark.svg",
+          logo: "/logomark.png",
           showWalletLoginFirst: false,
         },
         embeddedWallets: {

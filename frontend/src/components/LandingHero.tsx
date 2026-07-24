@@ -78,7 +78,7 @@ export default function LandingHero() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/logomark.svg"
+          src="/logomark.png"
           alt=""
           className="h-12 w-12 rounded-[14px] shadow-[0_12px_32px_-14px_rgba(10,10,10,0.35)] ring-1 ring-ink/5 sm:h-14 sm:w-14 sm:rounded-2xl"
           aria-hidden

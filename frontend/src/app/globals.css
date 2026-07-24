@@ -28,6 +28,8 @@
   --animate-press: press 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-avatar-in: avatar-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-soft-rise: soft-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-loader-in: loader-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-loader-breathe: loader-breathe 2.4s ease-in-out infinite;
 
   @keyframes rise {
     from {
@@ -164,6 +166,29 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes loader-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.92);
+      filter: blur(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes loader-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.035);
     }
   }
 
@@ -437,4 +462,11 @@
 
 .toast-enter {
   animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-loader-in,
+  .animate-loader-breathe {
+    animation: none !important;
+  }
 }

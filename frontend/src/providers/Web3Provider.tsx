@@ -3,6 +3,7 @@
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {type ReactNode, useState} from "react";
 import {WagmiProvider} from "wagmi";
+import {AppLoader} from "@/components/AppLoader";
 import {AuthSync} from "@/components/AuthSync";
 import {ToastHost} from "@/components/ToastHost";
 import {PrivyAppProvider} from "@/providers/PrivyAppProvider";
@@ -14,6 +15,7 @@ export function Web3Provider({children}: {children: ReactNode}) {
     <PrivyAppProvider>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
+          <AppLoader />
           <AuthSync />
           {children}
           <ToastHost />

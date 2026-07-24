@@ -44,7 +44,7 @@ export function AppChrome({children}: {children: ReactNode}) {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logomark.svg"
+              src="/logomark.png"
               alt=""
               className="h-7 w-7 rounded-[9px] ring-1 ring-ink/5"
               aria-hidden
