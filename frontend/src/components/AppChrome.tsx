@@ -4,7 +4,7 @@ import type {ReactNode} from "react";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
 import IslandNav from "@/components/IslandNav";
-import {GithubIcon} from "@/components/icons";
+import {GithubIcon, XBrandIcon} from "@/components/icons";
 
 function isAppRoute(pathname: string) {
   return (
@@ -56,6 +56,15 @@ export function AppChrome({children}: {children: ReactNode}) {
             <Link href="/privacy" className="transition-colors hover:text-ink">
               Privacy
             </Link>
+            <a
+              href="https://x.com/hushhprotocol"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Hushh Protocol on X"
+              className="transition-colors hover:text-ink"
+            >
+              <XBrandIcon className="h-4 w-4" />
+            </a>
             <a
               href="https://github.com/Kali-Decoder/Hush-"
               target="_blank"
