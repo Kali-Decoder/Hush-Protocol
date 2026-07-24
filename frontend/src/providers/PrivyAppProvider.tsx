@@ -2,6 +2,7 @@
 
 import {PrivyProvider} from "@privy-io/react-auth";
 import type {ReactNode} from "react";
+import {PrivyLogoutBridge} from "@/components/PrivyLogoutBridge";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "";
 
@@ -31,6 +32,7 @@ export function PrivyAppProvider({children}: {children: ReactNode}) {
         },
       }}
     >
+      <PrivyLogoutBridge />
       {children}
     </PrivyProvider>
   );

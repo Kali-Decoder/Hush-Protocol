@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {usePathname} from "next/navigation";
+import {useAccount} from "wagmi";
 import {APP_NAV_WIDTH} from "@/components/AppShell";
 import {ConnectButton} from "@/components/ConnectButton";
 import {UserAvatar} from "@/components/UserAvatar";
@@ -24,10 +25,15 @@ function isAppRoute(pathname: string) {
 
 export default function IslandNav() {
   const pathname = usePathname();
-  const {user, isSignedIn} = useSession();
-  const showApp = isSignedIn && !!user;
-  // Wider than AppShell cards (max-w-3xl) on app screens; hug content on landing.
-  const wide = showApp || isAppRoute(pathname);
+  const {address, isConnected} = useAccount();
+  const {user, needsUsername, lookup} = useSession();
+  // App tabs once the wallet is connected (not only after JWT sign-in).
+  const showAppNav = isConnected;
+  const username =
+    user?.username ??
+    (lookup?.username && lookup.username.length > 0 ? lookup.username : null);
+  const profileHref = needsUsername || !username ? "/register" : "/account";
+  const wide = showAppNav || isAppRoute(pathname);
 
   function tab(
     href: string,
@@ -83,25 +89,35 @@ export default function IslandNav() {
         </Link>
 
         <div className="flex min-w-0 flex-1 items-center justify-end gap-0.5 sm:gap-1.5">
-          {showApp ? (
+          {showAppNav ? (
             <>
               {tab("/send", "Send")}
               {tab("/inbox", "Inbox")}
               {tab("/lookout", "Lookout", {showOnMobile: false})}
               <Link
-                href="/account"
+                href={profileHref}
                 aria-current={
-                  navActive(pathname, "/account") ? "page" : undefined
+                  navActive(pathname, profileHref) ||
+                  (username
+                    ? navActive(pathname, "/account")
+                    : navActive(pathname, "/register"))
+                    ? "page"
+                    : undefined
                 }
-                title={`@${user.username}`}
-                className={`relative inline-flex max-w-[7.5rem] shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 pr-2 text-[13px] font-semibold tracking-[-0.01em] transition-all duration-200 sm:max-w-none sm:gap-2 sm:pr-3.5 sm:text-sm ${
-                  navActive(pathname, "/account")
+                title={username ? `@${username}` : "Claim username"}
+                className={`relative inline-flex max-w-[8rem] shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 pr-2 text-[13px] font-semibold tracking-[-0.01em] transition-all duration-200 sm:max-w-none sm:gap-2 sm:pr-3.5 sm:text-sm ${
+                  navActive(pathname, "/account") ||
+                  navActive(pathname, "/register")
                     ? "bg-paper text-ink shadow-[0_1px_0_rgba(255,255,255,0.5)_inset]"
                     : "text-paper/80 hover:bg-white/[0.08] hover:text-paper"
                 }`}
               >
-                <UserAvatar address={user.wallet} size="sm" />
-                <span className="truncate">@{user.username}</span>
+                {address ? (
+                  <UserAvatar address={address} size="sm" />
+                ) : null}
+                <span className="truncate">
+                  {username ? `@${username}` : "Claim"}
+                </span>
               </Link>
             </>
           ) : (

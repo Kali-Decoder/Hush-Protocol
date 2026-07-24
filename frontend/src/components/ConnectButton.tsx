@@ -9,6 +9,7 @@ import {
 } from "wagmi";
 import {arcTestnet} from "@/lib/chains";
 import {toast} from "@/lib/toast";
+import {useSignOut} from "@/hooks/useSignOut";
 import {LoaderIcon, WalletIcon} from "@/components/icons";
 import {
   SwitchNetworkButton,
@@ -46,6 +47,7 @@ export function ConnectButton({
   const {connectAsync, connectors, isPending, error, reset} = useConnect();
   const {disconnectAsync, isPending: isDisconnecting} = useDisconnect();
   const {isCorrectChain} = useIsCorrectChain();
+  const signOut = useSignOut();
   const [busyLocal, setBusyLocal] = useState(false);
 
   const busy =
@@ -55,12 +57,10 @@ export function ConnectButton({
     status === "connecting" ||
     status === "reconnecting";
 
-  async function disconnectWallet() {
+  async function handleSignOut() {
     setBusyLocal(true);
     try {
-      await disconnectAsync();
-      // Clear stuck connect mutation so the next Connect click works.
-      reset();
+      await signOut({silent: compact});
     } catch (err) {
       if (!compact) toast.error(err);
     } finally {
@@ -112,14 +112,12 @@ export function ConnectButton({
     return (
       <button
         type="button"
-        onClick={() => void disconnectWallet()}
+        onClick={() => void handleSignOut()}
         disabled={busy}
         className={className}
-        title={`Disconnect ${address}`}
+        title="Sign out and disconnect wallet"
       >
-        {busy ? (
-          <LoaderIcon className="h-4 w-4 animate-spin" />
-        ) : null}
+        {busy ? <LoaderIcon className="h-4 w-4 animate-spin" /> : null}
         {compact ? "Sign out" : "Disconnect wallet"}
       </button>
     );
