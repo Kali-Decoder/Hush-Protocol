@@ -29,6 +29,7 @@ import {NetworkGate} from "@/components/NetworkGate";
 import {LoaderIcon, CheckIcon, XBrandIcon} from "@/components/icons";
 import {ErrorBanner, Panel} from "@/components/ui";
 import {formatError, formatErrorTitle} from "@/lib/errors";
+import {shortAddr} from "@/lib/address";
 
 function AuthSteps({step}: {step: 1 | 2 | 3}) {
   return (
@@ -257,8 +258,8 @@ function RegisterFlowInner() {
           >
             @{user.username}
           </p>
-          <p className="mt-2 truncate font-mono text-xs text-graphite">
-            {user.wallet}
+          <p className="mt-2 truncate font-mono text-xs text-graphite" title={user.wallet}>
+            {shortAddr(user.wallet)}
           </p>
           {justClaimed ? (
             <p className="mt-2 text-sm text-graphite">
@@ -313,8 +314,8 @@ function RegisterFlowInner() {
             <>
               <div className="rounded-xl bg-paper/80 px-4 py-3">
                 <p className="text-xs text-graphite">Wallet connected</p>
-                <p className="mt-0.5 truncate font-mono text-xs text-ink">
-                  {address}
+                <p className="mt-0.5 truncate font-mono text-xs text-ink" title={address}>
+                  {shortAddr(address)}
                 </p>
               </div>
 

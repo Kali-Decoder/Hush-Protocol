@@ -19,6 +19,7 @@ import {
 } from "@/components/icons";
 import {ErrorBanner, FieldLabel, Panel} from "@/components/ui";
 import {UserAvatar} from "@/components/UserAvatar";
+import {shortAddr} from "@/lib/address";
 
 type Status = "idle" | "loading" | "found" | "missing" | "error";
 
@@ -145,8 +146,8 @@ export function LookoutForm() {
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-graphite">
               Resolved wallet
             </p>
-            <p className="mt-2 break-all font-mono text-sm leading-relaxed text-ink">
-              {user.wallet}
+            <p className="mt-2 font-mono text-sm leading-relaxed text-ink" title={user.wallet}>
+              {shortAddr(user.wallet)}
             </p>
             <a
               href={explorerAddress(user.wallet)}

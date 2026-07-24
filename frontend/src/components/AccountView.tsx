@@ -29,11 +29,7 @@ import {TransactionHistory} from "@/components/TransactionHistory";
 import {ConnectTwitterCard} from "@/components/ConnectTwitterCard";
 import {useState} from "react";
 import {getAvatarByAddress} from "@/utils/getAvatarByAddress";
-
-function shortAddr(addr: string): string {
-  if (addr.length < 12) return addr;
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+import {shortAddr} from "@/lib/address";
 
 function CopyChip({
   value,
@@ -343,7 +339,7 @@ export function AccountView() {
         <DetailRow
           icon={<WalletIcon className="h-4 w-4" />}
           label="Connected wallet"
-          value={address ?? "—"}
+          value={address ? shortAddr(address) : "—"}
           trailing={
             address ? (
               <CopyChip
@@ -460,7 +456,7 @@ export function AccountView() {
               <DetailRow
                 icon={<WalletIcon className="h-4 w-4" />}
                 label="Wallet"
-                value={user.wallet}
+                value={shortAddr(user.wallet)}
                 trailing={
                   <>
                     <CopyChip
@@ -485,7 +481,7 @@ export function AccountView() {
               <DetailRow
                 icon={<ShieldCheckIcon className="h-4 w-4" />}
                 label="Hushh Protocol key"
-                value={user.bulletPublicKey}
+                value={shortAddr(user.bulletPublicKey)}
                 trailing={
                   <CopyChip
                     value={user.bulletPublicKey}

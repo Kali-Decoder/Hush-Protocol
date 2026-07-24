@@ -9,6 +9,7 @@ import {formatError} from "@/lib/errors";
 import {useSession} from "@/hooks/useSession";
 import {twitterHandleFromPrivyUser} from "@/lib/twitter";
 import {LoaderIcon, XBrandIcon} from "@/components/icons";
+import {shortAddr} from "@/lib/address";
 
 function ConnectTwitterCardInner({className = ""}: {className?: string}) {
   const {user: hushUser, isSignedIn, token} = useSession();
@@ -136,7 +137,7 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
               <p className="mt-0.5 text-xs text-graphite">
                 {claimedViaTwitter
                   ? "Your claimed Hushh username"
-                  : `Linked to ${hushUser?.wallet?.slice(0, 6)}…${hushUser?.wallet?.slice(-4)}`}
+                  : `Linked to ${shortAddr(hushUser?.wallet)}`}
               </p>
             </>
           ) : (

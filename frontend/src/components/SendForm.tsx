@@ -33,6 +33,7 @@ import {
 } from "@/components/RecipientKind";
 import {useSession} from "@/hooks/useSession";
 import {useTokenBalance} from "@/hooks/useUsdcBalance";
+import {shortAddr} from "@/lib/address";
 import {TokenBalanceSelect} from "@/components/TokenSelect";
 import {UserAvatar} from "@/components/UserAvatar";
 import {
@@ -503,8 +504,11 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                           className="h-4 w-4 shrink-0 text-graphite"
                         />
                       </p>
-                      <p className="mt-0.5 truncate font-mono text-[11px] leading-snug text-graphite">
-                        {resolved.wallet}
+                      <p
+                        className="mt-0.5 truncate font-mono text-[11px] leading-snug text-graphite"
+                        title={resolved.wallet}
+                      >
+                        {shortAddr(resolved.wallet)}
                       </p>
                     </div>
                     <button
