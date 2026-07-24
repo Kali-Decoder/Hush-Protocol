@@ -18,6 +18,12 @@ import {
   type PoolToken,
 } from "@/lib/config";
 import {sealPayload} from "@/lib/crypto";
+import {
+  listPendingSends,
+  removePendingSend,
+  upsertPendingSend,
+  type PendingSend,
+} from "@/lib/pendingSends";
 import {getToken, getStoredUser} from "@/lib/session";
 import {toast} from "@/lib/toast";
 import {formatError, formatErrorTitle} from "@/lib/errors";
@@ -52,6 +58,7 @@ type Step =
   | "depositing"
   | "posting"
   | "done"
+  | "undelivered"
   | "error";
 
 const FLOW_STEPS = ["Note", "Approve", "Deposit", "Deliver"] as const;
@@ -126,6 +133,8 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   const [sentTokenSymbol, setSentTokenSymbol] = useState(
     DEFAULT_POOL_TOKEN.symbol
   );
+  const [sentUsername, setSentUsername] = useState("");
+  const [sentAmount, setSentAmount] = useState<number | null>(null);
 
   const busy =
     step === "resolving" ||
@@ -134,7 +143,65 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     step === "depositing" ||
     step === "posting";
 
+  const [pendingSends, setPendingSends] = useState<PendingSend[]>([]);
+  const [retryingCommitment, setRetryingCommitment] = useState<string | null>(
+    null
+  );
+
   const amountDecimals = selectedToken.decimals;
+
+  function refreshPending() {
+    setPendingSends(listPendingSends());
+  }
+
+  useEffect(() => {
+    refreshPending();
+  }, []);
+
+  async function deliverPending(pending: PendingSend): Promise<boolean> {
+    const authToken = getToken();
+    if (!authToken) {
+      toast.error("Sign in to deliver the encrypted note.");
+      return false;
+    }
+    setRetryingCommitment(pending.commitment);
+    setError("");
+    try {
+      setStep("posting");
+      const sealed = sealPayload(
+        JSON.stringify(pending.noteJson),
+        pending.recipientBulletPublicKey
+      );
+      upsertPendingSend({...pending, encryptedPayload: sealed});
+      await postNote(authToken, {
+        recipientUsername: pending.recipientUsername,
+        commitment: pending.commitment,
+        encryptedPayload: sealed,
+        depositTxHash: pending.depositTxHash,
+        amount: pending.amount,
+        tokenSymbol: pending.tokenSymbol,
+      });
+      removePendingSend(pending.commitment);
+      refreshPending();
+      setCommitment(pending.commitment);
+      setTxHash(pending.depositTxHash);
+      setSentTokenSymbol(pending.tokenSymbol);
+      setSentUsername(pending.recipientUsername);
+      setSentAmount(Number(pending.amount) || null);
+      setStep("done");
+      toast.success("Note delivered. Recipient can claim from Inbox.");
+      return true;
+    } catch (e) {
+      const msg = formatError(e);
+      setError(msg);
+      toast.error(msg);
+      setStep("undelivered");
+      refreshPending();
+      return false;
+    } finally {
+      setRetryingCommitment(null);
+    }
+  }
 
   function applyAmount(n: number | null) {
     if (n == null || !Number.isFinite(n) || n <= 0) {
@@ -185,6 +252,8 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     setTxHash("");
     setCommitment("");
     setError("");
+    setSentUsername("");
+    setSentAmount(null);
   }
 
   useEffect(() => {
@@ -283,18 +352,47 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       await client.waitForTransactionReceipt({hash: depositHash});
       setTxHash(depositHash);
 
-      setStep("posting");
+      // Persist sealed note before POST so delivery can be retried without
+      // depositing again if the backend/RPC call fails.
       const sealed = sealPayload(JSON.stringify(json), resolved.bulletPublicKey);
-      await postNote(authToken, {
-        recipientUsername: resolved.username,
+      upsertPendingSend({
         commitment: commitmentBytes32,
+        noteJson: json,
         encryptedPayload: sealed,
         depositTxHash: depositHash,
+        recipientUsername: resolved.username,
+        recipientBulletPublicKey: resolved.bulletPublicKey,
         amount: String(amount),
         tokenSymbol: selectedToken.symbol,
       });
+      refreshPending();
+
+      setStep("posting");
+      try {
+        await postNote(authToken, {
+          recipientUsername: resolved.username,
+          commitment: commitmentBytes32,
+          encryptedPayload: sealed,
+          depositTxHash: depositHash,
+          amount: String(amount),
+          tokenSymbol: selectedToken.symbol,
+        });
+        removePendingSend(commitmentBytes32);
+        refreshPending();
+      } catch (postErr) {
+        const msg = formatError(postErr);
+        setError(msg);
+        toast.error(
+          "Deposit confirmed, but note delivery failed. Retry deliver — do not send again."
+        );
+        setStep("undelivered");
+        void refetchBalance();
+        return;
+      }
 
       setSentTokenSymbol(selectedToken.symbol);
+      setSentUsername(resolved.username);
+      setSentAmount(amount);
       setStep("done");
       void refetchBalance();
     } catch (e) {
@@ -302,6 +400,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       setError(msg);
       toast.error(msg);
       setStep("error");
+      refreshPending();
     }
   }
 
@@ -309,6 +408,14 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
 
   return (
     <>
+      {pendingSends.length > 0 ? (
+        <PendingDeliveriesPanel
+          items={pendingSends}
+          retryingCommitment={retryingCommitment}
+          onRetry={(p) => void deliverPending(p)}
+        />
+      ) : null}
+
       <Panel className="space-y-6 text-left">
         {!isConnected ? (
           <div className="space-y-4 py-2 text-center">
@@ -639,13 +746,49 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         {error ? (
           <ErrorBanner title={formatErrorTitle(error)} message={error} />
         ) : null}
+
+        {step === "undelivered" && commitment ? (
+          <div className="space-y-3 rounded-2xl border border-amber/40 bg-amber/5 p-4">
+            <p className="text-sm text-ink">
+              Funds are in the pool. The encrypted note was not saved — retry
+              delivery. Do not pay again.
+            </p>
+            {txHash ? (
+              <a
+                href={explorerTx(txHash)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-graphite underline-offset-2 hover:text-ink hover:underline"
+              >
+                View deposit
+                <ExternalLinkIcon className="h-3.5 w-3.5" />
+              </a>
+            ) : null}
+            <button
+              type="button"
+              className="btn-primary w-full"
+              disabled={retryingCommitment === commitment}
+              onClick={() => {
+                const pending = pendingSends.find(
+                  (p) => p.commitment.toLowerCase() === commitment.toLowerCase()
+                );
+                if (pending) void deliverPending(pending);
+              }}
+            >
+              {retryingCommitment === commitment ? (
+                <LoaderIcon className="h-5 w-5 animate-spin" />
+              ) : null}
+              Retry deliver
+            </button>
+          </div>
+        ) : null}
       </Panel>
 
       {step === "done" ? (
         <PaymentSuccessModal
-          amount={amount}
+          amount={sentAmount ?? amount}
           tokenSymbol={sentTokenSymbol}
-          username={resolved?.username ?? ""}
+          username={sentUsername || resolved?.username || ""}
           recipientKind={recipientKind}
           recipientInput={recipient}
           commitment={commitment}
@@ -654,6 +797,65 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         />
       ) : null}
     </>
+  );
+}
+
+function PendingDeliveriesPanel({
+  items,
+  retryingCommitment,
+  onRetry,
+}: {
+  items: PendingSend[];
+  retryingCommitment: string | null;
+  onRetry: (p: PendingSend) => void;
+}) {
+  return (
+    <Panel className="mb-4 space-y-3 text-left">
+      <div>
+        <h2 className="text-sm font-semibold tracking-tight text-ink">
+          Undelivered notes
+        </h2>
+        <p className="mt-1 text-xs text-graphite">
+          Deposit succeeded on-chain, but the note never reached the inbox.
+          Retry deliver — do not send a new payment.
+        </p>
+      </div>
+      <ul className="space-y-2">
+        {items.map((p) => {
+          const busy = retryingCommitment === p.commitment;
+          return (
+            <li
+              key={p.commitment}
+              className="flex flex-col gap-2 rounded-xl border border-fog bg-paper/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-ink">
+                  {p.amount} {p.tokenSymbol} → @{p.recipientUsername}
+                </p>
+                <a
+                  href={explorerTx(p.depositTxHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-0.5 inline-flex items-center gap-1 font-mono text-[11px] text-graphite hover:text-ink"
+                >
+                  {shortAddr(p.depositTxHash)}
+                  <ExternalLinkIcon className="h-3 w-3" />
+                </a>
+              </div>
+              <button
+                type="button"
+                className="btn-primary shrink-0 sm:w-auto"
+                disabled={busy}
+                onClick={() => onRetry(p)}
+              >
+                {busy ? <LoaderIcon className="h-4 w-4 animate-spin" /> : null}
+                Retry deliver
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
   );
 }
 
@@ -756,6 +958,8 @@ function stepLabel(
       return "Depositing on Arc…";
     case "posting":
       return "Delivering note…";
+    case "undelivered":
+      return "Retry deliver";
     default:
       return amount != null ? `Pay ${amount} ${symbol}` : "Select an amount";
   }

@@ -57,6 +57,28 @@ export async function createNote(params: {
   const amount = normalizeAmount(params.amount);
   const tokenSymbol = normalizeTokenSymbol(params.tokenSymbol);
 
+  // Idempotent on commitment so "retry deliver" after a flaky POST is safe.
+  const existing = await prisma.note.findFirst({where: {commitment}});
+  if (existing) {
+    if (existing.senderId && existing.senderId !== sender.id) {
+      throw Object.assign(new Error("commitment_already_used"), {
+        statusCode: 409,
+      });
+    }
+    const updated = await prisma.note.update({
+      where: {id: existing.id},
+      data: {
+        encryptedPayload,
+        depositTxHash: depositTxHash ?? existing.depositTxHash,
+        amount: amount ?? existing.amount,
+        tokenSymbol: tokenSymbol ?? existing.tokenSymbol,
+        recipientUsername: recipientUsername ?? existing.recipientUsername,
+        senderId: existing.senderId ?? sender.id,
+      },
+    });
+    return serializeNote(updated);
+  }
+
   const note = await prisma.note.create({
     data: {
       recipientId,

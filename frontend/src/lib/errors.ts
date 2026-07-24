@@ -27,6 +27,8 @@ const API_MESSAGES: Record<string, string> = {
   http_403: "You do not have access.",
   http_404: "Not found.",
   http_409: "Conflict with an existing account.",
+  commitment_already_used:
+    "This deposit commitment is already registered to another sender.",
   http_500: "Server error. Try again in a moment.",
   privy_not_configured: "Twitter linking is not configured on the server.",
   privy_token_required: "Privy session missing. Try Connect with Twitter again.",
