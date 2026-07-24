@@ -62,13 +62,13 @@ export default function LandingHero() {
       </div>
 
       <p
-        className={`animate-rise inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.22em] text-graphite ${
+        className={`animate-rise inline-flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.24em] text-graphite ${
           ready ? "" : "opacity-0"
         }`}
       >
-        <span className="h-px w-6 bg-fog" aria-hidden />
+        <span className="h-px w-5 bg-fog" aria-hidden />
         Hushh Protocol
-        <span className="h-px w-6 bg-fog" aria-hidden />
+        <span className="h-px w-5 bg-fog" aria-hidden />
       </p>
 
       <div
@@ -80,7 +80,7 @@ export default function LandingHero() {
         <img
           src="/logomark.svg"
           alt=""
-          className="h-12 w-12 rounded-[14px] shadow-lg shadow-ink/10 sm:h-14 sm:w-14 sm:rounded-2xl"
+          className="h-12 w-12 rounded-[14px] shadow-[0_12px_32px_-14px_rgba(10,10,10,0.35)] ring-1 ring-ink/5 sm:h-14 sm:w-14 sm:rounded-2xl"
           aria-hidden
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -92,7 +92,7 @@ export default function LandingHero() {
       </div>
 
       <h1
-        className={`mt-8 text-[2.75rem] font-extrabold leading-[0.92] tracking-tighter sm:text-7xl md:text-8xl ${
+        className={`mt-8 text-[2.75rem] font-extrabold leading-[0.9] tracking-[-0.05em] sm:text-7xl md:text-8xl ${
           ready ? "" : "opacity-0"
         }`}
       >
@@ -136,7 +136,7 @@ export default function LandingHero() {
       </h1>
 
       <p
-        className={`mx-auto mt-6 max-w-lg text-base leading-relaxed text-graphite sm:text-lg ${
+        className={`mx-auto mt-6 max-w-lg text-base leading-relaxed tracking-[-0.01em] text-graphite sm:text-lg ${
           ready ? "" : "opacity-0"
         }`}
       >
@@ -166,14 +166,14 @@ export default function LandingHero() {
           {isConnected ? (
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition hover:bg-ink/90 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-paper shadow-[0_8px_20px_-12px_rgba(10,10,10,0.45)] transition hover:bg-ink/90 active:scale-[0.98]"
             >
               Connect Twitter
             </Link>
           ) : null}
           <a
             href="#how-it-works"
-            className="inline-flex items-center gap-2 rounded-full border border-fog bg-white/80 px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:border-graphite hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-full border border-fog/90 bg-white/70 px-5 py-2.5 text-sm font-medium tracking-[-0.01em] text-ink backdrop-blur-sm transition-colors hover:border-graphite hover:bg-white"
           >
             How it works
           </a>

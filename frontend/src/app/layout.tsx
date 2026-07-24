@@ -1,10 +1,14 @@
 import type {Metadata, Viewport} from "next";
-import {Geist_Mono, Inter} from "next/font/google";
+import {Geist_Mono, Plus_Jakarta_Sans} from "next/font/google";
 import {AppChrome} from "@/components/AppChrome";
 import {Web3Provider} from "@/providers/Web3Provider";
 import "./globals.css";
 
-const inter = Inter({subsets: ["latin"], variable: "--font-inter"});
+const sans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans-ui",
+  weight: ["400", "500", "600", "700", "800"],
+});
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
@@ -26,7 +30,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistMono.variable} paper-surface min-h-dvh font-sans text-ink antialiased`}
+        className={`${sans.variable} ${geistMono.variable} paper-surface min-h-dvh font-sans text-ink antialiased`}
       >
         <Web3Provider>
           <AppChrome>{children}</AppChrome>

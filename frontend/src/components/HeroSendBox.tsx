@@ -49,7 +49,7 @@ export default function HeroSendBox() {
     <form
       action="/send"
       method="get"
-      className="input-shell mx-auto max-w-lg !rounded-full !py-1.5 !pl-1.5 !pr-1.5 shadow-[0_1px_0_rgba(10,10,10,0.04),0_24px_48px_-28px_rgba(10,10,10,0.35)] transition-shadow duration-500 hover:shadow-[0_1px_0_rgba(10,10,10,0.04),0_28px_56px_-24px_rgba(10,10,10,0.4)]"
+      className="input-shell mx-auto max-w-lg !rounded-full !py-1.5 !pl-1.5 !pr-1.5 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_1px_0_rgba(10,10,10,0.04),0_28px_56px_-28px_rgba(10,10,10,0.38)] transition-shadow duration-500 hover:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_1px_0_rgba(10,10,10,0.04),0_32px_64px_-24px_rgba(10,10,10,0.42)]"
     >
       <input type="hidden" name="kind" value={kind} />
       <RecipientKindSelect value={kind} onChange={setKind} variant="inline" />
@@ -70,7 +70,7 @@ export default function HeroSendBox() {
       />
       <button
         type="submit"
-        className="shrink-0 rounded-full bg-ink px-6 py-3 text-base font-semibold text-paper transition-all duration-200 hover:bg-ink/90 active:scale-[0.97] sm:px-8"
+        className="shrink-0 rounded-full bg-ink px-6 py-3 text-base font-semibold tracking-[-0.015em] text-paper shadow-[0_8px_20px_-10px_rgba(10,10,10,0.55)] transition-all duration-200 hover:bg-ink/90 active:scale-[0.97] sm:px-8"
       >
         Pay
       </button>

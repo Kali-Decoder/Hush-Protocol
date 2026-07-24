@@ -175,7 +175,7 @@ export function TokenBalanceSelect({
   return (
     <div
       ref={root}
-      className={`relative overflow-visible rounded-2xl border border-fog bg-white transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(10,10,10,0.14)] ${className}`}
+      className={`relative overflow-visible rounded-2xl border border-fog bg-white ${className}`}
     >
       <div className="flex items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-5">
         <button
@@ -186,7 +186,7 @@ export function TokenBalanceSelect({
           aria-label="Select token"
           onClick={() => setOpen((o) => !o)}
           className={`group flex shrink-0 items-center gap-2 rounded-full border bg-paper/90 py-1.5 pl-1.5 pr-2.5 transition-all duration-200 hover:border-graphite hover:bg-paper active:scale-[0.98] disabled:opacity-50 ${
-            open ? "border-ink shadow-sm" : "border-fog"
+            open ? "border-ink" : "border-fog"
           }`}
         >
           <TokenLogo token={value} size={28} />

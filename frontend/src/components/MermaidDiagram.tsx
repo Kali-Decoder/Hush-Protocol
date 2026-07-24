@@ -27,7 +27,7 @@ export function MermaidDiagram({
           startOnLoad: false,
           securityLevel: "strict",
           theme: "base",
-          fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+          fontFamily: "var(--font-sans-ui), ui-sans-serif, system-ui, sans-serif",
           themeVariables: {
             primaryColor: "#0A0A0A",
             primaryTextColor: "#F5F3EE",

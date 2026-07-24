@@ -33,23 +33,26 @@ export function AppChrome({children}: {children: ReactNode}) {
         {children}
       </main>
       <footer
-        className={`mt-auto border-t border-fog/80 bg-paper/90 backdrop-blur-sm ${
+        className={`mt-auto border-t border-fog/70 bg-paper/80 backdrop-blur-md ${
           app ? "hidden sm:block" : ""
         }`}
       >
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row">
-          <Link href="/" className="flex items-center gap-2 opacity-90">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 py-7 sm:flex-row">
+          <Link
+            href="/"
+            className="flex items-center gap-2 opacity-85 transition-opacity hover:opacity-100"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logomark.svg"
               alt=""
-              className="h-7 w-7 rounded-[9px]"
+              className="h-7 w-7 rounded-[9px] ring-1 ring-ink/5"
               aria-hidden
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/wordmark.svg" alt="Hushh Protocol" className="h-4 w-auto" />
           </Link>
-          <nav className="flex items-center gap-6 text-sm text-graphite">
+          <nav className="flex items-center gap-6 text-sm tracking-[-0.01em] text-graphite">
             <Link href="/privacy" className="transition-colors hover:text-ink">
               Privacy
             </Link>

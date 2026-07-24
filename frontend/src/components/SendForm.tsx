@@ -472,7 +472,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                   disabled={busy}
                 />
                 <div className="animate-soft-rise space-y-5 motion-reduce:animate-none">
-                <div className="rounded-2xl border border-fog bg-white px-4 py-3.5 transition-shadow duration-300 hover:shadow-[0_8px_30px_-18px_rgba(10,10,10,0.18)] sm:px-5">
+                <div className="rounded-2xl border border-fog bg-white px-4 py-3.5 sm:px-5">
                   <div className="flex items-center gap-3 sm:gap-3.5">
                     <UserAvatar
                       address={resolved.wallet}
@@ -671,7 +671,7 @@ function PaymentSuccessModal({
         aria-label="Dismiss"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-sm animate-rise rounded-2xl border border-fog bg-white p-6 text-center shadow-xl shadow-ink/15 motion-reduce:animate-none sm:p-7">
+      <div className="relative w-full max-w-sm animate-rise rounded-2xl border border-fog bg-white p-6 text-center motion-reduce:animate-none sm:p-7">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-signal/10 text-signal">
           <CheckIcon className="h-6 w-6" />
         </div>

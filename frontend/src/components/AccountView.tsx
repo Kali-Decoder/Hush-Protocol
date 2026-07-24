@@ -109,13 +109,13 @@ function StatusChip({
 }) {
   const styles =
     tone === "ok"
-      ? "bg-signal/10 text-signal"
+      ? "bg-signal/10 text-signal ring-1 ring-signal/15"
       : tone === "warn"
-        ? "bg-amber/15 text-ink"
-        : "bg-paper text-graphite";
+        ? "bg-amber/15 text-ink ring-1 ring-amber/20"
+        : "bg-paper/90 text-graphite ring-1 ring-fog/80";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-[-0.01em] ${styles}`}
     >
       {children}
     </span>
@@ -153,7 +153,7 @@ function BalanceTile({
   logo?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-fog/80 bg-white px-4 py-3.5 transition-shadow duration-300 hover:shadow-[0_8px_28px_-18px_rgba(10,10,10,0.16)]">
+    <div className="rounded-2xl border border-fog/80 bg-white px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {logo}
@@ -367,13 +367,13 @@ export function AccountView() {
     <div className="space-y-4">
       <Panel className="!p-0 overflow-hidden text-left">
         {/* Identity hero */}
-        <div className="relative border-b border-fog bg-[radial-gradient(120%_80%_at_0%_0%,rgba(10,10,10,0.06),transparent_55%),linear-gradient(180deg,#f7f6f3_0%,#ffffff_70%)] px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-7">
+        <div className="relative border-b border-fog/80 bg-[radial-gradient(120%_90%_at_0%_0%,rgba(10,10,10,0.05),transparent_55%),linear-gradient(180deg,#f6f4ef_0%,#ffffff_72%)] px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex items-center gap-4 sm:gap-5">
               <UserAvatar
                 address={user.wallet}
                 size="lg"
-                className="shrink-0"
+                className="shrink-0 ring-1 ring-ink/5"
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -391,7 +391,7 @@ export function AccountView() {
                   <StatusChip tone="idle">{avatarMeta.name}</StatusChip>
                 </div>
                 <div className="mt-2 flex min-w-0 items-center gap-2">
-                  <h1 className="truncate text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                  <h1 className="truncate text-3xl font-bold tracking-[-0.035em] text-ink sm:text-4xl">
                     @{user.username}
                   </h1>
                   <span
@@ -412,14 +412,14 @@ export function AccountView() {
               <div className="flex flex-wrap gap-2">
                 <a
                   href="/send"
-                  className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-paper transition-transform duration-200 hover:bg-ink/90 active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold tracking-[-0.01em] text-paper shadow-[0_8px_20px_-12px_rgba(10,10,10,0.45)] transition-all duration-200 hover:bg-ink/90 active:scale-[0.98]"
                 >
                   <ArrowUpRightIcon className="h-4 w-4" />
                   Send
                 </a>
                 <a
                   href="/inbox"
-                  className="inline-flex items-center gap-2 rounded-full border border-fog bg-white px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-graphite"
+                  className="inline-flex items-center gap-2 rounded-full border border-fog bg-white/90 px-4 py-2.5 text-sm font-semibold tracking-[-0.01em] text-ink backdrop-blur-sm transition-colors hover:border-graphite"
                 >
                   <InboxIcon className="h-4 w-4" />
                   Inbox

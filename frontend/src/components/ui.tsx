@@ -8,7 +8,9 @@ export function Panel({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`panel p-6 sm:p-7 ${className}`}>{children}</div>;
+  return (
+    <div className={`panel p-5 sm:p-7 ${className}`}>{children}</div>
+  );
 }
 
 export function PageHeader({
@@ -22,9 +24,11 @@ export function PageHeader({
 }) {
   return (
     <header
-      className={`mb-8 space-y-2 ${align === "center" ? "text-center" : "text-left"}`}
+      className={`mb-7 space-y-2 sm:mb-8 ${align === "center" ? "text-center" : "text-left"}`}
     >
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+      <h1 className="text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+        {title}
+      </h1>
       {subtitle ? (
         <p className="text-sm leading-relaxed text-graphite sm:text-base">
           {subtitle}
@@ -36,7 +40,7 @@ export function PageHeader({
 
 export function FieldLabel({children}: {children: ReactNode}) {
   return (
-    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-graphite">
+    <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-graphite">
       {children}
     </p>
   );
