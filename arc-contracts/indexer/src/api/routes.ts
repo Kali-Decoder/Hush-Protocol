@@ -10,6 +10,7 @@ export async function registerRoutes(
     const state = await sync.sync.get();
     return {
       status: "ok",
+      eventSource: config.eventSource,
       lastBlock: state.lastProcessedBlock,
       latestRoot: state.lastRoot,
       treeDepth: state.treeDepth,
@@ -76,6 +77,7 @@ export async function registerRoutes(
       latestRoot: latest?.root ?? state.lastRoot,
       lastProcessedBlock: state.lastProcessedBlock,
       treeSize: sync.tree.size,
+      eventSource: config.eventSource,
     };
   });
 }

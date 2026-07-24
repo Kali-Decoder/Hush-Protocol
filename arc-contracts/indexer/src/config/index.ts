@@ -18,6 +18,14 @@ function parseAddress(name: string, value: string): `0x${string}` {
   return value.toLowerCase() as `0x${string}`;
 }
 
+export type EventSourceMode = "goldsky" | "rpc";
+
+function parseEventSource(): EventSourceMode {
+  const raw = (process.env.EVENT_SOURCE || "goldsky").trim().toLowerCase();
+  if (raw === "rpc") return "rpc";
+  return "goldsky";
+}
+
 export const config = {
   rpcUrl: optionalEnv("RPC_URL", "http://127.0.0.1:8545"),
   chainId: Number(optionalEnv("CHAIN_ID", "31337")),
@@ -40,13 +48,24 @@ export const config = {
   treeDepth: Number(optionalEnv("TREE_DEPTH", "20")),
   apiPort: Number(optionalEnv("API_PORT", "4010")),
   skipPostRoot: optionalEnv("SKIP_POST_ROOT", "0") === "1",
+  eventSource: parseEventSource(),
+  goldskyBulletPoolUrl: (
+    process.env.GOLDSKY_BULLET_POOL_URL ||
+    "https://api.goldsky.com/api/public/project_cmrzb84g5syuc01vz6wx2ad6n/subgraphs/BulletPool/1.0.0/gn"
+  ).trim(),
+  goldskyRootManagerUrl: (
+    process.env.GOLDSKY_ROOT_MANAGER_URL ||
+    "https://api.goldsky.com/api/public/project_cmrzb84g5syuc01vz6wx2ad6n/subgraphs/MerkleRootManager/1.0.0/gn"
+  ).trim(),
 };
 
 export function assertRuntimeConfig(): void {
   if (config.poolAddress === "0x0000000000000000000000000000000000000000") {
     throw new Error("BULLET_POOL_ADDRESS is required");
   }
-  if (config.rootManagerAddress === "0x0000000000000000000000000000000000000000") {
+  if (
+    config.rootManagerAddress === "0x0000000000000000000000000000000000000000"
+  ) {
     throw new Error("MERKLE_ROOT_MANAGER_ADDRESS is required");
   }
   if (!config.skipPostRoot && !config.relayerPrivateKey) {
@@ -55,9 +74,13 @@ export function assertRuntimeConfig(): void {
   if (config.confirmations < 1) {
     throw new Error("CONFIRMATIONS must be >= 1");
   }
+  if (config.eventSource === "goldsky" && !config.goldskyBulletPoolUrl) {
+    throw new Error(
+      "GOLDSKY_BULLET_POOL_URL is required when EVENT_SOURCE=goldsky"
+    );
+  }
 }
 
-/** Soft check used by health endpoint when addresses are placeholders. */
 export function hasContractConfig(): boolean {
   return (
     config.poolAddress !== "0x0000000000000000000000000000000000000000" &&

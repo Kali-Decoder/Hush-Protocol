@@ -33,6 +33,13 @@ export const POOL_TOKENS: readonly PoolToken[] = [
     enabled: true,
     logo: "/tokens/cirbtc.png",
   },
+  {
+    address: "0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C",
+    symbol: "USYC",
+    decimals: 6,
+    enabled: true,
+    logo: "/tokens/usyc.png",
+  },
 ] as const;
 
 export const DEFAULT_POOL_TOKEN = POOL_TOKENS[0];

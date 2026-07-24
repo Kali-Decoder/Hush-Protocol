@@ -65,7 +65,7 @@ export interface Note {
   depositTxHash?: string;
   /** Human amount for history UI. */
   amount?: string;
-  /** Pool token symbol (USDC, EURC, cirBTC, …). */
+  /** Pool token symbol (USDC, EURC, cirBTC, USYC, …). */
   tokenSymbol?: string;
   recipientUsername?: string;
   createdAt: string | Date;

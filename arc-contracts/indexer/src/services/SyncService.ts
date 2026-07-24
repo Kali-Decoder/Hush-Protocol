@@ -8,20 +8,26 @@ import {
   SyncStateRepository,
 } from "../db/DepositRepository.js";
 import {PoseidonTree} from "../merkle/PoseidonTree.js";
-import {EventWatcher} from "../watcher/EventWatcher.js";
+import {
+  GoldskyDepositSource,
+  type DepositSource,
+} from "../goldsky/GoldskyDepositSource.js";
+import {GoldskyRootSource} from "../goldsky/GoldskyRootSource.js";
+import {RpcDepositSource} from "../watcher/EventWatcher.js";
 import type {DepositEvent, WitnessResponse} from "../types/index.js";
 
 /**
- * Core loop: hydrate tree → poll deposits → wait confirmations → insert →
- * post root. Idempotent and crash-safe via Postgres cursor + leaf ordering.
+ * Core loop: hydrate tree → ingest deposits (Goldsky or RPC) → confirmations →
+ * insert leaf → post root → serve witnesses.
  */
 export class SyncService {
   readonly tree: PoseidonTree;
   readonly deposits = new DepositRepository();
   readonly roots = new RootRepository();
   readonly sync = new SyncStateRepository();
-  readonly watcher: EventWatcher;
+  readonly source: DepositSource;
   readonly poster: RootPoster;
+  readonly goldskyRoots: GoldskyRootSource | null;
   private readonly client: PublicClient;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private running = false;
@@ -29,14 +35,22 @@ export class SyncService {
 
   constructor(client?: PublicClient) {
     this.client = client ?? createIndexerPublicClient();
-    this.watcher = new EventWatcher(this.client);
     this.poster = new RootPoster(this.client);
     this.tree = new PoseidonTree(config.treeDepth);
+
+    if (config.eventSource === "goldsky") {
+      this.source = new GoldskyDepositSource(config.goldskyBulletPoolUrl);
+      this.goldskyRoots = config.goldskyRootManagerUrl
+        ? new GoldskyRootSource(config.goldskyRootManagerUrl)
+        : null;
+    } else {
+      this.source = new RpcDepositSource(this.client);
+      this.goldskyRoots = null;
+    }
   }
 
   async start(): Promise<void> {
     await this.hydrate();
-    // If START_BLOCK was raised (e.g. skip genesis crawl), jump the cursor forward.
     const state = await this.sync.get();
     if (state.lastProcessedBlock < config.startBlock) {
       const jumpTo = Math.max(0, config.startBlock - 1);
@@ -47,7 +61,7 @@ export class SyncService {
     }
     this.running = true;
     console.log(
-      `[sync] started pool=${config.poolAddress} confirmations=${config.confirmations}`
+      `[sync] started source=${config.eventSource} pool=${config.poolAddress} confirmations=${config.confirmations}`
     );
     void this.loop();
   }
@@ -58,7 +72,6 @@ export class SyncService {
     this.timer = null;
   }
 
-  /** Rebuild in-memory tree from finalized deposits (never from zero unless empty). */
   async hydrate(): Promise<void> {
     const finalized = await this.deposits.listFinalizedOrdered();
     const commitments = finalized.map((d) => d.commitment);
@@ -69,7 +82,6 @@ export class SyncService {
     });
     console.log(`[sync] hydrated ${commitments.length} leaf(s) root=${root}`);
 
-    // Re-post latest root after restart so claims work if window evicted it.
     if (commitments.length > 0 && !config.skipPostRoot) {
       try {
         const tx = await this.poster.postRoot(root as Hex);
@@ -83,9 +95,15 @@ export class SyncService {
       }
     }
 
-    // Retry any unposted roots from prior crashes
     for (const rootHex of await this.roots.unposted()) {
       try {
+        if (
+          this.goldskyRoots &&
+          (await this.goldskyRoots.isRootPosted(rootHex))
+        ) {
+          await this.roots.markPosted(rootHex, "goldsky");
+          continue;
+        }
         const tx = await this.poster.postRoot(rootHex as Hex);
         if (tx) await this.roots.markPosted(rootHex, tx);
       } catch (err) {
@@ -98,19 +116,19 @@ export class SyncService {
     if (this.tickBusy) return {ingested: 0, finalized: 0};
     this.tickBusy = true;
     try {
-      const latest = await this.watcher.latestBlock();
+      const latest = await this.source.latestBlock();
       const state = await this.sync.get();
 
       let from =
         state.lastProcessedBlock > 0
           ? state.lastProcessedBlock + 1
           : config.startBlock;
-      // Cap range to avoid huge eth_getLogs
+      // Cap range — Goldsky pages internally; keep windows bounded.
       const to = Math.min(latest, from + 2_000 - 1);
       let ingested = 0;
 
       if (to >= from) {
-        const events = await this.watcher.fetchDeposits(from, to);
+        const events = await this.source.fetchDeposits(from, to);
         for (const ev of events) {
           const inserted = await this.deposits.insertIgnore({
             commitment: ev.commitment,
@@ -135,10 +153,6 @@ export class SyncService {
     }
   }
 
-  /**
-   * Finalize deposits at or below `safeBlock`: insert into Merkle tree in
-   * leafIndex order, post root.
-   */
   private async finalizeUpTo(safeBlock: number): Promise<number> {
     if (safeBlock < 0) return 0;
     const pending = await this.deposits.listPendingFinalization(safeBlock);
@@ -147,10 +161,8 @@ export class SyncService {
     let count = 0;
     for (const d of pending) {
       const expected = await this.deposits.nextExpectedLeafIndex();
-      // Only finalize the next contiguous leaf — gaps wait for missing events
       if (d.leafIndex !== expected) {
         if (d.leafIndex < expected) {
-          // Duplicate / already covered — mark finalized without re-insert
           await this.deposits.markFinalized(d.id!);
           continue;
         }
@@ -160,7 +172,6 @@ export class SyncService {
         break;
       }
 
-      // Verify commitment not already in tree at wrong index
       const {leafIndex, root} = await this.tree.insert(d.commitment);
       if (leafIndex !== d.leafIndex) {
         throw new Error(
@@ -173,14 +184,20 @@ export class SyncService {
       await this.sync.update({lastRoot: root});
 
       try {
-        const tx = await this.poster.postRoot(root as Hex);
-        if (tx) await this.roots.markPosted(root, tx);
+        if (
+          this.goldskyRoots &&
+          (await this.goldskyRoots.isRootPosted(root))
+        ) {
+          await this.roots.markPosted(root, "goldsky");
+        } else {
+          const tx = await this.poster.postRoot(root as Hex);
+          if (tx) await this.roots.markPosted(root, tx);
+        }
       } catch (err) {
         console.error(
           `[sync] postRoot failed for ${root}:`,
           err instanceof Error ? err.message : err
         );
-        // Root stays unposted; hydrate/retry will try again
       }
 
       count++;
@@ -197,7 +214,6 @@ export class SyncService {
     return this.tree.witness(dep.leafIndex);
   }
 
-  /** Expose for debugging / tests. */
   processEventForTest(ev: DepositEvent): Promise<boolean> {
     return this.deposits.insertIgnore({
       commitment: ev.commitment,
@@ -220,7 +236,10 @@ export class SyncService {
           console.log(`[sync] tick ingested=${ingested} finalized=${finalized}`);
         }
       } catch (err) {
-        console.error("[sync] tick error:", err instanceof Error ? err.message : err);
+        console.error(
+          "[sync] tick error:",
+          err instanceof Error ? err.message : err
+        );
       }
       await new Promise<void>((resolve) => {
         this.timer = setTimeout(resolve, config.pollIntervalMs);

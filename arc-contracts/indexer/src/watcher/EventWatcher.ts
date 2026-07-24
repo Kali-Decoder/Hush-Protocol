@@ -2,27 +2,26 @@ import type {PublicClient} from "viem";
 import {parseAbiItem} from "viem";
 import {config} from "../config/index.js";
 import type {DepositEvent} from "../types/index.js";
+import type {DepositSource} from "../goldsky/GoldskyDepositSource.js";
 
 const depositEvent = parseAbiItem(
   "event Deposit(bytes32 indexed commitment, uint32 indexed leafIndex, address indexed token, uint256 amount)"
 );
 
 /**
- * Polls BulletPool Deposit events. Does not finalize — SyncService applies
- * confirmation depth before inserting into the Merkle tree.
+ * Polls BulletPool Deposit events via eth_getLogs (RPC fallback).
  */
-export class EventWatcher {
+export class RpcDepositSource implements DepositSource {
   constructor(private readonly client: PublicClient) {}
 
   async latestBlock(): Promise<number> {
     return Number(await this.client.getBlockNumber());
   }
 
-  /**
-   * Fetch Deposit logs in [fromBlock, toBlock] inclusive.
-   * Sorted by (blockNumber, logIndex) ascending.
-   */
-  async fetchDeposits(fromBlock: number, toBlock: number): Promise<DepositEvent[]> {
+  async fetchDeposits(
+    fromBlock: number,
+    toBlock: number
+  ): Promise<DepositEvent[]> {
     if (toBlock < fromBlock) return [];
 
     const logs = await this.client.getLogs({
@@ -34,11 +33,20 @@ export class EventWatcher {
 
     const events: DepositEvent[] = [];
     for (const log of logs) {
-      if (log.blockNumber == null || log.blockHash == null || log.transactionHash == null) {
+      if (
+        log.blockNumber == null ||
+        log.blockHash == null ||
+        log.transactionHash == null
+      ) {
         continue;
       }
       const {commitment, leafIndex, token, amount} = log.args;
-      if (commitment == null || leafIndex == null || token == null || amount == null) {
+      if (
+        commitment == null ||
+        leafIndex == null ||
+        token == null ||
+        amount == null
+      ) {
         continue;
       }
       events.push({
@@ -61,3 +69,6 @@ export class EventWatcher {
     return events;
   }
 }
+
+/** @deprecated Prefer RpcDepositSource / GoldskyDepositSource */
+export class EventWatcher extends RpcDepositSource {}

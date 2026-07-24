@@ -26,7 +26,13 @@
       "symbol": "cirBTC",
       "decimals": 8,
       "enabled": true
+    },
+    {
+      "address": "0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C",
+      "symbol": "USYC",
+      "decimals": 6,
+      "enabled": true
     }
   ],
-  "updatedAt": "2026-07-23T15:55:17.683Z"
+  "updatedAt": "2026-07-24T19:26:13.326Z"
 }

@@ -1,25 +1,27 @@
-# Bullet Indexer
-
-Watches `BulletPool` deposits, maintains the canonical Poseidon Merkle tree,
-posts roots to `MerkleRootManager`, and serves membership witnesses.
+Watches `BulletPool` deposits (via **Goldsky** or RPC), maintains the canonical
+Poseidon Merkle tree, posts roots to `MerkleRootManager`, and serves membership
+witnesses.
 
 **Never** stores secrets. **Never** generates ZK proofs.
 
 ```
-Deposit event
+Goldsky Deposit (or RPC logs)
     → ingest (pending)
     → wait CONFIRMATIONS
     → insert leaf (in leafIndex order)
     → compute root
-    → postRoot()
+    → postRoot()   ← indexer / relayer (verifier path)
     → GET /witness/:commitment
 ```
+
+Goldsky = data fetcher. Indexer = tree + root poster + witness API.
 
 ## Layout
 
 ```
 indexer/src/
-├── watcher/EventWatcher.ts
+├── goldsky/          GraphQL deposit + root sources
+├── watcher/          RPC eth_getLogs fallback
 ├── merkle/PoseidonTree.ts
 ├── blockchain/RootPoster.ts
 ├── db/          schema + repositories
@@ -37,7 +39,8 @@ cd arc-contracts
 pnpm sdk:build
 pnpm --dir indexer install --ignore-workspace
 cp indexer/.env.example indexer/.env
-# fill BULLET_POOL_ADDRESS, MERKLE_ROOT_MANAGER_ADDRESS, RELAYER_PRIVATE_KEY, DATABASE_URL
+# fill RELAYER_PRIVATE_KEY + DATABASE_URL
+# Goldsky URLs default to the public BulletPool / MerkleRootManager subgraphs
 ```
 
 Postgres:
@@ -58,27 +61,22 @@ pnpm --dir indexer dev
 
 | Var | Meaning |
 |-----|---------|
-| `RPC_URL` | EVM JSON-RPC |
-| `BULLET_POOL_ADDRESS` | Pool with Deposit events |
+| `EVENT_SOURCE` | `goldsky` (default) or `rpc` |
+| `GOLDSKY_BULLET_POOL_URL` | Deposit subgraph GraphQL endpoint |
+| `GOLDSKY_ROOT_MANAGER_URL` | RootPosted subgraph (skip redundant postRoot) |
+| `RPC_URL` | EVM JSON-RPC (still needed for `postRoot`) |
+| `BULLET_POOL_ADDRESS` | Pool address |
 | `MERKLE_ROOT_MANAGER_ADDRESS` | Root poster target |
 | `RELAYER_PRIVATE_KEY` | Must **own** MerkleRootManager |
 | `DATABASE_URL` | Postgres |
 | `CONFIRMATIONS` | Blocks before finalizing a leaf (default 8) |
 | `SKIP_POST_ROOT=1` | Build tree + API without posting |
 
-Load addresses from a deploy file:
-
-```bash
-# after pnpm deploy:all --network localhost
-export BULLET_POOL_ADDRESS=$(jq -r .contracts.BulletPool deployments/localhost.json)
-export MERKLE_ROOT_MANAGER_ADDRESS=$(jq -r .contracts.MerkleRootManager deployments/localhost.json)
-```
-
 ## API
 
 | Method | Path | Notes |
 |--------|------|-------|
-| GET | `/health` | status, lastBlock, latestRoot |
+| GET | `/health` | status, eventSource, lastBlock, latestRoot |
 | GET | `/root` | latest root + leafCount |
 | GET | `/witness/:commitment` | siblings + pathIndices (no secret) |
 | GET | `/deposit/:commitment` | deposit metadata |
