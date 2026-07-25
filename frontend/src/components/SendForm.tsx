@@ -25,13 +25,27 @@ import {
   upsertPendingSend,
   type PendingSend,
 } from "@/lib/pendingSends";
+import {
+  copyPaymentShareImage,
+  sharePaymentOnTwitter,
+  type PaymentShareDetails,
+} from "@/lib/sharePayment";
+import {PaymentSharePreview} from "@/components/PaymentSharePreview";
 import {getToken, getStoredUser} from "@/lib/session";
 import {toast} from "@/lib/toast";
 import {formatError, formatErrorTitle} from "@/lib/errors";
 import type {PublicUser} from "@/shared";
 import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
-import {CheckIcon, ExternalLinkIcon, LoaderIcon, MinusIcon, PlusIcon} from "@/components/icons";
+import {
+  CheckIcon,
+  CopyIcon,
+  ExternalLinkIcon,
+  LoaderIcon,
+  MinusIcon,
+  PlusIcon,
+  XBrandIcon,
+} from "@/components/icons";
 import {
   formatRecipientLabel,
   normalizeRecipient,
@@ -61,7 +75,6 @@ type Step =
   | "undelivered"
   | "error";
 
-const SUCCESS_MODAL_MS = 5000;
 const AMOUNT_STEP = 1;
 
 type FlowStepId = "note" | "approve" | "deposit" | "deliver";
@@ -285,12 +298,6 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     setStatusHint("");
   }
 
-  useEffect(() => {
-    if (step !== "done") return;
-    const id = window.setTimeout(resetAfterSuccess, SUCCESS_MODAL_MS);
-    return () => window.clearTimeout(id);
-  }, [step]);
-
   async function handleResolve() {
     setError("");
     setResolved(null);
@@ -457,6 +464,16 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   const showStatusModal =
     sendInFlight || step === "done" || step === "undelivered";
 
+  // Only list undelivered notes when idle — during send we persist pending
+  // before POST, which would flash "Retry deliver" under the status modal.
+  const idlePending = showStatusModal
+    ? []
+    : pendingSends.filter(
+        (p) =>
+          !commitment ||
+          p.commitment.toLowerCase() !== commitment.toLowerCase()
+      );
+
   return (
     <>
       <div
@@ -467,9 +484,9 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         }
         aria-hidden={showStatusModal || undefined}
       >
-      {pendingSends.length > 0 ? (
+      {idlePending.length > 0 ? (
         <PendingDeliveriesPanel
-          items={pendingSends}
+          items={idlePending}
           retryingCommitment={retryingCommitment}
           onRetry={(p) => void deliverPending(p)}
         />
@@ -809,9 +826,8 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
           includeApprove={includeApprove}
           statusHint={statusHint}
           amount={sentAmount ?? amount}
-          tokenSymbol={
-            sentTokenSymbol || selectedToken.symbol
-          }
+          tokenSymbol={sentTokenSymbol || selectedToken.symbol}
+          fromUsername={me?.username || ""}
           username={sentUsername || resolved?.username || ""}
           recipientKind={recipientKind}
           recipientInput={recipient}
@@ -903,6 +919,7 @@ function PaymentStatusModal({
   statusHint,
   amount,
   tokenSymbol,
+  fromUsername,
   username,
   recipientKind,
   recipientInput,
@@ -919,6 +936,7 @@ function PaymentStatusModal({
   statusHint: string;
   amount: number | null;
   tokenSymbol: string;
+  fromUsername: string;
   username: string;
   recipientKind: Exclude<RecipientKind, "unknown">;
   recipientInput: string;
@@ -947,6 +965,14 @@ function PaymentStatusModal({
     recipientKind === "email" ? recipientInput : `@${username}`,
     recipientKind
   );
+  const shareDetails: PaymentShareDetails = {
+    fromUsername,
+    toLabel: recipientLabel,
+    amount: amount ?? "—",
+    tokenSymbol,
+    tokenLogo: tokenMeta?.logo,
+  };
+  const [shareBusy, setShareBusy] = useState<"copy" | "tweet" | null>(null);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -955,6 +981,34 @@ function PaymentStatusModal({
       document.body.style.overflow = prev;
     };
   }, []);
+
+  async function onCopyImage() {
+    setShareBusy("copy");
+    try {
+      await copyPaymentShareImage(shareDetails);
+      toast.success("Share image copied. Paste it into X, Telegram, or Discord.");
+    } catch {
+      toast.error("Could not copy image. Try Share on X to download instead.");
+    } finally {
+      setShareBusy(null);
+    }
+  }
+
+  async function onShareTwitter() {
+    setShareBusy("tweet");
+    try {
+      const mode = await sharePaymentOnTwitter(shareDetails);
+      toast.success(
+        mode === "copied"
+          ? "Image copied — paste it into your post on X."
+          : "Image downloaded — attach it to your post on X."
+      );
+    } catch (e) {
+      toast.error(formatError(e));
+    } finally {
+      setShareBusy(null);
+    }
+  }
 
   return (
     <div
@@ -968,8 +1022,8 @@ function PaymentStatusModal({
         aria-hidden
       />
 
-      <div className="relative z-[1] flex w-full max-w-md animate-sheet-in flex-col rounded-t-3xl border border-fog bg-white shadow-[0_-12px_48px_-20px_rgba(10,10,10,0.35)] motion-reduce:animate-none sm:animate-rise sm:rounded-3xl sm:shadow-[0_28px_64px_-28px_rgba(10,10,10,0.4)]">
-        <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-fog sm:hidden" />
+      <div className="relative z-[1] flex max-h-[92dvh] w-full max-w-md animate-sheet-in flex-col overflow-y-auto rounded-t-3xl border border-fog bg-white shadow-[0_-12px_48px_-20px_rgba(10,10,10,0.35)] motion-reduce:animate-none sm:animate-rise sm:rounded-3xl sm:shadow-[0_28px_64px_-28px_rgba(10,10,10,0.4)]">
+        <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-fog sm:hidden" />
 
         <div className="px-6 pb-2 pt-5 text-center sm:px-8 sm:pt-8">
           {success ? (
@@ -979,11 +1033,7 @@ function PaymentStatusModal({
           ) : null}
 
           <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-graphite">
-            {success
-              ? "Sent"
-              : failed
-                ? "Action needed"
-                : "Sending"}
+            {success ? "Sent" : failed ? "Action needed" : "Sending"}
           </p>
 
           <h2
@@ -1081,12 +1131,79 @@ function PaymentStatusModal({
           ) : null}
 
           {success ? (
-            <p className="text-center text-sm text-graphite">
-              Encrypted note delivered. They can claim from Inbox.
-            </p>
+            <div className="space-y-4">
+              <PaymentSharePreview details={shareDetails} />
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={shareBusy !== null}
+                  onClick={() => void onCopyImage()}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-fog bg-paper px-3 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-graphite disabled:opacity-50"
+                >
+                  {shareBusy === "copy" ? (
+                    <LoaderIcon className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CopyIcon className="h-4 w-4" />
+                  )}
+                  Copy image
+                </button>
+                <button
+                  type="button"
+                  disabled={shareBusy !== null}
+                  onClick={() => void onShareTwitter()}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-3 py-2.5 text-sm font-semibold text-paper transition-transform duration-200 hover:bg-ink/90 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {shareBusy === "tweet" ? (
+                    <LoaderIcon className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <XBrandIcon className="h-4 w-4" />
+                  )}
+                  Share on X
+                </button>
+              </div>
+
+              <p className="text-center text-[11px] text-graphite">
+                Tags{" "}
+                <a
+                  href="https://x.com/hushhprotocol"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-ink underline-offset-2 hover:underline"
+                >
+                  @hushhprotocol
+                </a>{" "}
+                · paste the image into your post
+              </p>
+
+              {(approveHash || depositHash) && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {approveHash ? (
+                    <TxChip label="Approve" hash={approveHash} />
+                  ) : null}
+                  {depositHash ? (
+                    <TxChip label="Deposit" hash={depositHash} />
+                  ) : null}
+                </div>
+              )}
+
+              {commitment ? (
+                <p className="truncate text-center font-mono text-[10px] text-graphite/80">
+                  {commitment}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-primary w-full"
+              >
+                Done
+              </button>
+            </div>
           ) : null}
 
-          {(approveHash || depositHash) && (
+          {!success && (approveHash || depositHash) ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {approveHash ? (
                 <TxChip label="Approve" hash={approveHash} />
@@ -1095,9 +1212,9 @@ function PaymentStatusModal({
                 <TxChip label="Deposit" hash={depositHash} />
               ) : null}
             </div>
-          )}
+          ) : null}
 
-          {commitment && (success || failed) ? (
+          {commitment && failed ? (
             <p className="mt-3 truncate text-center font-mono text-[10px] text-graphite/80">
               {commitment}
             </p>
@@ -1125,21 +1242,6 @@ function PaymentStatusModal({
                   Close
                 </button>
               ) : null}
-            </div>
-          ) : null}
-
-          {success ? (
-            <div className="mt-5 space-y-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-primary w-full"
-              >
-                Done
-              </button>
-              <p className="text-center text-[11px] text-graphite">
-                Closes automatically
-              </p>
             </div>
           ) : null}
         </div>
