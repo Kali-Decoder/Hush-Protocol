@@ -43,10 +43,10 @@ cp indexer/.env.example indexer/.env
 # Goldsky URLs default to the public BulletPool / MerkleRootManager subgraphs
 ```
 
-Postgres:
+MongoDB Atlas:
 
 ```bash
-createdb bullet_indexer   # or use Docker
+# Set DATABASE_URL in indexer/.env (db name: hushh_indexer)
 pnpm --dir indexer db:migrate
 ```
 
@@ -68,7 +68,7 @@ pnpm --dir indexer dev
 | `BULLET_POOL_ADDRESS` | Pool address |
 | `MERKLE_ROOT_MANAGER_ADDRESS` | Root poster target |
 | `RELAYER_PRIVATE_KEY` | Must **own** MerkleRootManager |
-| `DATABASE_URL` | Postgres |
+| `DATABASE_URL` | MongoDB Atlas (`…/hushh_indexer`) |
 | `CONFIRMATIONS` | Blocks before finalizing a leaf (default 8) |
 | `SKIP_POST_ROOT=1` | Build tree + API without posting |
 
@@ -86,7 +86,7 @@ pnpm --dir indexer dev
 
 On restart the indexer:
 
-1. Loads finalized deposits from Postgres in `leaf_index` order
+1. Loads finalized deposits from MongoDB in `leaf_index` order
 2. Rebuilds the in-memory Poseidon tree
 3. Re-posts the latest root if needed
 4. Continues from `sync_state.last_processed_block`

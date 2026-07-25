@@ -258,10 +258,10 @@ Writes `deployments/arcTestnet.json` (pool, root manager, verifier, MockUSDC).
 ```bash
 pnpm indexer:install
 cp indexer/.env.example indexer/.env
-# BULLET_POOL_ADDRESS, MERKLE_ROOT_MANAGER_ADDRESS, RELAYER_PRIVATE_KEY, DATABASE_URL
+# BULLET_POOL_ADDRESS, MERKLE_ROOT_MANAGER_ADDRESS, RELAYER_PRIVATE_KEY
+# DATABASE_URL=mongodb+srv://…/hushh_indexer
 # RPC_URL=https://rpc.testnet.arc.network  CHAIN_ID=5042002
 
-createdb bullet_indexer
 pnpm indexer:migrate
 pnpm indexer:dev                 # API :4010
 ```
@@ -272,6 +272,7 @@ Witness API: `GET /witness/:commitment` (no secrets returned).
 
 ```bash
 pnpm backend:install
+# DATABASE_URL=mongodb+srv://…/hushh
 pnpm backend:db
 pnpm backend:dev                 # API :4020
 ```

@@ -22,12 +22,14 @@ Those stay in SDK / indexer / contracts.
 ```bash
 cd arc-contracts/backend
 pnpm install --ignore-workspace
-cp .env.example .env
+cp .env.example .env   # set MongoDB Atlas DATABASE_URL (db: hushh)
 pnpm db:generate
 pnpm db:push
 pnpm dev
 # → http://127.0.0.1:4020
 ```
+
+Users and encrypted notes live in **MongoDB Atlas** (not on-chain).
 
 ## Auth flow (frontend)
 

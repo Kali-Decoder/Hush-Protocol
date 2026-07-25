@@ -1,12 +1,12 @@
-import {migrate, closePool} from "./client.js";
+import {migrate, closeDb} from "./client.js";
 
 migrate()
   .then(async () => {
-    await closePool();
+    await closeDb();
     console.log("migrate ok");
   })
   .catch(async (err) => {
     console.error(err);
-    await closePool();
+    await closeDb();
     process.exit(1);
   });

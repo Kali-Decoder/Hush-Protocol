@@ -1,147 +1,215 @@
-import {getPool} from "./client.js";
+import {ObjectId, type Db, type WithId} from "mongodb";
+import {connectDb, getDb} from "./client.js";
 import type {DepositRecord, SyncState} from "../types/index.js";
 
-function mapDeposit(row: Record<string, unknown>): DepositRecord {
+type DepositDoc = {
+  commitment: string;
+  leaf_index: number;
+  token: string;
+  amount: string;
+  block_number: number;
+  block_hash: string;
+  tx_hash: string;
+  log_index: number;
+  finalized: boolean;
+  created_at: Date;
+};
+
+type RootDoc = {
+  root: string;
+  leaf_count: number;
+  block_number: number | null;
+  posted: boolean;
+  posted_tx_hash: string | null;
+  created_at: Date;
+};
+
+type SyncDoc = {
+  _id: string;
+  last_processed_block: number;
+  last_root: string | null;
+  tree_depth: number;
+  updated_at: Date;
+};
+
+function isDuplicateKey(err: unknown): boolean {
+  return Boolean(
+    err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as {code: number}).code === 11000
+  );
+}
+
+function mapDeposit(doc: WithId<DepositDoc>): DepositRecord {
   return {
-    id: Number(row.id),
-    commitment: String(row.commitment),
-    leafIndex: Number(row.leaf_index),
-    token: String(row.token),
-    amount: String(row.amount),
-    blockNumber: Number(row.block_number),
-    blockHash: String(row.block_hash),
-    txHash: String(row.tx_hash),
-    logIndex: Number(row.log_index),
-    finalized: Boolean(row.finalized),
-    createdAt: row.created_at as Date,
+    id: String(doc._id),
+    commitment: doc.commitment,
+    leafIndex: doc.leaf_index,
+    token: doc.token,
+    amount: doc.amount,
+    blockNumber: doc.block_number,
+    blockHash: doc.block_hash,
+    txHash: doc.tx_hash,
+    logIndex: doc.log_index,
+    finalized: doc.finalized,
+    createdAt: doc.created_at,
   };
+}
+
+function deposits(db: Db = getDb()) {
+  return db.collection<DepositDoc>("deposits");
+}
+
+function roots(db: Db = getDb()) {
+  return db.collection<RootDoc>("merkle_roots");
+}
+
+function syncState(db: Db = getDb()) {
+  return db.collection<SyncDoc>("sync_state");
 }
 
 export class DepositRepository {
   async insertIgnore(d: DepositRecord): Promise<boolean> {
     try {
-      const res = await getPool().query(
-        `INSERT INTO deposits
-          (commitment, leaf_index, token, amount, block_number, block_hash, tx_hash, log_index, finalized)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         ON CONFLICT (tx_hash, log_index) DO NOTHING
-         RETURNING id`,
-        [
-          d.commitment.toLowerCase(),
-          d.leafIndex,
-          d.token.toLowerCase(),
-          d.amount,
-          d.blockNumber,
-          d.blockHash.toLowerCase(),
-          d.txHash.toLowerCase(),
-          d.logIndex,
-          d.finalized,
-        ]
-      );
-      return (res.rowCount ?? 0) > 0;
+      await deposits().insertOne({
+        commitment: d.commitment.toLowerCase(),
+        leaf_index: d.leafIndex,
+        token: d.token.toLowerCase(),
+        amount: d.amount,
+        block_number: d.blockNumber,
+        block_hash: d.blockHash.toLowerCase(),
+        tx_hash: d.txHash.toLowerCase(),
+        log_index: d.logIndex,
+        finalized: d.finalized,
+        created_at: new Date(),
+      });
+      return true;
     } catch (err) {
-      const code = (err as {code?: string}).code;
-      // Unique leaf_index / commitment — treat as already ingested
-      if (code === "23505") return false;
+      if (isDuplicateKey(err)) return false;
       throw err;
     }
   }
 
-  async markFinalized(id: number): Promise<void> {
-    await getPool().query(`UPDATE deposits SET finalized = TRUE WHERE id = $1`, [id]);
+  async markFinalized(id: string): Promise<void> {
+    await deposits().updateOne(
+      {_id: new ObjectId(id)},
+      {$set: {finalized: true}}
+    );
   }
 
   async findByCommitment(commitment: string): Promise<DepositRecord | null> {
-    const res = await getPool().query(
-      `SELECT * FROM deposits WHERE commitment = $1`,
-      [commitment.toLowerCase()]
-    );
-    return res.rows[0] ? mapDeposit(res.rows[0]) : null;
+    const doc = await deposits().findOne({
+      commitment: commitment.toLowerCase(),
+    });
+    return doc ? mapDeposit(doc) : null;
   }
 
   async listFinalizedOrdered(): Promise<DepositRecord[]> {
-    const res = await getPool().query(
-      `SELECT * FROM deposits WHERE finalized = TRUE ORDER BY leaf_index ASC`
-    );
-    return res.rows.map(mapDeposit);
+    const docs = await deposits()
+      .find({finalized: true})
+      .sort({leaf_index: 1})
+      .toArray();
+    return docs.map(mapDeposit);
   }
 
   async listPendingFinalization(maxBlock: number): Promise<DepositRecord[]> {
-    const res = await getPool().query(
-      `SELECT * FROM deposits
-       WHERE finalized = FALSE AND block_number <= $1
-       ORDER BY leaf_index ASC, log_index ASC`,
-      [maxBlock]
-    );
-    return res.rows.map(mapDeposit);
+    const docs = await deposits()
+      .find({finalized: false, block_number: {$lte: maxBlock}})
+      .sort({leaf_index: 1, log_index: 1})
+      .toArray();
+    return docs.map(mapDeposit);
   }
 
   async countFinalized(): Promise<number> {
-    const res = await getPool().query(
-      `SELECT COUNT(*)::int AS c FROM deposits WHERE finalized = TRUE`
-    );
-    return Number(res.rows[0].c);
+    return deposits().countDocuments({finalized: true});
   }
 
   async nextExpectedLeafIndex(): Promise<number> {
-    const res = await getPool().query(
-      `SELECT COALESCE(MAX(leaf_index) + 1, 0)::int AS n FROM deposits WHERE finalized = TRUE`
-    );
-    return Number(res.rows[0].n);
+    const top = await deposits()
+      .find({finalized: true})
+      .sort({leaf_index: -1})
+      .limit(1)
+      .project({leaf_index: 1})
+      .toArray();
+    if (!top[0]) return 0;
+    return top[0].leaf_index + 1;
   }
 }
 
 export class RootRepository {
-  async upsert(root: string, leafCount: number, blockNumber: number | null): Promise<void> {
-    await getPool().query(
-      `INSERT INTO merkle_roots (root, leaf_count, block_number, posted)
-       VALUES ($1, $2, $3, FALSE)
-       ON CONFLICT (root) DO NOTHING`,
-      [root.toLowerCase(), leafCount, blockNumber]
-    );
+  async upsert(
+    root: string,
+    leafCount: number,
+    blockNumber: number | null
+  ): Promise<void> {
+    try {
+      await roots().insertOne({
+        root: root.toLowerCase(),
+        leaf_count: leafCount,
+        block_number: blockNumber,
+        posted: false,
+        posted_tx_hash: null,
+        created_at: new Date(),
+      });
+    } catch (err) {
+      if (isDuplicateKey(err)) return;
+      throw err;
+    }
   }
 
   async markPosted(root: string, txHash: string): Promise<void> {
-    await getPool().query(
-      `UPDATE merkle_roots SET posted = TRUE, posted_tx_hash = $2 WHERE root = $1`,
-      [root.toLowerCase(), txHash.toLowerCase()]
+    await roots().updateOne(
+      {root: root.toLowerCase()},
+      {$set: {posted: true, posted_tx_hash: txHash.toLowerCase()}}
     );
   }
 
-  async latest(): Promise<{root: string; leafCount: number; posted: boolean} | null> {
-    const res = await getPool().query(
-      `SELECT root, leaf_count, posted FROM merkle_roots ORDER BY leaf_count DESC LIMIT 1`
-    );
-    if (!res.rows[0]) return null;
+  async latest(): Promise<{
+    root: string;
+    leafCount: number;
+    posted: boolean;
+  } | null> {
+    const doc = await roots().find().sort({leaf_count: -1}).limit(1).next();
+    if (!doc) return null;
     return {
-      root: String(res.rows[0].root),
-      leafCount: Number(res.rows[0].leaf_count),
-      posted: Boolean(res.rows[0].posted),
+      root: doc.root,
+      leafCount: doc.leaf_count,
+      posted: doc.posted,
     };
   }
 
   async count(): Promise<number> {
-    const res = await getPool().query(`SELECT COUNT(*)::int AS c FROM merkle_roots`);
-    return Number(res.rows[0].c);
+    return roots().countDocuments();
   }
 
   async unposted(): Promise<string[]> {
-    const res = await getPool().query(
-      `SELECT root FROM merkle_roots WHERE posted = FALSE ORDER BY leaf_count ASC`
-    );
-    return res.rows.map((r) => String(r.root));
+    const docs = await roots()
+      .find({posted: false})
+      .sort({leaf_count: 1})
+      .project({root: 1})
+      .toArray();
+    return docs.map((d) => d.root);
   }
 }
 
 export class SyncStateRepository {
   async get(): Promise<SyncState> {
-    const res = await getPool().query(`SELECT * FROM sync_state WHERE id = 1`);
-    const row = res.rows[0];
+    await connectDb();
+    const row = await syncState().findOne({_id: "singleton"});
+    if (!row) {
+      return {
+        lastProcessedBlock: 0,
+        lastRoot: null,
+        treeDepth: 20,
+        updatedAt: new Date(),
+      };
+    }
     return {
-      lastProcessedBlock: Number(row.last_processed_block),
-      lastRoot: row.last_root ? String(row.last_root) : null,
-      treeDepth: Number(row.tree_depth),
-      updatedAt: row.updated_at as Date,
+      lastProcessedBlock: row.last_processed_block,
+      lastRoot: row.last_root,
+      treeDepth: row.tree_depth,
+      updatedAt: row.updated_at,
     };
   }
 
@@ -151,18 +219,19 @@ export class SyncStateRepository {
     treeDepth?: number;
   }): Promise<void> {
     const cur = await this.get();
-    await getPool().query(
-      `UPDATE sync_state SET
-         last_processed_block = $1,
-         last_root = $2,
-         tree_depth = $3,
-         updated_at = NOW()
-       WHERE id = 1`,
-      [
-        partial.lastProcessedBlock ?? cur.lastProcessedBlock,
-        partial.lastRoot === undefined ? cur.lastRoot : partial.lastRoot,
-        partial.treeDepth ?? cur.treeDepth,
-      ]
+    await syncState().updateOne(
+      {_id: "singleton"},
+      {
+        $set: {
+          last_processed_block:
+            partial.lastProcessedBlock ?? cur.lastProcessedBlock,
+          last_root:
+            partial.lastRoot === undefined ? cur.lastRoot : partial.lastRoot,
+          tree_depth: partial.treeDepth ?? cur.treeDepth,
+          updated_at: new Date(),
+        },
+      },
+      {upsert: true}
     );
   }
 }

@@ -125,7 +125,7 @@ needs the indexer.
 ### P0.4 Merkle indexer (`arc-contracts/indexer`) — DONE
 
 - Watch `Deposit` events, insert leaves in `leafIndex` order.
-- Confirmations before finalize. Crash recovery from Postgres.
+- Confirmations before finalize. Crash recovery from MongoDB.
 - `postRoot` via dedicated relayer key.
 - API: `/health`, `/root`, `/witness/:commitment`, `/deposit/:commitment`,
   `/stats`. Never returns secrets. Never proves.
@@ -185,8 +185,8 @@ Reaching for any of these = stop and ask.
 | Contracts | Solidity 0.8.28, Hardhat, OpenZeppelin | `arc-contracts/contracts/` |
 | ZK | Circom + snarkjs, Groth16 / BN254 | `arc-contracts/zk/` |
 | SDK | TypeScript, circomlibjs, snarkjs | `arc-contracts/sdk/` |
-| Indexer | Node, Fastify, viem, Postgres | `arc-contracts/indexer/` |
-| Backend | Fastify + Prisma (SQLite) | `arc-contracts/backend/` — auth, users, notes |
+| Indexer | Node, Fastify, viem, MongoDB | `arc-contracts/indexer/` |
+| Backend | Fastify + Prisma (MongoDB) | `arc-contracts/backend/` — auth, users, notes |
 | Frontend | Next.js + TS + Tailwind | `frontend/` — types in `src/shared/`, EVM wallet next |
 | Asset | ERC-20 USDC (+ MockUSDC on testnet) | registry inside `BulletPool` |
 

@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id               String   @id @default(cuid())
+  id               String   @id @default(cuid()) @map("_id")
   wallet           String   @unique
   username         String   @unique
   bulletPublicKey  String
@@ -25,7 +25,7 @@ model User {
 }
 
 model Note {
-  id                 String   @id @default(cuid())
+  id                 String   @id @default(cuid()) @map("_id")
   recipientId        String
   recipient          User     @relation("RecipientNotes", fields: [recipientId], references: [id])
   senderId           String?

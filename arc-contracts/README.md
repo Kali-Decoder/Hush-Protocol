@@ -97,7 +97,7 @@ cp indexer/.env.example indexer/.env
 # CHAIN_ID=5042002
 # BULLET_POOL_ADDRESS / MERKLE_ROOT_MANAGER_ADDRESS from deployments/arcTestnet.json
 # RELAYER_PRIVATE_KEY must own MerkleRootManager
-# DATABASE_URL=postgres://...
+# DATABASE_URL=mongodb+srv://USER:PASSWORD@HOST/hushh_indexer?retryWrites=true&w=majority
 
 pnpm indexer:migrate
 pnpm indexer:dev        # http://127.0.0.1:4010
@@ -107,7 +107,7 @@ pnpm indexer:dev        # http://127.0.0.1:4010
 
 ```bash
 pnpm backend:install
-pnpm backend:db         # prisma generate + db push (SQLite)
+pnpm backend:db         # prisma generate + db push (MongoDB)
 pnpm backend:dev        # http://127.0.0.1:4020
 ```
 

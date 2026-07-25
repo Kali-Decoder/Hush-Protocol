@@ -1,5 +1,5 @@
 export interface DepositRecord {
-  id?: number;
+  id?: string;
   commitment: string;
   leafIndex: number;
   token: string;

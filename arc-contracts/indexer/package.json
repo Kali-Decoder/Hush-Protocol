@@ -5,7 +5,7 @@
   "description": "Bullet deposit indexer — Poseidon Merkle tree + root poster + witness API",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json && mkdir -p dist/db && cp src/db/schema.sql dist/db/schema.sql",
+    "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
     "db:migrate": "tsx src/db/migrate.ts",
@@ -16,12 +16,11 @@
     "@bullet/sdk": "link:../sdk",
     "dotenv": "^16.0.0",
     "fastify": "^5.2.1",
-    "pg": "^8.14.1",
+    "mongodb": "^6.16.0",
     "viem": "^2.26.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
-    "@types/pg": "^8.11.11",
     "tsx": "^4.19.4",
     "typescript": "5.8.3"
   }

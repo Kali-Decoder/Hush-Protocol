@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import {assertRuntimeConfig, config} from "./config/index.js";
-import {migrate, closePool} from "./db/client.js";
+import {migrate, closeDb} from "./db/client.js";
 import {SyncService} from "./services/SyncService.js";
 import {registerRoutes} from "./api/routes.js";
 
@@ -30,7 +30,7 @@ async function main() {
     console.log("[main] shutting down…");
     sync.stop();
     await app.close();
-    await closePool();
+    await closeDb();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);
@@ -42,6 +42,6 @@ async function main() {
 
 main().catch(async (err) => {
   console.error(err);
-  await closePool();
+  await closeDb();
   process.exit(1);
 });
