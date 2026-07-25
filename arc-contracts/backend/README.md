@@ -30,7 +30,17 @@ pnpm dev
 ```
 
 Users and encrypted notes live in **MongoDB Atlas** (not on-chain).
-On Render, set **`MONGODB_URI`** (not `DATABASE_URL`) so a linked Postgres service cannot override Prisma.
+
+### Render deploy
+
+| Setting | Value |
+|--------|--------|
+| **Root Directory** | `arc-contracts/backend` |
+| **Build Command** | `pnpm install --ignore-workspace && pnpm db:generate` |
+| **Start Command** | `pnpm start` |
+| **Env** | `MONGODB_URI=mongodb+srv://…/hushh?retryWrites=true&w=majority` |
+
+Do **not** put `db:push` in Build Command. Do **not** leave a Render Postgres `DATABASE_URL` linked to this service. Mark `MONGODB_URI` available at runtime (and optionally during build).
 
 ## Auth flow (frontend)
 
