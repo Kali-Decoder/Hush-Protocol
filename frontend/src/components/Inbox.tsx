@@ -16,6 +16,7 @@ import {
 } from "@/lib/config";
 import {getOrCreateHushKeys, openPayload} from "@/lib/crypto";
 import {getToken, getStoredUser} from "@/lib/session";
+import {shortAddr} from "@/lib/address";
 import {toast} from "@/lib/toast";
 import {formatError, formatErrorTitle} from "@/lib/errors";
 import {useSession} from "@/hooks/useSession";
@@ -27,12 +28,14 @@ import {
 import type {Note} from "@/shared";
 import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
+import {PaymentShareSuccessModal} from "@/components/PaymentShareSuccessModal";
 import {
   CheckIcon,
   ExternalLinkIcon,
   LoaderIcon,
 } from "@/components/icons";
 import {ErrorBanner, Panel} from "@/components/ui";
+import type {PaymentShareDetails} from "@/lib/sharePayment";
 
 interface DecryptedRow {
   note: Note;
@@ -78,6 +81,10 @@ export function Inbox() {
   const [claimStep, setClaimStep] = useState<ClaimStep>("idle");
   const [txHash, setTxHash] = useState("");
   const [tab, setTab] = useState<InboxTab>("unclaimed");
+  const [shareSuccess, setShareSuccess] = useState<{
+    details: PaymentShareDetails;
+    txHash: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -181,7 +188,24 @@ export function Inbox() {
       await claimNote(token, row.note.id, hash);
       rememberClaimTx(row.note.id, hash);
 
+      const tok = resolvePoolToken({
+        tokenSymbol: row.note.tokenSymbol,
+        tokenHash: row.payload.tokenHash,
+      });
+      const amountLabel = fromTokenUnits(row.payload.amount, tok.decimals);
+
       setClaimStep("done");
+      setShareSuccess({
+        details: {
+          kind: "claimed",
+          fromUsername: "",
+          toLabel: me?.username ? `@${me.username}` : shortAddr(address),
+          amount: amountLabel,
+          tokenSymbol: tok.symbol,
+          tokenLogo: tok.logo,
+        },
+        txHash: hash,
+      });
       toast.success("Claimed. Tokens sent to your wallet.", {
         href: explorerTx(hash),
         hrefLabel: "View on explorer",
@@ -430,6 +454,14 @@ export function Inbox() {
           })}
         </ul>
       </div>
+
+      {shareSuccess ? (
+        <PaymentShareSuccessModal
+          details={shareSuccess.details}
+          depositHash={shareSuccess.txHash}
+          onClose={() => setShareSuccess(null)}
+        />
+      ) : null}
     </NetworkGate>
   );
 }

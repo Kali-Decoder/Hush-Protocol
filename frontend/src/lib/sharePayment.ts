@@ -1,6 +1,9 @@
 const HUSH_HANDLE = "@hushhprotocol";
 
+export type PaymentShareKind = "sent" | "claimed";
+
 export type PaymentShareDetails = {
+  kind?: PaymentShareKind;
   fromUsername: string;
   toLabel: string;
   amount: number | string;
@@ -8,15 +11,36 @@ export type PaymentShareDetails = {
   tokenLogo?: string;
 };
 
+function shareKind(d: PaymentShareDetails): PaymentShareKind {
+  return d.kind ?? "sent";
+}
+
+function fromDisplay(d: PaymentShareDetails): string {
+  if (d.fromUsername) return `@${d.fromUsername.replace(/^@/, "")}`;
+  return shareKind(d) === "claimed" ? "Private" : "—";
+}
+
+function eyebrowLabel(d: PaymentShareDetails): string {
+  return shareKind(d) === "claimed" ? "PAYMENT CLAIMED" : "PAYMENT SENT";
+}
+
 /** Prefill text for X / Twitter share intent. */
 export function paymentShareTweetText(d: PaymentShareDetails): string {
-  const from = d.fromUsername
-    ? `@${d.fromUsername.replace(/^@/, "")}`
-    : "someone";
+  const from = fromDisplay(d);
+  const to = d.toLabel;
+  if (shareKind(d) === "claimed") {
+    return [
+      `Claimed ${d.amount} ${d.tokenSymbol} privately on ${HUSH_HANDLE}`,
+      "",
+      `${from} → ${to}`,
+      "",
+      "Private by design on Arc. #HushhProtocol #Arc",
+    ].join("\n");
+  }
   return [
     `Sent ${d.amount} ${d.tokenSymbol} silently on ${HUSH_HANDLE}`,
     "",
-    `${from} → ${d.toLabel}`,
+    `${from} → ${to}`,
     "",
     "Private by design on Arc. #HushhProtocol #Arc",
   ].join("\n");
@@ -131,7 +155,7 @@ export async function renderPaymentSharePng(
   ctx.fillStyle = "#6b6b6b";
   ctx.font =
     "600 22px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
-  ctx.fillText("PAYMENT SENT", 120, 320);
+  ctx.fillText(eyebrowLabel(d), 120, 320);
 
   // Amount
   ctx.fillStyle = "#0a0a0a";
@@ -165,9 +189,7 @@ export async function renderPaymentSharePng(
   ctx.stroke();
 
   // From → To
-  const from = d.fromUsername
-    ? `@${d.fromUsername.replace(/^@/, "")}`
-    : "—";
+  const from = fromDisplay(d);
   ctx.fillStyle = "#6b6b6b";
   ctx.font = "600 24px Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif";
   ctx.fillText("FROM", 120, 590);

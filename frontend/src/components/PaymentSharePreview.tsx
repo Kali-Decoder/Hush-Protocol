@@ -10,7 +10,11 @@ export function PaymentSharePreview({
 }) {
   const from = details.fromUsername
     ? `@${details.fromUsername.replace(/^@/, "")}`
-    : "—";
+    : details.kind === "claimed"
+      ? "Private"
+      : "—";
+  const eyebrow =
+    details.kind === "claimed" ? "PAYMENT CLAIMED" : "PAYMENT SENT";
 
   return (
     <div className="overflow-hidden rounded-2xl border border-fog bg-gradient-to-br from-[#f7f5f1] via-white to-[#efeae4] p-4 text-left">
@@ -41,7 +45,7 @@ export function PaymentSharePreview({
       </div>
 
       <p className="mt-4 font-mono text-[10px] font-semibold tracking-[0.14em] text-graphite">
-        PAYMENT SENT
+        {eyebrow}
       </p>
       <p className="mt-1 flex items-baseline gap-2">
         <span className="text-3xl font-extrabold tracking-tight text-ink">
