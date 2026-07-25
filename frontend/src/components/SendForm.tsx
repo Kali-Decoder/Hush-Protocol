@@ -14,6 +14,7 @@ import {
   arcTestnet,
   DEFAULT_POOL_TOKEN,
   explorerTx,
+  getPoolToken,
   toTokenUnits,
   type PoolToken,
 } from "@/lib/config";
@@ -47,7 +48,6 @@ import {
   ErrorBanner,
   FieldLabel,
   Panel,
-  PayProgress,
 } from "@/components/ui";
 
 type Step =
@@ -61,9 +61,44 @@ type Step =
   | "undelivered"
   | "error";
 
-const FLOW_STEPS = ["Note", "Approve", "Deposit", "Deliver"] as const;
 const SUCCESS_MODAL_MS = 5000;
 const AMOUNT_STEP = 1;
+
+type FlowStepId = "note" | "approve" | "deposit" | "deliver";
+
+function flowSteps(includeApprove: boolean): {id: FlowStepId; label: string}[] {
+  if (includeApprove) {
+    return [
+      {id: "note", label: "Note"},
+      {id: "approve", label: "Approve"},
+      {id: "deposit", label: "Deposit"},
+      {id: "deliver", label: "Deliver"},
+    ];
+  }
+  return [
+    {id: "note", label: "Note"},
+    {id: "deposit", label: "Deposit"},
+    {id: "deliver", label: "Deliver"},
+  ];
+}
+
+function activeFlowId(step: Step): FlowStepId | "done" | null {
+  switch (step) {
+    case "creating":
+      return "note";
+    case "approving":
+      return "approve";
+    case "depositing":
+      return "deposit";
+    case "posting":
+    case "undelivered":
+      return "deliver";
+    case "done":
+      return "done";
+    default:
+      return null;
+  }
+}
 
 function isValidAmountInput(raw: string, maxDecimals: number): boolean {
   if (raw === "") return true;
@@ -88,23 +123,6 @@ function formatAmountDisplay(n: number, decimals: number): string {
 function roundAmount(n: number, decimals: number): number {
   const f = 10 ** decimals;
   return Math.round(n * f) / f;
-}
-
-function flowIndex(step: Step): number {
-  switch (step) {
-    case "creating":
-      return 0;
-    case "approving":
-      return 1;
-    case "depositing":
-      return 2;
-    case "posting":
-      return 3;
-    case "done":
-      return 4;
-    default:
-      return -1;
-  }
 }
 
 export function SendForm({initialRecipient}: {initialRecipient?: string}) {
@@ -135,13 +153,20 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   );
   const [sentUsername, setSentUsername] = useState("");
   const [sentAmount, setSentAmount] = useState<number | null>(null);
+  /** False once we know allowance already covers this send (skip approve tx). */
+  const [includeApprove, setIncludeApprove] = useState(true);
+  const [approveHash, setApproveHash] = useState("");
+  const [statusHint, setStatusHint] = useState("");
 
-  const busy =
-    step === "resolving" ||
+  const sendInFlight =
     step === "creating" ||
     step === "approving" ||
     step === "depositing" ||
     step === "posting";
+
+  const busy =
+    step === "resolving" ||
+    sendInFlight;
 
   const [pendingSends, setPendingSends] = useState<PendingSend[]>([]);
   const [retryingCommitment, setRetryingCommitment] = useState<string | null>(
@@ -166,6 +191,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     }
     setRetryingCommitment(pending.commitment);
     setError("");
+    setStatusHint("Delivering encrypted note…");
     try {
       setStep("posting");
       const sealed = sealPayload(
@@ -254,6 +280,9 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     setError("");
     setSentUsername("");
     setSentAmount(null);
+    setIncludeApprove(true);
+    setApproveHash("");
+    setStatusHint("");
   }
 
   useEffect(() => {
@@ -306,6 +335,9 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     const units = toTokenUnits(amount, selectedToken.decimals);
 
     try {
+      setIncludeApprove(true);
+      setApproveHash("");
+      setStatusHint("Building a private note…");
       setStep("creating");
       const digest = recipientDigestForWallet(resolved.wallet);
       const note = await createNote({
@@ -328,19 +360,30 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         args: [address, pool],
       });
 
-      // Approve max once when short; skip wallet prompt if allowance already covers.
-      if (allowance < units) {
+      // Any pool token: one-time maxUint256 approve, then skip forever while covered.
+      const needsApprove = allowance < units;
+      setIncludeApprove(needsApprove);
+
+      if (needsApprove) {
+        setStatusHint(
+          `One-time max approval for ${selectedToken.symbol}… Confirm in wallet.`
+        );
         setStep("approving");
-        const approveHash = await writeContractAsync({
+        const nextApproveHash = await writeContractAsync({
           address: tokenAddr,
           abi: erc20Abi,
           functionName: "approve",
           args: [pool, maxUint256],
           chainId: arcTestnet.id,
         });
-        await client.waitForTransactionReceipt({hash: approveHash});
+        setApproveHash(nextApproveHash);
+        setStatusHint("Waiting for approval confirmation…");
+        await client.waitForTransactionReceipt({hash: nextApproveHash});
+      } else {
+        setStatusHint("Allowance already set — skipping approve.");
       }
 
+      setStatusHint("Confirm deposit in your wallet…");
       setStep("depositing");
       const depositHash = await writeContractAsync({
         address: pool,
@@ -349,8 +392,9 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         args: [tokenAddr, units, commitmentBytes32],
         chainId: arcTestnet.id,
       });
-      await client.waitForTransactionReceipt({hash: depositHash});
       setTxHash(depositHash);
+      setStatusHint("Waiting for deposit confirmation on Arc…");
+      await client.waitForTransactionReceipt({hash: depositHash});
 
       // Persist sealed note before POST so delivery can be retried without
       // depositing again if the backend/RPC call fails.
@@ -367,6 +411,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       });
       refreshPending();
 
+      setStatusHint("Delivering encrypted note…");
       setStep("posting");
       try {
         await postNote(authToken, {
@@ -382,6 +427,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       } catch (postErr) {
         const msg = formatError(postErr);
         setError(msg);
+        setStatusHint("Deposit confirmed — note delivery failed.");
         toast.error(
           "Deposit confirmed, but note delivery failed. Retry deliver — do not send again."
         );
@@ -393,6 +439,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       setSentTokenSymbol(selectedToken.symbol);
       setSentUsername(resolved.username);
       setSentAmount(amount);
+      setStatusHint("Payment complete.");
       setStep("done");
       void refetchBalance();
     } catch (e) {
@@ -400,14 +447,26 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       setError(msg);
       toast.error(msg);
       setStep("error");
+      setStatusHint("");
       refreshPending();
     }
   }
 
   const showRecipientLookup = !resolved || step === "done";
 
+  const showStatusModal =
+    sendInFlight || step === "done" || step === "undelivered";
+
   return (
     <>
+      <div
+        className={
+          showStatusModal
+            ? "pointer-events-none select-none opacity-40 transition-opacity duration-300"
+            : undefined
+        }
+        aria-hidden={showStatusModal || undefined}
+      >
       {pendingSends.length > 0 ? (
         <PendingDeliveriesPanel
           items={pendingSends}
@@ -717,13 +776,6 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                   </p>
                 ) : null}
 
-                {busy ? (
-                  <PayProgress
-                    steps={[...FLOW_STEPS]}
-                    current={Math.max(0, flowIndex(step))}
-                  />
-                ) : null}
-
                 <button
                   type="button"
                   disabled={
@@ -734,7 +786,9 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                   onClick={handleSend}
                   className="btn-primary transition-transform duration-200 active:scale-[0.98]"
                 >
-                  {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
+                  {busy && !sendInFlight ? (
+                    <LoaderIcon className="h-5 w-5 animate-spin" />
+                  ) : null}
                   {stepLabel(step, amount, selectedToken.symbol)}
                 </button>
                 </div>
@@ -743,57 +797,41 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
           </NetworkGate>
         )}
 
-        {error ? (
+        {error && step !== "undelivered" && !sendInFlight ? (
           <ErrorBanner title={formatErrorTitle(error)} message={error} />
         ) : null}
-
-        {step === "undelivered" && commitment ? (
-          <div className="space-y-3 rounded-2xl border border-amber/40 bg-amber/5 p-4">
-            <p className="text-sm text-ink">
-              Funds are in the pool. The encrypted note was not saved — retry
-              delivery. Do not pay again.
-            </p>
-            {txHash ? (
-              <a
-                href={explorerTx(txHash)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-graphite underline-offset-2 hover:text-ink hover:underline"
-              >
-                View deposit
-                <ExternalLinkIcon className="h-3.5 w-3.5" />
-              </a>
-            ) : null}
-            <button
-              type="button"
-              className="btn-primary w-full"
-              disabled={retryingCommitment === commitment}
-              onClick={() => {
-                const pending = pendingSends.find(
-                  (p) => p.commitment.toLowerCase() === commitment.toLowerCase()
-                );
-                if (pending) void deliverPending(pending);
-              }}
-            >
-              {retryingCommitment === commitment ? (
-                <LoaderIcon className="h-5 w-5 animate-spin" />
-              ) : null}
-              Retry deliver
-            </button>
-          </div>
-        ) : null}
       </Panel>
+      </div>
 
-      {step === "done" ? (
-        <PaymentSuccessModal
+      {showStatusModal ? (
+        <PaymentStatusModal
+          step={step}
+          includeApprove={includeApprove}
+          statusHint={statusHint}
           amount={sentAmount ?? amount}
-          tokenSymbol={sentTokenSymbol}
+          tokenSymbol={
+            sentTokenSymbol || selectedToken.symbol
+          }
           username={sentUsername || resolved?.username || ""}
           recipientKind={recipientKind}
           recipientInput={recipient}
           commitment={commitment}
-          txHash={txHash}
-          onClose={resetAfterSuccess}
+          approveHash={approveHash}
+          depositHash={txHash}
+          error={error}
+          retrying={retryingCommitment === commitment}
+          onRetry={() => {
+            const pending = pendingSends.find(
+              (p) =>
+                p.commitment.toLowerCase() === commitment.toLowerCase()
+            );
+            if (pending) void deliverPending(pending);
+          }}
+          onClose={
+            step === "done" || step === "undelivered"
+              ? resetAfterSuccess
+              : undefined
+          }
         />
       ) : null}
     </>
@@ -859,88 +897,269 @@ function PendingDeliveriesPanel({
   );
 }
 
-function PaymentSuccessModal({
+function PaymentStatusModal({
+  step,
+  includeApprove,
+  statusHint,
   amount,
   tokenSymbol,
   username,
   recipientKind,
   recipientInput,
   commitment,
-  txHash,
+  approveHash,
+  depositHash,
+  error,
+  retrying,
+  onRetry,
   onClose,
 }: {
+  step: Step;
+  includeApprove: boolean;
+  statusHint: string;
   amount: number | null;
   tokenSymbol: string;
   username: string;
   recipientKind: Exclude<RecipientKind, "unknown">;
   recipientInput: string;
   commitment: string;
-  txHash: string;
-  onClose: () => void;
+  approveHash: string;
+  depositHash: string;
+  error: string;
+  retrying: boolean;
+  onRetry: () => void;
+  onClose?: () => void;
 }) {
+  const steps = flowSteps(includeApprove);
+  const active = activeFlowId(step);
+  const success = step === "done";
+  const failed = step === "undelivered";
+  const inFlight = !success && !failed;
+  const activeIndex = steps.findIndex((s) => s.id === active);
+  const progress =
+    success || failed
+      ? 1
+      : activeIndex < 0
+        ? 0
+        : (activeIndex + 0.45) / steps.length;
+  const tokenMeta = getPoolToken(tokenSymbol);
+  const recipientLabel = formatRecipientLabel(
+    recipientKind === "email" ? recipientInput : `@${username}`,
+    recipientKind
+  );
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center px-4"
+      className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="payment-success-title"
+      aria-labelledby="payment-status-title"
     >
-      <button
-        type="button"
-        className="absolute inset-0 bg-ink/40 backdrop-blur-[2px] animate-fade motion-reduce:animate-none"
-        aria-label="Dismiss"
-        onClick={onClose}
+      <div
+        className="absolute inset-0 bg-ink/50 backdrop-blur-md animate-fade motion-reduce:animate-none"
+        aria-hidden
       />
-      <div className="relative w-full max-w-sm animate-rise rounded-2xl border border-fog bg-white p-6 text-center motion-reduce:animate-none sm:p-7">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-signal/10 text-signal">
-          <CheckIcon className="h-6 w-6" />
-        </div>
-        <h2
-          id="payment-success-title"
-          className="mt-4 text-lg font-semibold tracking-tight text-ink"
-        >
-          Payment successful
-        </h2>
-        <p className="mt-3 text-4xl font-bold tracking-tight">
-          {amount}{" "}
-          <span className="text-xl font-semibold text-graphite">
-            {tokenSymbol}
-          </span>
-        </p>
-        <p className="mt-2 flex items-center justify-center gap-2 text-base text-graphite">
-          to{" "}
-          {formatRecipientLabel(
-            recipientKind === "email" ? recipientInput : `@${username}`,
-            recipientKind
-          )}
-          <RecipientKindIcon kind={recipientKind} className="h-4 w-4" />
-        </p>
-        {commitment ? (
-          <p className="mt-4 truncate font-mono text-[11px] text-graphite">
-            {commitment}
+
+      <div className="relative z-[1] flex w-full max-w-md animate-sheet-in flex-col rounded-t-3xl border border-fog bg-white shadow-[0_-12px_48px_-20px_rgba(10,10,10,0.35)] motion-reduce:animate-none sm:animate-rise sm:rounded-3xl sm:shadow-[0_28px_64px_-28px_rgba(10,10,10,0.4)]">
+        <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-fog sm:hidden" />
+
+        <div className="px-6 pb-2 pt-5 text-center sm:px-8 sm:pt-8">
+          {success ? (
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-signal/10 text-signal animate-amount-pop motion-reduce:animate-none">
+              <CheckIcon className="h-7 w-7" />
+            </div>
+          ) : null}
+
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-graphite">
+            {success
+              ? "Sent"
+              : failed
+                ? "Action needed"
+                : "Sending"}
           </p>
-        ) : null}
-        {txHash ? (
-          <a
-            href={explorerTx(txHash)}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-fog bg-paper px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-graphite"
+
+          <h2
+            id="payment-status-title"
+            className={`mt-2 font-bold tracking-tight text-ink ${
+              success
+                ? "animate-amount-pop text-4xl motion-reduce:animate-none sm:text-5xl"
+                : "text-3xl sm:text-4xl"
+            }`}
           >
-            View transaction
-            <ExternalLinkIcon className="h-3.5 w-3.5 text-graphite" />
-          </a>
+            {amount != null ? amount : "—"}{" "}
+            <span className="text-[0.55em] font-semibold text-graphite">
+              {tokenSymbol}
+            </span>
+          </h2>
+
+          <p className="mt-2 flex items-center justify-center gap-2 text-sm text-graphite">
+            {tokenMeta?.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={tokenMeta.logo}
+                alt=""
+                className="h-4 w-4 rounded-full"
+              />
+            ) : null}
+            <span>to {recipientLabel}</span>
+            <RecipientKindIcon kind={recipientKind} className="h-3.5 w-3.5" />
+          </p>
+        </div>
+
+        {!success ? (
+          <div className="px-6 pt-5 sm:px-8">
+            <div className="h-1.5 overflow-hidden rounded-full bg-fog">
+              <div
+                className="h-full rounded-full bg-ink transition-[width] duration-500 ease-out"
+                style={{width: `${Math.round(progress * 100)}%`}}
+              />
+            </div>
+            <ol className="mt-3 flex justify-between gap-1">
+              {steps.map((s, i) => {
+                const done =
+                  success ||
+                  (failed && i < activeIndex) ||
+                  (activeIndex >= 0 && i < activeIndex);
+                const isActive = !success && !failed && s.id === active;
+                return (
+                  <li
+                    key={s.id}
+                    className={`min-w-0 flex-1 text-center font-mono text-[10px] tracking-wide ${
+                      isActive
+                        ? "font-semibold text-ink"
+                        : done
+                          ? "text-graphite"
+                          : "text-graphite/45"
+                    }`}
+                  >
+                    {s.label}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         ) : null}
-        <p className="mt-5 text-xs text-graphite">Closes in 5 seconds</p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="btn-primary mt-3 w-full"
-        >
-          Done
-        </button>
+
+        <div className="px-6 py-5 sm:px-8 sm:pb-6">
+          {inFlight ? (
+            <div className="flex items-start gap-3 rounded-2xl bg-paper px-4 py-3.5">
+              <LoaderIcon className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-ink" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-ink">
+                  {statusHint || "Working…"}
+                </p>
+                {!includeApprove ? (
+                  <p className="mt-1 text-xs text-graphite">
+                    Allowance ready — deposit only.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {failed ? (
+            <div className="space-y-3 rounded-2xl border border-amber/35 bg-amber/10 px-4 py-3.5">
+              <p className="text-sm font-medium text-ink">
+                Deposit landed. Note was not delivered.
+              </p>
+              <p className="text-xs leading-relaxed text-graphite">
+                Retry delivery — do not send again. Your funds are already in
+                the pool.
+              </p>
+              {error ? (
+                <p className="font-mono text-[11px] text-graphite">{error}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {success ? (
+            <p className="text-center text-sm text-graphite">
+              Encrypted note delivered. They can claim from Inbox.
+            </p>
+          ) : null}
+
+          {(approveHash || depositHash) && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {approveHash ? (
+                <TxChip label="Approve" hash={approveHash} />
+              ) : null}
+              {depositHash ? (
+                <TxChip label="Deposit" hash={depositHash} />
+              ) : null}
+            </div>
+          )}
+
+          {commitment && (success || failed) ? (
+            <p className="mt-3 truncate text-center font-mono text-[10px] text-graphite/80">
+              {commitment}
+            </p>
+          ) : null}
+
+          {failed ? (
+            <div className="mt-5 space-y-2">
+              <button
+                type="button"
+                className="btn-primary w-full"
+                disabled={retrying}
+                onClick={onRetry}
+              >
+                {retrying ? (
+                  <LoaderIcon className="h-5 w-5 animate-spin" />
+                ) : null}
+                Retry deliver
+              </button>
+              {onClose ? (
+                <button
+                  type="button"
+                  className="btn-ghost w-full"
+                  onClick={onClose}
+                >
+                  Close
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {success ? (
+            <div className="mt-5 space-y-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-primary w-full"
+              >
+                Done
+              </button>
+              <p className="text-center text-[11px] text-graphite">
+                Closes automatically
+              </p>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
+  );
+}
+
+function TxChip({label, hash}: {label: string; hash: string}) {
+  return (
+    <a
+      href={explorerTx(hash)}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1.5 rounded-full border border-fog bg-paper px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:border-graphite"
+    >
+      <span className="text-graphite">{label}</span>
+      <span className="font-mono">{shortAddr(hash)}</span>
+      <ExternalLinkIcon className="h-3 w-3 text-graphite" />
+    </a>
   );
 }
 
@@ -951,13 +1170,10 @@ function stepLabel(
 ): string {
   switch (step) {
     case "creating":
-      return "Creating note…";
     case "approving":
-      return `Approve ${symbol} (one-time)…`;
     case "depositing":
-      return "Depositing on Arc…";
     case "posting":
-      return "Delivering note…";
+      return "Sending…";
     case "undelivered":
       return "Retry deliver";
     default:
