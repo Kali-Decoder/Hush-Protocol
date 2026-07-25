@@ -22,7 +22,7 @@ Those stay in SDK / indexer / contracts.
 ```bash
 cd arc-contracts/backend
 pnpm install --ignore-workspace
-cp .env.example .env   # set MongoDB Atlas DATABASE_URL (db: hushh)
+cp .env.example .env   # set MongoDB Atlas MONGODB_URI (db: hushh)
 pnpm db:generate
 pnpm db:push
 pnpm dev
@@ -30,6 +30,7 @@ pnpm dev
 ```
 
 Users and encrypted notes live in **MongoDB Atlas** (not on-chain).
+On Render, set **`MONGODB_URI`** (not `DATABASE_URL`) so a linked Postgres service cannot override Prisma.
 
 ## Auth flow (frontend)
 

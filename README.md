@@ -272,7 +272,7 @@ Witness API: `GET /witness/:commitment` (no secrets returned).
 
 ```bash
 pnpm backend:install
-# DATABASE_URL=mongodb+srv://…/hushh
+# MONGODB_URI=mongodb+srv://…/hushh
 pnpm backend:db
 pnpm backend:dev                 # API :4020
 ```
