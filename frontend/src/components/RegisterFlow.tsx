@@ -31,16 +31,31 @@ import {ErrorBanner, Panel} from "@/components/ui";
 import {formatError, formatErrorTitle} from "@/lib/errors";
 import {shortAddr} from "@/lib/address";
 
-function AuthSteps({step}: {step: 1 | 2 | 3}) {
-  return (
-    <ol className="mb-6 flex items-center gap-2">
-      {[
+function AuthSteps({
+  step,
+  skipTwitter,
+}: {
+  step: 1 | 2 | 3;
+  skipTwitter?: boolean;
+}) {
+  const steps = skipTwitter
+    ? [
+        {n: 1 as const, label: "Wallet"},
+        {n: 3 as const, label: "Sign"},
+      ]
+    : [
         {n: 1 as const, label: "Wallet"},
         {n: 2 as const, label: "Twitter"},
         {n: 3 as const, label: "Sign"},
-      ].map((s, i) => {
-        const active = step === s.n;
-        const done = step > s.n;
+      ];
+
+  return (
+    <ol className="mb-6 flex items-center gap-2">
+      {steps.map((s, i) => {
+        const active = step === s.n || (skipTwitter && step === 3 && s.n === 3);
+        const done = skipTwitter
+          ? s.n === 1 && step >= 3
+          : step > s.n;
         return (
           <li key={s.n} className="flex min-w-0 flex-1 items-center gap-2">
             {i > 0 ? <span className="h-px w-3 shrink-0 bg-fog" /> : null}
@@ -51,7 +66,7 @@ function AuthSteps({step}: {step: 1 | 2 | 3}) {
                   : "border border-fog bg-white text-graphite"
               }`}
             >
-              {done ? "✓" : s.n}
+              {done ? "✓" : i + 1}
             </span>
             <span
               className={`truncate text-xs font-medium ${
@@ -70,7 +85,7 @@ function AuthSteps({step}: {step: 1 | 2 | 3}) {
 function RegisterFlowInner() {
   const {address, isConnected} = useAccount();
   const {signMessageAsync} = useSignMessage();
-  const {user, isSignedIn, ready, hasCachedSignature, needsUsername} =
+  const {user, isSignedIn, ready, hasCachedSignature, lookup} =
     useSession();
   const signOut = useSignOut();
   const {
@@ -283,7 +298,15 @@ function RegisterFlowInner() {
     );
   }
 
-  const needsClaim = needsUsername || !(known || user);
+  const hasClaimedUsername =
+    known ||
+    !!knownUsername ||
+    !!user?.username ||
+    !!lookup?.username;
+
+  // Existing DB users only sign in — never prompt Twitter again.
+  const needsClaim = isConnected && !hasClaimedUsername;
+
   const step: 1 | 2 | 3 = !isConnected
     ? 1
     : needsClaim && !twitterHandle
@@ -294,7 +317,7 @@ function RegisterFlowInner() {
 
   return (
     <Panel className="space-y-5 text-left">
-      <AuthSteps step={step} />
+      <AuthSteps step={step} skipTwitter={hasClaimedUsername} />
 
       {!isConnected ? (
         <div className="space-y-4 py-1 text-center">

@@ -28,8 +28,13 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
     hushUser?.username ??
     twitterHandleFromPrivyUser(privyUser);
 
+  // Username was claimed via the Twitter flow — never ask to connect Twitter again.
+  const alreadyClaimedOnHushh = !!hushUser?.username;
+  const twitterLinkedOnServer = !!hushUser?.twitterUsername;
+
   const syncLink = useCallback(async () => {
     if (!isSignedIn || !token || !authenticated || !privyUser) return;
+    if (twitterLinkedOnServer || alreadyClaimedOnHushh) return;
     const handle = twitterHandleFromPrivyUser(privyUser);
     if (!handle) return;
     if (
@@ -53,6 +58,7 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
       setBusy(false);
     }
   }, [
+    alreadyClaimedOnHushh,
     authenticated,
     getAccessToken,
     hushUser?.twitterUsername,
@@ -60,6 +66,7 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
     isSignedIn,
     privyUser,
     token,
+    twitterLinkedOnServer,
   ]);
 
   useEffect(() => {
@@ -112,10 +119,7 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
     }
   }
 
-  const claimedViaTwitter =
-    !!hushUser?.username &&
-    (!!hushUser.twitterUsername ||
-      hushUser.username === twitterHandleFromPrivyUser(privyUser));
+  const claimedViaTwitter = alreadyClaimedOnHushh;
 
   return (
     <div
@@ -153,18 +157,9 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
         </div>
       </div>
 
-      <div className="mt-4">
-        {hushUser?.twitterUsername ? (
-          <button
-            type="button"
-            disabled={busy || !ready}
-            onClick={() => void onUnlink()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-fog bg-paper px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-graphite disabled:opacity-50"
-          >
-            {busy ? <LoaderIcon className="h-4 w-4 animate-spin" /> : null}
-            Disconnect Twitter
-          </button>
-        ) : (
+      {/* Only offer connect/disconnect when username is not already claimed. */}
+      {!alreadyClaimedOnHushh ? (
+        <div className="mt-4">
           <button
             type="button"
             disabled={busy || !ready}
@@ -178,8 +173,20 @@ function ConnectTwitterCardInner({className = ""}: {className?: string}) {
             )}
             Connect with Twitter
           </button>
-        )}
-      </div>
+        </div>
+      ) : twitterLinkedOnServer ? (
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={busy || !ready}
+            onClick={() => void onUnlink()}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-fog bg-paper px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-graphite disabled:opacity-50"
+          >
+            {busy ? <LoaderIcon className="h-4 w-4 animate-spin" /> : null}
+            Disconnect Twitter
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
