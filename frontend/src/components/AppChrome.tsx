@@ -6,20 +6,11 @@ import {usePathname} from "next/navigation";
 import {ClickSoundProvider} from "@/components/ClickSoundProvider";
 import IslandNav from "@/components/IslandNav";
 import {GithubIcon, XBrandIcon} from "@/components/icons";
-
-function isAppRoute(pathname: string) {
-  return (
-    pathname.startsWith("/lookout") ||
-    pathname.startsWith("/send") ||
-    pathname.startsWith("/inbox") ||
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/register")
-  );
-}
+import {isAppShellPath} from "@/lib/routes";
 
 export function AppChrome({children}: {children: ReactNode}) {
   const pathname = usePathname();
-  const app = isAppRoute(pathname);
+  const app = isAppShellPath(pathname);
 
   return (
     <div className="flex min-h-dvh flex-col">

@@ -283,13 +283,18 @@ function RegisterFlowInner() {
           ) : null}
         </div>
         <NetworkGate>
-          <a href="/send" className="btn-primary">
-            Send
-          </a>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <a href={`/${encodeURIComponent(user.username)}`} className="btn-primary">
+              View profile
+            </a>
+            <a href="/send" className="btn-ghost">
+              Send
+            </a>
+          </div>
         </NetworkGate>
         <button
           type="button"
-          onClick={() => signOut({redirect: "/register"})}
+          onClick={() => signOut({redirect: "/"})}
           className="btn-ghost"
         >
           Sign out
@@ -446,7 +451,7 @@ function RegisterFlowInner() {
 
               <button
                 type="button"
-                onClick={() => signOut({silent: true})}
+                onClick={() => signOut({silent: true, redirect: null})}
                 className="w-full text-center text-sm text-graphite hover:text-ink"
               >
                 Disconnect wallet

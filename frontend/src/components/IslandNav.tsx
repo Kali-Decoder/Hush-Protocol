@@ -7,20 +7,11 @@ import {APP_NAV_WIDTH} from "@/components/AppShell";
 import {ConnectButton} from "@/components/ConnectButton";
 import {UserAvatar} from "@/components/UserAvatar";
 import {useSession} from "@/hooks/useSession";
+import {isAppShellPath, profilePath} from "@/lib/routes";
 
 function navActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function isAppRoute(pathname: string) {
-  return (
-    pathname.startsWith("/lookout") ||
-    pathname.startsWith("/send") ||
-    pathname.startsWith("/inbox") ||
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/register")
-  );
 }
 
 export default function IslandNav() {
@@ -32,8 +23,13 @@ export default function IslandNav() {
   const username =
     user?.username ??
     (lookup?.username && lookup.username.length > 0 ? lookup.username : null);
-  const profileHref = needsUsername || !username ? "/register" : "/account";
-  const wide = showAppNav || isAppRoute(pathname);
+  const profileHref =
+    needsUsername || !username ? "/register" : profilePath(username);
+  const wide = showAppNav || isAppShellPath(pathname);
+  const profileActive =
+    navActive(pathname, profileHref) ||
+    navActive(pathname, "/account") ||
+    navActive(pathname, "/register");
 
   function tab(
     href: string,
@@ -96,18 +92,10 @@ export default function IslandNav() {
               {tab("/lookout", "Lookout", {showOnMobile: false})}
               <Link
                 href={profileHref}
-                aria-current={
-                  navActive(pathname, profileHref) ||
-                  (username
-                    ? navActive(pathname, "/account")
-                    : navActive(pathname, "/register"))
-                    ? "page"
-                    : undefined
-                }
+                aria-current={profileActive ? "page" : undefined}
                 title={username ? `@${username}` : "Claim username"}
                 className={`relative inline-flex max-w-[8rem] shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 pr-2 text-[13px] font-semibold tracking-[-0.01em] transition-all duration-200 sm:max-w-none sm:gap-2 sm:pr-3.5 sm:text-sm ${
-                  navActive(pathname, "/account") ||
-                  navActive(pathname, "/register")
+                  profileActive
                     ? "bg-paper text-ink shadow-[0_1px_0_rgba(255,255,255,0.5)_inset]"
                     : "text-paper/80 hover:bg-white/[0.08] hover:text-paper"
                 }`}

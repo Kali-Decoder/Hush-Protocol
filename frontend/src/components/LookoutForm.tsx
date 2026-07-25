@@ -160,14 +160,22 @@ export function LookoutForm() {
             </a>
           </div>
 
-          <a
-            href={`/send?to=${encodeURIComponent(
-              kind === "email" ? searched.replace(/^@/, "") : user.username
-            )}`}
-            className="btn-ghost transition-transform active:scale-[0.985]"
-          >
-            Send to this user
-          </a>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <a
+              href={`/${encodeURIComponent(user.username)}`}
+              className="btn-ghost transition-transform active:scale-[0.985]"
+            >
+              View profile
+            </a>
+            <a
+              href={`/send?to=${encodeURIComponent(
+                kind === "email" ? searched.replace(/^@/, "") : user.username
+              )}`}
+              className="btn-primary transition-transform active:scale-[0.985]"
+            >
+              Send to this user
+            </a>
+          </div>
         </div>
       ) : null}
 

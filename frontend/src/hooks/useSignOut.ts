@@ -11,7 +11,8 @@ export function useSignOut() {
   const {reset} = useConnect();
 
   return async function signOut(opts?: {
-    redirect?: string;
+    /** Defaults to home `/`. Pass `null` to stay on the current page. */
+    redirect?: string | null;
     silent?: boolean;
   }) {
     clearSession();
@@ -26,8 +27,8 @@ export function useSignOut() {
     reset();
 
     if (!opts?.silent) toast.info("Signed out.");
-    if (opts?.redirect && typeof window !== "undefined") {
-      window.location.href = opts.redirect;
-    }
+    if (typeof window === "undefined") return;
+    if (opts?.redirect === null) return;
+    window.location.href = opts?.redirect ?? "/";
   };
 }

@@ -60,7 +60,7 @@ export function ConnectButton({
   async function handleSignOut() {
     setBusyLocal(true);
     try {
-      await signOut({silent: compact});
+      await signOut({silent: compact, redirect: "/"});
     } catch (err) {
       if (!compact) toast.error(err);
     } finally {

@@ -14,18 +14,29 @@ export function PaymentSharePreview({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-fog bg-gradient-to-br from-[#f7f5f1] via-white to-[#efeae4] p-4 text-left">
-      <div className="flex items-center gap-2.5">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logomark.png"
-          alt=""
-          className="h-8 w-8 rounded-[9px] ring-1 ring-ink/5"
-        />
-        <div className="min-w-0">
-          <p className="text-sm font-bold tracking-tight text-ink">
-            Hushh Protocol
-          </p>
-          <p className="text-[11px] text-graphite">{HUSH_HANDLE}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logomark.png"
+            alt=""
+            className="h-8 w-8 rounded-[9px] ring-1 ring-ink/5"
+          />
+          <div className="min-w-0">
+            <p className="text-sm font-bold tracking-tight text-ink">
+              Hushh Protocol
+            </p>
+            <p className="text-[11px] text-graphite">{HUSH_HANDLE}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/arc-logo.png"
+            alt="Arc"
+            className="h-8 w-8 rounded-[9px] ring-1 ring-ink/5"
+          />
+          <span className="text-[10px] font-medium text-graphite">Arc</span>
         </div>
       </div>
 

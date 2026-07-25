@@ -504,7 +504,7 @@ export function AccountView() {
 
       <button
         type="button"
-        onClick={() => void signOut({redirect: "/register"})}
+        onClick={() => void signOut({redirect: "/"})}
         className="btn-ghost inline-flex w-full items-center justify-center gap-2"
       >
         <LogOutIcon className="h-4 w-4" />

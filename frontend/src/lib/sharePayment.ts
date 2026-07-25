@@ -18,7 +18,7 @@ export function paymentShareTweetText(d: PaymentShareDetails): string {
     "",
     `${from} → ${d.toLabel}`,
     "",
-    "Private by design. #HushhProtocol",
+    "Private by design on Arc. #HushhProtocol #Arc",
   ].join("\n");
 }
 
@@ -65,8 +65,9 @@ export async function renderPaymentSharePng(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("canvas_unavailable");
 
-  const [logo, tokenImg] = await Promise.all([
+  const [logo, arcLogo, tokenImg] = await Promise.all([
     loadImage("/logomark.png").catch(() => null),
+    loadImage("/arc-logo.png").catch(() => null),
     d.tokenLogo ? loadImage(d.tokenLogo).catch(() => null) : Promise.resolve(null),
   ]);
 
@@ -94,7 +95,7 @@ export async function renderPaymentSharePng(
   roundRect(ctx, 72, 96, size - 144, size - 192, 48);
   ctx.stroke();
 
-  // Brand row
+  // Brand row — Hushh + Arc
   if (logo) {
     ctx.drawImage(logo, 120, 140, 72, 72);
   } else {
@@ -108,6 +109,23 @@ export async function renderPaymentSharePng(
   ctx.fillStyle = "#6b6b6b";
   ctx.font = "500 28px Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif";
   ctx.fillText(HUSH_HANDLE, 214, 228);
+
+  if (arcLogo) {
+    const arcSize = 64;
+    const arcX = size - 120 - arcSize;
+    const arcY = 146;
+    ctx.save();
+    roundRect(ctx, arcX, arcY, arcSize, arcSize, 16);
+    ctx.clip();
+    ctx.drawImage(arcLogo, arcX, arcY, arcSize, arcSize);
+    ctx.restore();
+    ctx.fillStyle = "#6b6b6b";
+    ctx.font =
+      "600 20px Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif";
+    const arcLabel = "Arc";
+    const labelW = ctx.measureText(arcLabel).width;
+    ctx.fillText(arcLabel, arcX + (arcSize - labelW) / 2, arcY + arcSize + 28);
+  }
 
   // Eyebrow
   ctx.fillStyle = "#6b6b6b";
@@ -168,7 +186,16 @@ export async function renderPaymentSharePng(
   // Footer
   ctx.fillStyle = "#6b6b6b";
   ctx.font = "500 26px Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText("send silently. · hushhprotocol", 120, size - 140);
+  ctx.fillText("send silently. · on Arc", 120, size - 140);
+
+  if (arcLogo) {
+    const foot = 40;
+    ctx.save();
+    roundRect(ctx, size - 120 - foot, size - 168, foot, foot, 10);
+    ctx.clip();
+    ctx.drawImage(arcLogo, size - 120 - foot, size - 168, foot, foot);
+    ctx.restore();
+  }
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
