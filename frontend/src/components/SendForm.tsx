@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {useAccount, useWriteContract} from "wagmi";
 import {createNote, noteToJSON} from "@bullet/sdk";
 import {createPublicClient, http, maxUint256} from "viem";
@@ -25,6 +25,10 @@ import {
   upsertPendingSend,
   type PendingSend,
 } from "@/lib/pendingSends";
+import {
+  filterRecentRecipients,
+  rememberRecentRecipient,
+} from "@/lib/recentRecipients";
 import {
   copyPaymentShareImage,
   sharePaymentOnTwitter,
@@ -185,8 +189,30 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
   const [retryingCommitment, setRetryingCommitment] = useState<string | null>(
     null
   );
+  const [recipientFocused, setRecipientFocused] = useState(false);
+  const [recentTick, setRecentTick] = useState(0);
 
   const amountDecimals = selectedToken.decimals;
+
+  const recentSuggestions = useMemo(() => {
+    void recentTick;
+    return filterRecentRecipients(recipientKind, recipient, {
+      exclude: me?.username,
+      limit: 6,
+    });
+  }, [recipientKind, recipient, me?.username, recentTick]);
+
+  function refreshRecent() {
+    setRecentTick((n) => n + 1);
+  }
+
+  function rememberRecipient(
+    kind: Exclude<RecipientKind, "unknown">,
+    value: string
+  ) {
+    rememberRecentRecipient(kind, value);
+    refreshRecent();
+  }
 
   function refreshPending() {
     setPendingSends(listPendingSends());
@@ -228,6 +254,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       setSentUsername(pending.recipientUsername);
       setSentAmount(Number(pending.amount) || null);
       setStep("done");
+      rememberRecipient("twitter", pending.recipientUsername);
       toast.success("Note delivered. Recipient can claim from Inbox.");
       return true;
     } catch (e) {
@@ -311,6 +338,10 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       }
       setResolved(user);
       setStep("idle");
+      rememberRecipient(
+        recipientKind,
+        recipientKind === "email" ? recipient : user.username
+      );
     } catch (e) {
       setError(formatError(e));
     }
@@ -448,6 +479,10 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       setSentAmount(amount);
       setStatusHint("Payment complete.");
       setStep("done");
+      rememberRecipient(
+        recipientKind,
+        recipientKind === "email" ? recipient : resolved.username
+      );
       void refetchBalance();
     } catch (e) {
       const msg = formatError(e);
@@ -638,6 +673,11 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                             : raw.replace(/^@+/g, "")
                         );
                       }}
+                      onFocus={() => setRecipientFocused(true)}
+                      onBlur={() => {
+                        // Allow suggestion click before closing.
+                        window.setTimeout(() => setRecipientFocused(false), 120);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && recipient.trim())
                           void handleResolve();
@@ -648,6 +688,45 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
                       className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none placeholder:text-fog disabled:cursor-not-allowed"
                     />
                   </div>
+
+                  {(recipientFocused || !recipient.trim()) &&
+                  recentSuggestions.length > 0 ? (
+                    <div
+                      role="listbox"
+                      aria-label="Recent recipients"
+                      className="overflow-hidden rounded-2xl border border-fog bg-white"
+                    >
+                      <p className="border-b border-fog/80 px-4 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-graphite">
+                        {recipient.trim() ? "Matches" : "Recent"}
+                      </p>
+                      <ul>
+                        {recentSuggestions.map((r) => (
+                          <li key={`${r.kind}:${r.value}`}>
+                            <button
+                              type="button"
+                              role="option"
+                              disabled={busy || step === "done"}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                setRecipient(r.value);
+                                setError("");
+                                setRecipientFocused(false);
+                              }}
+                              className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink transition-colors hover:bg-paper disabled:opacity-50"
+                            >
+                              <RecipientKindIcon
+                                kind={r.kind}
+                                className="h-3.5 w-3.5 shrink-0 text-graphite"
+                              />
+                              <span className="min-w-0 truncate">
+                                {r.kind === "email" ? r.value : `@${r.value}`}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
 
                 <button
