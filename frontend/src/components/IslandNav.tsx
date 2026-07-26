@@ -7,7 +7,7 @@ import {APP_NAV_WIDTH} from "@/components/AppShell";
 import {ConnectButton} from "@/components/ConnectButton";
 import {UserAvatar} from "@/components/UserAvatar";
 import {useSession} from "@/hooks/useSession";
-import {isAppShellPath, profilePath} from "@/lib/routes";
+import {profilePath} from "@/lib/routes";
 
 function navActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -25,7 +25,6 @@ export default function IslandNav() {
     (lookup?.username && lookup.username.length > 0 ? lookup.username : null);
   const profileHref =
     needsUsername || !username ? "/register" : profilePath(username);
-  const wide = showAppNav || isAppShellPath(pathname);
   const profileActive =
     navActive(pathname, profileHref) ||
     navActive(pathname, "/account") ||
@@ -58,9 +57,7 @@ export default function IslandNav() {
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:top-4 sm:px-4 sm:pt-0">
       <nav
         aria-label="Primary"
-        className={`pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-ink/90 px-2.5 py-1.5 text-paper shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_12px_40px_-16px_rgba(10,10,10,0.55)] backdrop-blur-xl sm:gap-3 sm:px-4 sm:py-2.5 ${
-          wide ? APP_NAV_WIDTH : "w-auto"
-        }`}
+        className={`pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-ink/90 px-2.5 py-1.5 text-paper shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_12px_40px_-16px_rgba(10,10,10,0.55)] backdrop-blur-xl ${APP_NAV_WIDTH} sm:gap-3 sm:px-4 sm:py-2.5`}
       >
         <Link
           href="/"

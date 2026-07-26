@@ -112,9 +112,23 @@ export default function HowItWorks() {
       ref={ref}
       className="flex min-h-[min(100dvh,56rem)] w-full flex-col justify-center py-10 sm:min-h-screen sm:py-0"
     >
-      <h2 className="text-left text-3xl font-bold tracking-tight sm:text-4xl">
-        How Hushh Protocol works
-      </h2>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="text-left">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-graphite">
+            Walkthrough
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">
+            How Hushh Protocol works
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => play(0)}
+          className="rounded-full border border-fog bg-white px-4 py-2 text-sm font-medium text-ink shadow-[0_8px_20px_-16px_rgba(10,10,10,0.35)] transition-all hover:border-graphite hover:shadow-[0_12px_24px_-16px_rgba(10,10,10,0.4)] active:scale-[0.98]"
+        >
+          Replay demo
+        </button>
+      </div>
 
       <div className="mt-12 grid gap-12 text-left md:grid-cols-[300px_1fr] md:items-center">
         <div className="relative pl-6">
@@ -151,10 +165,12 @@ export default function HowItWorks() {
               active === 2 ? "opacity-40" : "opacity-100"
             }`}
           >
-            <div className="flex w-full items-center gap-1.5 rounded-full border border-fog bg-white p-1.5 shadow-[0_1px_0_rgba(10,10,10,0.04)]">
+            <div className="flex w-full items-center gap-1.5 rounded-full border border-fog bg-white p-1.5 shadow-[0_1px_0_rgba(10,10,10,0.04),0_20px_40px_-28px_rgba(10,10,10,0.35)]">
               <span className="flex min-w-0 flex-1 items-center px-4 py-2.5 text-lg sm:px-5 sm:py-3 sm:text-xl">
                 {typed ? (
-                  <span className="truncate">{typed}</span>
+                  <span className="truncate font-semibold tracking-tight">
+                    {typed}
+                  </span>
                 ) : (
                   <span className="truncate text-graphite/60">@username</span>
                 )}
@@ -165,7 +181,7 @@ export default function HowItWorks() {
                 />
               </span>
               <span
-                className={`shrink-0 rounded-full bg-ink px-6 py-2.5 text-lg font-semibold text-paper transition-transform duration-200 sm:px-7 sm:py-3 sm:text-xl ${
+                className={`shrink-0 rounded-full bg-ink px-6 py-2.5 text-lg font-semibold text-paper shadow-[0_8px_18px_-12px_rgba(10,10,10,0.55)] transition-transform duration-200 sm:px-7 sm:py-3 sm:text-xl ${
                   pressed ? "scale-90" : "scale-100"
                 }`}
               >

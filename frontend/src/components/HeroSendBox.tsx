@@ -49,8 +49,12 @@ export default function HeroSendBox() {
     <form
       action="/send"
       method="get"
-      className="input-shell mx-auto max-w-lg !rounded-full !py-1.5 !pl-1.5 !pr-1.5 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_1px_0_rgba(10,10,10,0.04),0_28px_56px_-28px_rgba(10,10,10,0.38)] transition-shadow duration-500 hover:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_1px_0_rgba(10,10,10,0.04),0_32px_64px_-24px_rgba(10,10,10,0.42)]"
+      className="group/shell relative input-shell mx-auto w-full max-w-3xl !rounded-full !py-2 !pl-2 !pr-2 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_1px_0_rgba(10,10,10,0.04),0_28px_56px_-28px_rgba(10,10,10,0.38)] transition-shadow duration-500 hover:shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_1px_0_rgba(10,10,10,0.04),0_32px_64px_-24px_rgba(10,10,10,0.42)]"
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-1 -z-10 rounded-full bg-signal/15 opacity-0 blur-md transition-opacity duration-500 group-focus-within/shell:opacity-100 group-hover/shell:opacity-70"
+      />
       <input type="hidden" name="kind" value={kind} />
       <RecipientKindSelect value={kind} onChange={setKind} variant="inline" />
       <span className="input-shell-divider" aria-hidden />
@@ -66,11 +70,11 @@ export default function HeroSendBox() {
         }
         autoComplete="off"
         spellCheck={false}
-        className="input-shell-field !py-2.5"
+        className="input-shell-field !py-3.5 !text-xl sm:!text-2xl"
       />
       <button
         type="submit"
-        className="shrink-0 rounded-full bg-ink px-6 py-3 text-base font-semibold tracking-[-0.015em] text-paper shadow-[0_8px_20px_-10px_rgba(10,10,10,0.55)] transition-all duration-200 hover:bg-ink/90 active:scale-[0.97] sm:px-8"
+        className="shrink-0 rounded-full bg-ink px-8 py-3.5 text-lg font-semibold tracking-[-0.015em] text-paper shadow-[0_8px_20px_-10px_rgba(10,10,10,0.55)] transition-all duration-200 hover:bg-ink/90 active:scale-[0.97] sm:px-10 sm:py-4 sm:text-xl"
       >
         Pay
       </button>

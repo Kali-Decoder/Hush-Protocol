@@ -42,7 +42,7 @@ export function RecipientKindSelect({
 
   const triggerClass =
     variant === "inline"
-      ? `inline-flex h-9 items-center gap-0.5 rounded-[0.8rem] px-2 text-ink transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-paper active:scale-95 disabled:opacity-50 ${
+      ? `inline-flex h-11 items-center gap-1 rounded-[0.9rem] px-2.5 text-ink transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-paper active:scale-95 disabled:opacity-50 ${
           open ? "bg-paper" : ""
         }`
       : "inline-flex h-9 items-center gap-1 rounded-full border border-fog bg-white px-2.5 text-ink transition-all duration-200 hover:border-graphite active:scale-95 disabled:opacity-50";
@@ -63,10 +63,10 @@ export function RecipientKindSelect({
           key={value}
           className="inline-flex animate-amount-pop motion-reduce:animate-none"
         >
-          <RecipientKindIcon kind={value} className="h-4 w-4" />
+          <RecipientKindIcon kind={value} className="h-5 w-5" />
         </span>
         <ChevronDownIcon
-          className={`h-3.5 w-3.5 text-graphite transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          className={`h-4 w-4 text-graphite transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             open ? "rotate-180" : ""
           }`}
         />
