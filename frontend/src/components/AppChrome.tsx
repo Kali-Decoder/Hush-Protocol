@@ -12,31 +12,29 @@ export function AppChrome({children}: {children: ReactNode}) {
   const pathname = usePathname();
   const app = isAppShellPath(pathname);
   const landing = pathname === "/";
+  const studio = pathname.startsWith("/scratch");
+
+  const mainWidth = landing || studio ? "max-w-7xl" : "max-w-5xl";
+  const mainPad = studio
+    ? "mx-auto w-full max-w-7xl flex-1 px-0 pb-10 pt-[4.75rem] sm:px-4 sm:pb-16 sm:pt-28"
+    : app
+      ? "mx-auto w-full max-w-5xl flex-1 px-0 pb-0 pt-[4.75rem] sm:px-4 sm:pb-16 sm:pt-28"
+      : landing
+        ? "mx-auto w-full max-w-7xl flex-1 px-5 pb-20 pt-24 sm:px-8 sm:pt-32"
+        : "mx-auto w-full max-w-5xl flex-1 px-4 pb-16 pt-24 sm:pt-32";
 
   return (
     <div className="flex min-h-dvh flex-col">
       <ClickSoundProvider />
       <IslandNav />
-      <main
-        className={
-          app
-            ? "mx-auto w-full max-w-5xl flex-1 px-0 pb-0 pt-[4.75rem] sm:px-4 sm:pb-16 sm:pt-28"
-            : landing
-              ? "mx-auto w-full max-w-7xl flex-1 px-5 pb-20 pt-24 sm:px-8 sm:pt-32"
-              : "mx-auto w-full max-w-5xl flex-1 px-4 pb-16 pt-24 sm:pt-32"
-        }
-      >
-        {children}
-      </main>
+      <main className={mainPad}>{children}</main>
       <footer
         className={`mt-auto border-t border-fog/60 bg-transparent ${
           app ? "hidden sm:block" : ""
         }`}
       >
         <div
-          className={`mx-auto flex flex-col items-center justify-between gap-5 px-4 py-8 sm:flex-row sm:py-9 ${
-            landing ? "max-w-7xl" : "max-w-5xl"
-          }`}
+          className={`mx-auto flex flex-col items-center justify-between gap-5 px-4 py-8 sm:flex-row sm:py-9 ${mainWidth}`}
         >
           <div className="flex flex-col items-center gap-2 sm:items-start">
             <Link

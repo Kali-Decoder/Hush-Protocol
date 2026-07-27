@@ -40,7 +40,7 @@ import {ScratchSendProgressModal} from "@/components/ScratchSendProgressModal";
 import {ScratchSendSuccessModal} from "@/components/ScratchSendSuccessModal";
 import {TokenBalanceSelect} from "@/components/TokenSelect";
 import {CheckIcon, CopyIcon, LoaderIcon} from "@/components/icons";
-import {AmountPills, ErrorBanner, FieldLabel, Panel} from "@/components/ui";
+import {AmountPills, ErrorBanner, FieldLabel} from "@/components/ui";
 
 const THEMES: Array<{
   id: ScratchTheme;
@@ -309,213 +309,263 @@ export function ScratchPaymentForm() {
 
   if (!isConnected) {
     return (
-      <Panel className="space-y-4 text-center">
+      <div className="mx-auto max-w-md rounded-[1.75rem] border border-fog bg-white/95 p-6 text-center shadow-[0_18px_40px_-28px_rgba(10,10,10,0.35)] sm:p-8">
         <p className="text-sm text-graphite">
           Connect your wallet to create and send a scratch card.
         </p>
-        <ConnectButton label="Connect wallet" />
-      </Panel>
+        <div className="mt-4 flex justify-center">
+          <ConnectButton label="Connect wallet" />
+        </div>
+      </div>
     );
   }
 
-  return (
-    <NetworkGate>
-      <Panel className="space-y-6 text-left">
-        {!isSignedIn ? (
-          <div className="space-y-4 text-center">
-            <p className="text-sm text-graphite">
-              Sign in so the encrypted scratch card can land in their inbox.
-            </p>
-            <a href="/register" className="btn-primary">
-              Sign in
-            </a>
+  const previewCard = (
+    <ScratchRevealCard
+      meta={{
+        title: previewTitle,
+        theme,
+      }}
+      amountLabel={previewAmount}
+      tokenSymbol={selectedToken.symbol}
+      recipientLabel={
+        previewRecipient ? `@${previewRecipient}` : undefined
+      }
+      disabled
+      tilt
+    />
+  );
+
+  const formFields = !isSignedIn ? (
+    <div className="space-y-4 text-center">
+      <p className="text-sm text-graphite">
+        Sign in so the encrypted scratch card can land in their inbox.
+      </p>
+      <a href="/register" className="btn-primary">
+        Sign in
+      </a>
+    </div>
+  ) : (
+    <>
+      {error ? <ErrorBanner message={error} /> : null}
+
+      <div className="space-y-2">
+        <FieldLabel>Send to username</FieldLabel>
+        <div className={`field !py-0 ${busy ? "opacity-60" : ""}`}>
+          <div className="flex items-center gap-2">
+            <span className="pl-1 text-lg font-semibold text-graphite">@</span>
+            <input
+              value={recipient.replace(/^@/, "")}
+              onChange={(e) =>
+                setRecipient(e.target.value.replace(/^@+/, ""))
+              }
+              onFocus={() => setRecipientFocused(true)}
+              onBlur={() =>
+                window.setTimeout(() => setRecipientFocused(false), 120)
+              }
+              placeholder="username"
+              disabled={busy}
+              className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none disabled:cursor-not-allowed"
+            />
           </div>
-        ) : (
-          <>
-            {error ? <ErrorBanner message={error} /> : null}
-
-            <div className="space-y-3">
-              <div className="flex items-end justify-between gap-3 px-0.5">
-                <div>
-                  <FieldLabel>Live preview</FieldLabel>
-                  <p className="mt-0.5 text-[12px] text-graphite">
-                    {previewAmount} {selectedToken.symbol}
-                    {previewRecipient ? ` → @${previewRecipient}` : ""}
-                  </p>
-                </div>
-                <p className="pb-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-graphite/70">
-                  Lottery ticket
-                </p>
-              </div>
-              <ScratchRevealCard
-                meta={{
-                  title: previewTitle,
-                  theme,
+        </div>
+        {recipientFocused && recentRecipients.length > 0 ? (
+          <div className="overflow-hidden rounded-2xl border border-fog bg-white">
+            {recentRecipients.map((r) => (
+              <button
+                key={r.value}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setRecipient(r.value);
+                  setRecipientFocused(false);
                 }}
-                amountLabel={previewAmount}
-                tokenSymbol={selectedToken.symbol}
-                recipientLabel={
-                  previewRecipient ? `@${previewRecipient}` : undefined
-                }
-                disabled
-                tilt
-                stage
-              />
-              <p className="px-0.5 text-[12px] leading-relaxed text-graphite">
-                They scratch the silver panel on the ticket, then claim
-                privately.
-              </p>
-            </div>
+                className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink hover:bg-paper"
+              >
+                @{r.value}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
-            <div className="space-y-2">
-              <FieldLabel>Send to username</FieldLabel>
-              <div className={`field !py-0 ${busy ? "opacity-60" : ""}`}>
-                <div className="flex items-center gap-2">
-                  <span className="pl-1 text-lg font-semibold text-graphite">
-                    @
-                  </span>
-                  <input
-                    value={recipient.replace(/^@/, "")}
-                    onChange={(e) =>
-                      setRecipient(e.target.value.replace(/^@+/, ""))
-                    }
-                    onFocus={() => setRecipientFocused(true)}
-                    onBlur={() =>
-                      window.setTimeout(() => setRecipientFocused(false), 120)
-                    }
-                    placeholder="username"
-                    disabled={busy}
-                    className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-              {recipientFocused && recentRecipients.length > 0 ? (
-                <div className="overflow-hidden rounded-2xl border border-fog bg-white">
-                  {recentRecipients.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setRecipient(r.value);
-                        setRecipientFocused(false);
-                      }}
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink hover:bg-paper"
-                    >
-                      @{r.value}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+      <div className="space-y-2">
+        <FieldLabel>Scratch card name</FieldLabel>
+        <input
+          value={cardName}
+          onChange={(e) => setCardName(e.target.value)}
+          placeholder="Scratch & Win"
+          maxLength={32}
+          disabled={busy}
+          className="field disabled:cursor-not-allowed disabled:opacity-60"
+        />
+        <p className="text-[11px] text-graphite">
+          Printed on the ticket — keep it short.
+        </p>
+      </div>
 
-            <div className="space-y-2">
-              <FieldLabel>Scratch card name</FieldLabel>
-              <input
-                value={cardName}
-                onChange={(e) => setCardName(e.target.value)}
-                placeholder="Scratch & Win"
-                maxLength={32}
+      <div className="space-y-2">
+        <FieldLabel>Card color</FieldLabel>
+        <div className="grid grid-cols-3 gap-2">
+          {THEMES.map((opt) => {
+            const on = theme === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
                 disabled={busy}
-                className="field disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <p className="text-[11px] text-graphite">
-                Left side of the card — short names look best.
-              </p>
-            </div>
+                onClick={() => setTheme(opt.id)}
+                className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-2 py-3 transition-all disabled:opacity-50 ${
+                  on
+                    ? `border-ink bg-white shadow-[0_8px_20px_-14px_rgba(10,10,10,0.45)] ring-2 ${opt.ring}`
+                    : "border-fog bg-white text-graphite hover:border-graphite"
+                }`}
+              >
+                <span
+                  className={`h-8 w-8 rounded-full shadow-inner ${opt.swatch}`}
+                  aria-hidden
+                />
+                <span
+                  className={`truncate text-xs font-semibold sm:text-sm ${
+                    on ? "text-ink" : "text-graphite"
+                  }`}
+                >
+                  {opt.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-            <div className="space-y-2">
-              <FieldLabel>Card color</FieldLabel>
-              <div className="grid grid-cols-3 gap-2">
-                {THEMES.map((opt) => {
-                  const on = theme === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      disabled={busy}
-                      onClick={() => setTheme(opt.id)}
-                      className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-2 py-3 transition-all disabled:opacity-50 ${
-                        on
-                          ? `border-ink bg-white shadow-[0_8px_20px_-14px_rgba(10,10,10,0.45)] ring-2 ${opt.ring}`
-                          : "border-fog bg-white text-graphite hover:border-graphite"
-                      }`}
-                    >
-                      <span
-                        className={`h-8 w-8 rounded-full shadow-inner ${opt.swatch}`}
-                        aria-hidden
-                      />
-                      <span
-                        className={`truncate text-xs font-semibold sm:text-sm ${
-                          on ? "text-ink" : "text-graphite"
-                        }`}
-                      >
-                        {opt.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+      <div className="space-y-2">
+        <FieldLabel>Token</FieldLabel>
+        <TokenBalanceSelect
+          value={selectedToken}
+          onChange={setSelectedToken}
+          disabled={busy}
+        />
+      </div>
 
-            <div className="space-y-2">
-              <FieldLabel>Token</FieldLabel>
-              <TokenBalanceSelect
-                value={selectedToken}
-                onChange={setSelectedToken}
-                disabled={busy}
-              />
-            </div>
+      <div className="space-y-2">
+        <FieldLabel>Amount</FieldLabel>
+        <AmountPills
+          amounts={AMOUNT_PRESETS}
+          value={amount}
+          onChange={setAmount}
+          disabled={busy}
+          canAfford={hasEnough}
+          symbol={selectedToken.symbol}
+        />
+      </div>
 
-            <div className="space-y-2">
-              <FieldLabel>Amount</FieldLabel>
-              <AmountPills
-                amounts={AMOUNT_PRESETS}
-                value={amount}
-                onChange={setAmount}
-                disabled={busy}
-                canAfford={hasEnough}
-                symbol={selectedToken.symbol}
-              />
-            </div>
+      <button
+        type="button"
+        onClick={() => void handleSend()}
+        disabled={busy || !recipient.trim() || !amount}
+        className="btn-primary"
+      >
+        {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
+        {busy ? "Creating scratch card…" : "Send scratch card"}
+      </button>
 
+      {claimUrl && !busy ? (
+        <div className="rounded-2xl border border-fog bg-paper/80 px-3.5 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-graphite">
+              Claim link
+            </p>
             <button
               type="button"
-              onClick={() => void handleSend()}
-              disabled={busy || !recipient.trim() || !amount}
-              className="btn-primary"
+              onClick={() => void copyClaimLink()}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink hover:opacity-70"
             >
-              {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
-              {busy ? "Creating scratch card…" : "Send scratch card"}
+              {copiedLink ? (
+                <CheckIcon className="h-3.5 w-3.5" />
+              ) : (
+                <CopyIcon className="h-3.5 w-3.5" />
+              )}
+              {copiedLink ? "Copied" : "Copy"}
             </button>
+          </div>
+          <p className="mt-1.5 truncate font-mono text-[11px] text-ink" title={claimUrl}>
+            {claimUrl}
+          </p>
+        </div>
+      ) : null}
+    </>
+  );
 
-            {claimUrl && !busy ? (
-              <div className="rounded-2xl border border-fog bg-paper/80 px-3.5 py-3 sm:px-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-graphite">
-                    Claim link
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void copyClaimLink()}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink hover:opacity-70"
-                  >
-                    {copiedLink ? (
-                      <CheckIcon className="h-3.5 w-3.5" />
-                    ) : (
-                      <CopyIcon className="h-3.5 w-3.5" />
-                    )}
-                    {copiedLink ? "Copied" : "Copy"}
-                  </button>
-                </div>
-                <p className="mt-1.5 break-all font-mono text-[11px] leading-relaxed text-ink sm:text-xs">
-                  {claimUrl}
+  return (
+    <NetworkGate>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-7 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+        {/* Left: sticky controls */}
+        <aside className="order-2 lg:order-1 lg:sticky lg:top-24 lg:self-start">
+          <div className="space-y-5 rounded-[1.75rem] border border-fog bg-white/95 p-5 shadow-[0_18px_40px_-28px_rgba(10,10,10,0.35)] backdrop-blur-sm sm:p-6">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-graphite">
+                Customize
+              </p>
+              <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">
+                Build your ticket
+              </h2>
+            </div>
+            <div className="space-y-5">{formFields}</div>
+          </div>
+        </aside>
+
+        {/* Right: live ticket stage */}
+        <section className="order-1 lg:order-2 lg:sticky lg:top-24 lg:self-start">
+          <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0a0a0a] px-5 py-8 sm:px-8 sm:py-10 lg:min-h-[28rem] lg:px-10 lg:py-12">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-[46%] opacity-[0.22] contrast-125 grayscale"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 18% 36%, rgba(255,255,255,0.22) 0 1px, transparent 1.5px),
+                  radial-gradient(circle at 62% 28%, rgba(255,255,255,0.16) 0 1px, transparent 1.5px),
+                  radial-gradient(circle at 84% 52%, rgba(255,255,255,0.14) 0 1px, transparent 1.5px),
+                  repeating-linear-gradient(90deg, transparent 0 6px, rgba(255,255,255,0.04) 6px 7px),
+                  repeating-linear-gradient(0deg, transparent 0 5px, rgba(255,255,255,0.035) 5px 6px)
+                `,
+                backgroundSize: "18px 18px, 22px 22px, 16px 16px, auto, auto",
+              }}
+            />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black to-transparent" />
+
+            <div className="relative mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/45">
+                  Live preview
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white/90">
+                  {previewAmount} {selectedToken.symbol}
+                  {previewRecipient ? (
+                    <span className="text-white/50">
+                      {" "}
+                      → @{previewRecipient}
+                    </span>
+                  ) : (
+                    <span className="text-white/40"> · pick a recipient</span>
+                  )}
                 </p>
               </div>
-            ) : null}
-          </>
-        )}
-      </Panel>
+              <p className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">
+                Lottery ticket
+              </p>
+            </div>
+
+            <div className="relative mx-auto max-w-lg px-2 sm:px-4">
+              {previewCard}
+            </div>
+
+            <p className="relative mx-auto mt-7 max-w-sm text-center text-[12px] leading-relaxed text-white/45">
+              They scratch the silver panel, then claim privately from Inbox →
+              Gift cards.
+            </p>
+          </div>
+        </section>
+      </div>
 
       {busy ? (
         <ScratchSendProgressModal
