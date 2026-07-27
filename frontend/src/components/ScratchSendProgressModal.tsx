@@ -110,7 +110,7 @@ export function ScratchSendProgressModal({
 
         <div className="relative px-6 pb-2 pt-5 text-center sm:px-8 sm:pt-8">
           <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-graphite">
-            Creating scratch card
+            Creating gift card
           </p>
           <h2
             id="scratch-send-progress-title"

@@ -297,7 +297,7 @@ export function ScratchPaymentForm() {
         depositHash: hash,
       });
       setStep("idle");
-      toast.success("Scratch card sent.");
+      toast.success("Gift card sent.");
     } catch (e) {
       const msg = formatError(e);
       setError(msg);
@@ -311,7 +311,7 @@ export function ScratchPaymentForm() {
     return (
       <div className="mx-auto max-w-md rounded-[1.75rem] border border-fog bg-white/95 p-6 text-center shadow-[0_18px_40px_-28px_rgba(10,10,10,0.35)] sm:p-8">
         <p className="text-sm text-graphite">
-          Connect your wallet to create and send a scratch card.
+          Connect your wallet to create and send a gift card.
         </p>
         <div className="mt-4 flex justify-center">
           <ConnectButton label="Connect wallet" />
@@ -339,7 +339,7 @@ export function ScratchPaymentForm() {
   const formFields = !isSignedIn ? (
     <div className="space-y-4 text-center">
       <p className="text-sm text-graphite">
-        Sign in so the encrypted scratch card can land in their inbox.
+        Sign in so the encrypted gift card can land in their inbox.
       </p>
       <a href="/register" className="btn-primary">
         Sign in
@@ -390,7 +390,7 @@ export function ScratchPaymentForm() {
       </div>
 
       <div className="space-y-2">
-        <FieldLabel>Scratch card name</FieldLabel>
+        <FieldLabel>Gift card name</FieldLabel>
         <input
           value={cardName}
           onChange={(e) => setCardName(e.target.value)}
@@ -466,7 +466,7 @@ export function ScratchPaymentForm() {
         className="btn-primary"
       >
         {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
-        {busy ? "Creating scratch card…" : "Send scratch card"}
+        {busy ? "Creating gift card…" : "Create gift card"}
       </button>
 
       {claimUrl && !busy ? (
@@ -507,7 +507,7 @@ export function ScratchPaymentForm() {
                 Customize
               </p>
               <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">
-                Build your ticket
+                Build your gift card
               </h2>
             </div>
             <div className="space-y-5">{formFields}</div>

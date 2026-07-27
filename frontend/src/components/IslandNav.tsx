@@ -85,7 +85,7 @@ export default function IslandNav() {
           {showAppNav ? (
             <>
               {tab("/send", "Send")}
-              {tab("/scratch", "Scratch", {showOnMobile: false})}
+              {tab("/scratch", "Create Gift Card", {showOnMobile: false})}
               {tab("/inbox", "Inbox")}
               {tab("/lookout", "Lookout", {showOnMobile: false})}
               <Link

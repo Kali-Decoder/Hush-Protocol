@@ -54,7 +54,7 @@ export function ScratchSendSuccessModal({
     try {
       await navigator.clipboard.writeText(claimUrl);
       setCopied(true);
-      toast.success("Scratch claim link copied.");
+      toast.success("Gift claim link copied.");
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
       toast.error("Couldn’t copy link.");
@@ -99,7 +99,7 @@ export function ScratchSendSuccessModal({
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-signal/15 text-signal">
               <CheckIcon className="h-3.5 w-3.5" />
             </span>
-            Scratch card sent
+            Gift card sent
           </div>
 
           <div className="relative mt-9 px-1 animate-soft-rise motion-reduce:animate-none sm:mt-10">
