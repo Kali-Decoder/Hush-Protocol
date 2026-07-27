@@ -9,7 +9,7 @@ interface Props {
 export default async function ShortClaimPage({ searchParams }: Props) {
   const { p } = await searchParams;
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto w-full max-w-xl">
       <ClaimView encoded={p ?? ""} />
     </div>
   );

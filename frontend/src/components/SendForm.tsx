@@ -234,7 +234,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
     try {
       setStep("posting");
       const sealed = sealPayload(
-        JSON.stringify(pending.noteJson),
+        pending.payloadPlaintext ?? JSON.stringify(pending.noteJson),
         pending.recipientBulletPublicKey
       );
       upsertPendingSend({...pending, encryptedPayload: sealed});
@@ -440,6 +440,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       upsertPendingSend({
         commitment: commitmentBytes32,
         noteJson: json,
+        payloadPlaintext: JSON.stringify(json),
         encryptedPayload: sealed,
         depositTxHash: depositHash,
         recipientUsername: resolved.username,

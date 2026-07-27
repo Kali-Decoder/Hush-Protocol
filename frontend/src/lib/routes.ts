@@ -1,6 +1,7 @@
 /** App path segments that must not be treated as usernames. */
 export const RESERVED_PATHS = new Set([
   "send",
+  "scratch",
   "inbox",
   "lookout",
   "account",
@@ -32,6 +33,7 @@ export function isAppShellPath(pathname: string): boolean {
   if (
     pathname.startsWith("/lookout") ||
     pathname.startsWith("/send") ||
+    pathname.startsWith("/scratch") ||
     pathname.startsWith("/inbox") ||
     pathname.startsWith("/account") ||
     pathname.startsWith("/register") ||

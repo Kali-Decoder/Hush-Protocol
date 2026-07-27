@@ -3,7 +3,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useAccount, useWriteContract} from "wagmi";
 import {createPublicClient, http} from "viem";
-import type {NoteJSON} from "@bullet/sdk";
 import {noteFromJSON} from "@bullet/sdk";
 import {bulletPoolAbi} from "@/abi/BulletPool";
 import {claimNote, listNotes} from "@/lib/api";
@@ -36,14 +35,20 @@ import {
 } from "@/components/icons";
 import {ErrorBanner, Panel} from "@/components/ui";
 import type {PaymentShareDetails} from "@/lib/sharePayment";
+import {
+  encodeScratchClaimPayload,
+  scratchClaimPath,
+  type StoredPaymentPayload,
+  parseStoredPaymentPayload,
+} from "@/lib/scratchGift";
 
 interface DecryptedRow {
   note: Note;
-  payload: NoteJSON | null;
+  payload: StoredPaymentPayload | null;
   error?: string;
 }
 
-type InboxTab = "unclaimed" | "claimed";
+type InboxTab = "unclaimed" | "gifts" | "claimed";
 
 const CLAIM_TX_KEY = "hush.claimTxByNote";
 
@@ -106,8 +111,8 @@ export function Inbox() {
         };
         try {
           const plain = openPayload(note.encryptedPayload, keys.secretKey);
-          const payload = JSON.parse(plain) as NoteJSON;
-          noteFromJSON(payload);
+          const payload = parseStoredPaymentPayload(plain);
+          noteFromJSON(payload.note);
           return {note: withTx, payload};
         } catch (e) {
           return {
@@ -129,15 +134,26 @@ export function Inbox() {
     if (isConnected && isSignedIn) void load();
   }, [isConnected, isSignedIn, load]);
 
+  const giftRows = useMemo(
+    () =>
+      rows.filter((r) => !r.note.claimed && r.payload?.kind === "scratch"),
+    [rows]
+  );
   const unclaimedRows = useMemo(
-    () => rows.filter((r) => !r.note.claimed),
+    () =>
+      rows.filter((r) => !r.note.claimed && r.payload?.kind !== "scratch"),
     [rows]
   );
   const claimedRows = useMemo(
     () => rows.filter((r) => r.note.claimed),
     [rows]
   );
-  const visibleRows = tab === "unclaimed" ? unclaimedRows : claimedRows;
+  const visibleRows =
+    tab === "gifts"
+      ? giftRows
+      : tab === "unclaimed"
+        ? unclaimedRows
+        : claimedRows;
 
   async function handleClaim(row: DecryptedRow) {
     if (!address || !row.payload || row.note.claimed) return;
@@ -154,7 +170,7 @@ export function Inbox() {
 
     try {
       const args = await prepareWithdraw({
-        payload: row.payload,
+        payload: row.payload.note,
         recipient: address,
         onStep: setClaimStep,
       });
@@ -190,9 +206,9 @@ export function Inbox() {
 
       const tok = resolvePoolToken({
         tokenSymbol: row.note.tokenSymbol,
-        tokenHash: row.payload.tokenHash,
+        tokenHash: row.payload.note.tokenHash,
       });
-      const amountLabel = fromTokenUnits(row.payload.amount, tok.decimals);
+      const amountLabel = fromTokenUnits(row.payload.note.amount, tok.decimals);
 
       setClaimStep("done");
       setShareSuccess({
@@ -304,6 +320,11 @@ export function Inbox() {
                 count: unclaimedRows.length,
               },
               {
+                id: "gifts" as const,
+                label: "Gift cards",
+                count: giftRows.length,
+              },
+              {
                 id: "claimed" as const,
                 label: "Claimed",
                 count: claimedRows.length,
@@ -368,7 +389,9 @@ export function Inbox() {
           <Panel className="py-10 text-center text-sm text-graphite">
             {tab === "unclaimed"
               ? "Nothing to claim."
-              : "No claimed notes yet."}
+              : tab === "gifts"
+                ? "No scratch gift cards yet."
+                : "No claimed notes yet."}
           </Panel>
         ) : null}
 
@@ -377,6 +400,15 @@ export function Inbox() {
             const {note, payload, error: decErr} = row;
             const isThis = claimingId === note.id;
             const claimTx = txForNote(note);
+            const scratchLink =
+              payload?.kind === "scratch"
+                ? scratchClaimPath(
+                    encodeScratchClaimPayload({
+                      ...payload.claim,
+                      noteId: note.id,
+                    })
+                  )
+                : null;
             return (
               <li key={note.id}>
                 <Panel className="!p-5">
@@ -387,11 +419,11 @@ export function Inbox() {
                           {(() => {
                             const tok = resolvePoolToken({
                               tokenSymbol: note.tokenSymbol,
-                              tokenHash: payload.tokenHash,
+                              tokenHash: payload.note.tokenHash,
                             });
                             return (
                               <>
-                                {fromTokenUnits(payload.amount, tok.decimals)}{" "}
+                                {fromTokenUnits(payload.note.amount, tok.decimals)}{" "}
                                 <span className="text-base font-semibold text-graphite">
                                   {tok.symbol}
                                 </span>
@@ -402,6 +434,11 @@ export function Inbox() {
                       ) : (
                         <p className="text-sm text-graphite">Could not decrypt</p>
                       )}
+                      {payload?.kind === "scratch" ? (
+                        <p className="mt-2 inline-flex items-center rounded-full bg-paper px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-graphite">
+                          {payload.claim.meta.title || "Scratch gift card"}
+                        </p>
+                      ) : null}
                       <p className="mt-2 truncate font-mono text-[11px] text-graphite">
                         {note.commitment}
                       </p>
@@ -424,11 +461,18 @@ export function Inbox() {
                               rel="noreferrer"
                               className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper transition-colors hover:bg-ink/85"
                             >
-                              
+                              View claim
                               <ExternalLinkIcon className="h-3.5 w-3.5" />
                             </a>
                           ) : null}
                         </>
+                      ) : payload?.kind === "scratch" && scratchLink ? (
+                        <a
+                          href={scratchLink}
+                          className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper transition-colors hover:bg-ink/85"
+                        >
+                          Open scratch card
+                        </a>
                       ) : payload ? (
                         <button
                           type="button"

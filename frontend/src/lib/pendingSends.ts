@@ -6,6 +6,8 @@ const STORAGE_KEY = "hush.pendingSends";
 export type PendingSend = {
   commitment: string;
   noteJson: NoteJSON;
+  /** Optional custom plaintext envelope; defaults to JSON.stringify(noteJson). */
+  payloadPlaintext?: string;
   encryptedPayload: string;
   depositTxHash: string;
   recipientUsername: string;
