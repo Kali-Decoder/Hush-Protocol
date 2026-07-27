@@ -7,7 +7,7 @@ export default function ScratchPage() {
   return (
     <AppShell
       title="Scratch Card"
-      subtitle="Pick amount, name the card, choose a token, and send to a username — just like Send, but as a scratch-to-claim gift."
+      subtitle="Name the card, pick an amount, and send a scratch-to-claim gift."
     >
       <ScratchPaymentForm />
     </AppShell>

@@ -22,10 +22,10 @@ const THEME: Record<
   },
   azure: {
     shell: "from-[#1d4ed8] via-[#2563eb] to-[#60a5fa]",
-    title: "text-[#0b1f4d]",
-    ampRing: "border-[#0b1f4d]/70 text-[#0b1f4d]",
+    title: "text-white",
+    ampRing: "border-white/80 text-white",
     prize: "text-[#1d4ed8]",
-    stars: "text-[#0b1f4d]/85",
+    stars: "text-white/90",
   },
   emerald: {
     shell: "from-[#047857] via-[#059669] to-[#34d399]",
@@ -192,32 +192,34 @@ export function ScratchRevealCard({
     nameParts.length > 1 ? nameParts.slice(1).join(" ") : "WIN!";
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`w-full max-w-full ${className}`}>
       <div
-        className={`relative overflow-hidden rounded-[1.35rem] bg-gradient-to-br p-3 shadow-[0_22px_48px_-24px_rgba(10,10,10,0.45)] sm:p-3.5 ${theme.shell}`}
+        className={`relative overflow-hidden rounded-[1.25rem] bg-gradient-to-br p-2.5 shadow-[0_22px_48px_-24px_rgba(10,10,10,0.45)] sm:rounded-[1.35rem] sm:p-3.5 ${theme.shell}`}
       >
         <StarBorder className={theme.stars} />
 
-        <div className="relative z-[1] grid grid-cols-[0.95fr_1.15fr] gap-2.5 sm:gap-3">
+        <div className="relative z-[1] grid grid-cols-1 gap-2 min-[380px]:grid-cols-[0.9fr_1.15fr] min-[380px]:gap-2.5 sm:gap-3">
           {/* Left: card name */}
-          <div className="flex min-h-[9.5rem] flex-col items-center justify-center px-2 py-4 text-center sm:min-h-[11rem] sm:px-3">
+          <div className="flex min-h-[7.5rem] flex-col items-center justify-center px-2 py-3 text-center min-[380px]:min-h-[9.5rem] sm:min-h-[11rem] sm:px-3 sm:py-4">
             <p
-              className={`text-[1.35rem] font-extrabold uppercase leading-none tracking-[-0.04em] sm:text-[1.7rem] ${theme.title}`}
+              className={`text-[clamp(1.15rem,4.5vw,1.7rem)] font-extrabold uppercase leading-none tracking-[-0.04em] ${theme.title}`}
             >
               {top}
             </p>
             <span
-              className={`my-2 inline-flex h-7 w-7 items-center justify-center rounded-full border-2 text-sm font-bold sm:my-2.5 sm:h-8 sm:w-8 ${theme.ampRing}`}
+              className={`my-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold sm:my-2.5 sm:h-8 sm:w-8 sm:text-sm ${theme.ampRing}`}
             >
               &
             </span>
             <p
-              className={`text-[1.55rem] font-extrabold uppercase leading-none tracking-[-0.045em] sm:text-[2rem] ${theme.title}`}
+              className={`text-[clamp(1.3rem,5vw,2rem)] font-extrabold uppercase leading-none tracking-[-0.045em] ${theme.title}`}
             >
               {bottom}
             </p>
             {recipientLabel ? (
-              <p className={`mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80 ${theme.title}`}>
+              <p
+                className={`mt-2 max-w-full truncate text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80 sm:mt-3 ${theme.title}`}
+              >
                 for {recipientLabel}
               </p>
             ) : null}
@@ -226,18 +228,28 @@ export function ScratchRevealCard({
           {/* Right: scratch foil / prize */}
           <div
             ref={foilRef}
-            className="relative min-h-[9.5rem] overflow-hidden rounded-[1rem] bg-white sm:min-h-[11rem]"
+            className="relative min-h-[8.5rem] overflow-hidden rounded-[0.9rem] bg-white sm:min-h-[11rem] sm:rounded-[1rem]"
+            style={
+              showFoil
+                ? {
+                    backgroundImage:
+                      "linear-gradient(135deg,#f8fafc 0%,#cbd5e1 35%,#e2e8f0 55%,#94a3b8 75%,#64748b 100%)",
+                  }
+                : undefined
+            }
           >
             <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Prize
               </p>
               <p
-                className={`mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl ${theme.prize}`}
+                className={`mt-1 text-[clamp(1.75rem,6vw,2.25rem)] font-extrabold tracking-tight ${theme.prize}`}
               >
                 {amountLabel}
               </p>
-              <p className={`mt-0.5 text-sm font-bold uppercase tracking-[0.12em] ${theme.prize}`}>
+              <p
+                className={`mt-0.5 text-sm font-bold uppercase tracking-[0.12em] ${theme.prize}`}
+              >
                 {tokenSymbol}
               </p>
             </div>
@@ -245,14 +257,16 @@ export function ScratchRevealCard({
             {showFoil ? (
               <canvas
                 ref={canvasRef}
-                className={`absolute inset-0 z-[2] rounded-[1rem] ${
+                className={`absolute inset-0 z-[2] rounded-[0.9rem] sm:rounded-[1rem] ${
                   disabled
                     ? "pointer-events-none"
                     : "cursor-crosshair touch-none"
                 }`}
                 onPointerDown={(e) => {
                   if (disabled) return;
-                  (e.target as HTMLCanvasElement).setPointerCapture?.(e.pointerId);
+                  (e.target as HTMLCanvasElement).setPointerCapture?.(
+                    e.pointerId
+                  );
                   scratching.current = true;
                   erase(e.clientX, e.clientY);
                 }}

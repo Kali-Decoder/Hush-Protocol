@@ -38,7 +38,7 @@ import {NetworkGate} from "@/components/NetworkGate";
 import {ScratchRevealCard} from "@/components/ScratchRevealCard";
 import {ScratchSendSuccessModal} from "@/components/ScratchSendSuccessModal";
 import {TokenBalanceSelect} from "@/components/TokenSelect";
-import {LoaderIcon} from "@/components/icons";
+import {CheckIcon, CopyIcon, LoaderIcon} from "@/components/icons";
 import {AmountPills, ErrorBanner, FieldLabel, Panel} from "@/components/ui";
 
 const THEMES: Array<{id: ScratchTheme; label: string; swatch: string}> = [
@@ -69,6 +69,7 @@ export function ScratchPaymentForm() {
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState("");
   const [claimUrl, setClaimUrl] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
   const [recipientFocused, setRecipientFocused] = useState(false);
   const [recentTick, setRecentTick] = useState(0);
   const [success, setSuccess] = useState<{
@@ -94,6 +95,17 @@ export function ScratchPaymentForm() {
   function rememberRecipient(username: string) {
     rememberRecentRecipient("twitter", username);
     setRecentTick((n) => n + 1);
+  }
+
+  async function copyClaimLink() {
+    if (!claimUrl) return;
+    try {
+      await navigator.clipboard.writeText(claimUrl);
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 1600);
+    } catch {
+      toast.error("Couldn’t copy link");
+    }
   }
 
   async function handleSend() {
@@ -264,175 +276,187 @@ export function ScratchPaymentForm() {
 
   return (
     <NetworkGate>
-      <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <Panel className="space-y-5">
-          {!isSignedIn ? (
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-graphite">
-                Sign in so the encrypted scratch card can land in their inbox.
-              </p>
-              <a href="/register" className="btn-primary">
-                Sign in
-              </a>
-            </div>
-          ) : (
-            <>
-              {error ? <ErrorBanner message={error} /> : null}
+      <Panel className="space-y-6 text-left">
+        {!isSignedIn ? (
+          <div className="space-y-4 text-center">
+            <p className="text-sm text-graphite">
+              Sign in so the encrypted scratch card can land in their inbox.
+            </p>
+            <a href="/register" className="btn-primary">
+              Sign in
+            </a>
+          </div>
+        ) : (
+          <>
+            {error ? <ErrorBanner message={error} /> : null}
 
-              <div className="space-y-2">
-                <FieldLabel>Send to username</FieldLabel>
-                <div className="field !py-0">
-                  <div className="flex items-center gap-2">
-                    <span className="pl-1 text-lg font-semibold text-graphite">
-                      @
-                    </span>
-                    <input
-                      value={recipient.replace(/^@/, "")}
-                      onChange={(e) =>
-                        setRecipient(e.target.value.replace(/^@+/, ""))
-                      }
-                      onFocus={() => setRecipientFocused(true)}
-                      onBlur={() =>
-                        window.setTimeout(() => setRecipientFocused(false), 120)
-                      }
-                      placeholder="username"
-                      className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none"
-                    />
-                  </div>
-                </div>
-                {recipientFocused && recentRecipients.length > 0 ? (
-                  <div className="overflow-hidden rounded-2xl border border-fog bg-white">
-                    {recentRecipients.map((r) => (
-                      <button
-                        key={r.value}
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setRecipient(r.value);
-                          setRecipientFocused(false);
-                        }}
-                        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink hover:bg-paper"
-                      >
-                        @{r.value}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel>Scratch card name</FieldLabel>
-                <input
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value)}
-                  placeholder="Scratch & Win"
-                  className="field"
-                />
-                <p className="text-[11px] text-graphite">
-                  Shown on the left side of the card, like “Scratch & Win”.
+            <div className="space-y-3">
+              <div className="flex items-end justify-between gap-3">
+                <FieldLabel>Live preview</FieldLabel>
+                <p className="pb-0.5 text-[11px] text-graphite">
+                  Updates as you edit
                 </p>
               </div>
-
-              <div className="space-y-2">
-                <FieldLabel>Card color</FieldLabel>
-                <div className="flex gap-2">
-                  {THEMES.map((opt) => {
-                    const on = theme === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setTheme(opt.id)}
-                        className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-colors ${
-                          on
-                            ? "border-ink bg-ink text-paper"
-                            : "border-fog bg-white text-graphite hover:border-graphite"
-                        }`}
-                      >
-                        <span
-                          className={`h-3 w-3 rounded-full ${opt.swatch}`}
-                          aria-hidden
-                        />
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel>Token</FieldLabel>
-                <TokenBalanceSelect
-                  value={selectedToken}
-                  onChange={setSelectedToken}
-                  disabled={busy}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel>Amount</FieldLabel>
-                <AmountPills
-                  amounts={AMOUNT_PRESETS}
-                  value={amount}
-                  onChange={setAmount}
-                  disabled={busy}
-                  canAfford={hasEnough}
-                  symbol={selectedToken.symbol}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void handleSend()}
-                disabled={busy || !recipient.trim() || !amount}
-                className="btn-primary"
-              >
-                {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
-                {busy ? "Sending scratch card…" : "Send scratch card"}
-              </button>
-            </>
-          )}
-        </Panel>
-
-        <Panel className="space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-graphite">
-              Live preview
-            </p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-ink">
-              Scratch & claim gift
-            </h2>
-          </div>
-          <ScratchRevealCard
-            meta={{
-              title: cardName.trim() || "Scratch & Win",
-              theme,
-            }}
-            amountLabel={String(amount ?? AMOUNT_PRESETS[1] ?? 10)}
-            tokenSymbol={selectedToken.symbol}
-            recipientLabel={
-              recipient.trim()
-                ? `@${recipient.replace(/^@/, "")}`
-                : "@username"
-            }
-            disabled
-          />
-          <p className="text-sm leading-relaxed text-graphite">
-            They open it from Inbox under Gift cards, scratch the silver panel,
-            then sign the withdraw proof.
-          </p>
-          {claimUrl ? (
-            <div className="rounded-2xl border border-fog bg-paper px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-graphite">
-                Claim link
-              </p>
-              <p className="mt-1 truncate font-mono text-xs text-ink">
-                {claimUrl}
+              <ScratchRevealCard
+                meta={{
+                  title: cardName.trim() || "Scratch & Win",
+                  theme,
+                }}
+                amountLabel={String(amount ?? AMOUNT_PRESETS[1] ?? 10)}
+                tokenSymbol={selectedToken.symbol}
+                recipientLabel={
+                  recipient.trim()
+                    ? `@${recipient.replace(/^@/, "")}`
+                    : undefined
+                }
+                disabled
+              />
+              <p className="text-[13px] leading-relaxed text-graphite">
+                They open it under Gift cards, scratch the silver panel, then
+                claim.
               </p>
             </div>
-          ) : null}
-        </Panel>
-      </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Send to username</FieldLabel>
+              <div className="field !py-0">
+                <div className="flex items-center gap-2">
+                  <span className="pl-1 text-lg font-semibold text-graphite">
+                    @
+                  </span>
+                  <input
+                    value={recipient.replace(/^@/, "")}
+                    onChange={(e) =>
+                      setRecipient(e.target.value.replace(/^@+/, ""))
+                    }
+                    onFocus={() => setRecipientFocused(true)}
+                    onBlur={() =>
+                      window.setTimeout(() => setRecipientFocused(false), 120)
+                    }
+                    placeholder="username"
+                    className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none"
+                  />
+                </div>
+              </div>
+              {recipientFocused && recentRecipients.length > 0 ? (
+                <div className="overflow-hidden rounded-2xl border border-fog bg-white">
+                  {recentRecipients.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setRecipient(r.value);
+                        setRecipientFocused(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink hover:bg-paper"
+                    >
+                      @{r.value}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Scratch card name</FieldLabel>
+              <input
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="Scratch & Win"
+                maxLength={32}
+                className="field"
+              />
+              <p className="text-[11px] text-graphite">
+                Left side of the card — short names look best.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Card color</FieldLabel>
+              <div className="grid grid-cols-3 gap-2">
+                {THEMES.map((opt) => {
+                  const on = theme === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setTheme(opt.id)}
+                      className={`flex min-w-0 items-center justify-center gap-1.5 rounded-2xl border px-2 py-3 text-xs font-semibold transition-colors sm:gap-2 sm:text-sm ${
+                        on
+                          ? "border-ink bg-ink text-paper"
+                          : "border-fog bg-white text-graphite hover:border-graphite"
+                      }`}
+                    >
+                      <span
+                        className={`h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3 ${opt.swatch}`}
+                        aria-hidden
+                      />
+                      <span className="truncate">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Token</FieldLabel>
+              <TokenBalanceSelect
+                value={selectedToken}
+                onChange={setSelectedToken}
+                disabled={busy}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Amount</FieldLabel>
+              <AmountPills
+                amounts={AMOUNT_PRESETS}
+                value={amount}
+                onChange={setAmount}
+                disabled={busy}
+                canAfford={hasEnough}
+                symbol={selectedToken.symbol}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleSend()}
+              disabled={busy || !recipient.trim() || !amount}
+              className="btn-primary"
+            >
+              {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
+              {busy ? "Sending scratch card…" : "Send scratch card"}
+            </button>
+
+            {claimUrl ? (
+              <div className="rounded-2xl border border-fog bg-paper/80 px-3.5 py-3 sm:px-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-graphite">
+                    Claim link
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void copyClaimLink()}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink hover:opacity-70"
+                  >
+                    {copiedLink ? (
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    ) : (
+                      <CopyIcon className="h-3.5 w-3.5" />
+                    )}
+                    {copiedLink ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <p className="mt-1.5 break-all font-mono text-[11px] leading-relaxed text-ink sm:text-xs">
+                  {claimUrl}
+                </p>
+              </div>
+            ) : null}
+          </>
+        )}
+      </Panel>
 
       {success ? (
         <ScratchSendSuccessModal
