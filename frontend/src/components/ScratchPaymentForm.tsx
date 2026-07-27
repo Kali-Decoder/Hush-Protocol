@@ -36,15 +36,36 @@ import {useTokenBalance} from "@/hooks/useUsdcBalance";
 import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
 import {ScratchRevealCard} from "@/components/ScratchRevealCard";
+import {ScratchSendProgressModal} from "@/components/ScratchSendProgressModal";
 import {ScratchSendSuccessModal} from "@/components/ScratchSendSuccessModal";
 import {TokenBalanceSelect} from "@/components/TokenSelect";
 import {CheckIcon, CopyIcon, LoaderIcon} from "@/components/icons";
 import {AmountPills, ErrorBanner, FieldLabel, Panel} from "@/components/ui";
 
-const THEMES: Array<{id: ScratchTheme; label: string; swatch: string}> = [
-  {id: "crimson", label: "Crimson", swatch: "bg-[#e11d48]"},
-  {id: "azure", label: "Azure", swatch: "bg-[#2563eb]"},
-  {id: "emerald", label: "Emerald", swatch: "bg-[#059669]"},
+const THEMES: Array<{
+  id: ScratchTheme;
+  label: string;
+  swatch: string;
+  ring: string;
+}> = [
+  {
+    id: "crimson",
+    label: "Orange",
+    swatch: "bg-[#f07a1a]",
+    ring: "ring-[#f07a1a]/40",
+  },
+  {
+    id: "azure",
+    label: "Azure",
+    swatch: "bg-[#2f6fed]",
+    ring: "ring-[#2f6fed]/40",
+  },
+  {
+    id: "emerald",
+    label: "Emerald",
+    swatch: "bg-[#0f9f6e]",
+    ring: "ring-[#0f9f6e]/40",
+  },
 ];
 
 type Step =
@@ -54,6 +75,8 @@ type Step =
   | "approving"
   | "depositing"
   | "posting";
+
+type ProgressStep = Exclude<Step, "idle">;
 
 export function ScratchPaymentForm() {
   const {address, isConnected} = useAccount();
@@ -68,6 +91,8 @@ export function ScratchPaymentForm() {
   const [amount, setAmount] = useState<number | null>(AMOUNT_PRESETS[1] ?? 10);
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState("");
+  const [statusHint, setStatusHint] = useState("");
+  const [includeApprove, setIncludeApprove] = useState(true);
   const [claimUrl, setClaimUrl] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
   const [recipientFocused, setRecipientFocused] = useState(false);
@@ -83,6 +108,9 @@ export function ScratchPaymentForm() {
   } | null>(null);
 
   const busy = step !== "idle";
+  const previewTitle = cardName.trim() || "Scratch & Win";
+  const previewAmount = String(amount ?? AMOUNT_PRESETS[1] ?? 10);
+  const previewRecipient = recipient.trim().replace(/^@/, "");
   const recentRecipients = useMemo(
     () =>
       filterRecentRecipients("twitter", recipient, {
@@ -129,6 +157,8 @@ export function ScratchPaymentForm() {
 
     setError("");
     setClaimUrl("");
+    setStatusHint("Looking up recipient…");
+    setIncludeApprove(true);
 
     try {
       setStep("resolving");
@@ -136,6 +166,7 @@ export function ScratchPaymentForm() {
       if (!resolved) {
         setError("User not found. They need to register first.");
         setStep("idle");
+        setStatusHint("");
         return;
       }
 
@@ -146,6 +177,7 @@ export function ScratchPaymentForm() {
       const digest = recipientDigestForWallet(resolved.wallet);
       const title = cardName.trim() || "Scratch & Win";
 
+      setStatusHint("Building a private scratch note…");
       setStep("creating");
       const note = await createNote({
         recipientDigest: digest,
@@ -183,7 +215,13 @@ export function ScratchPaymentForm() {
         args: [address, pool],
       });
 
-      if (allowance < units) {
+      const needsApprove = allowance < units;
+      setIncludeApprove(needsApprove);
+
+      if (needsApprove) {
+        setStatusHint(
+          `Approve ${selectedToken.symbol} in your wallet (one-time)…`
+        );
         setStep("approving");
         const approveHash = await writeContractAsync({
           address: tokenAddr,
@@ -192,9 +230,11 @@ export function ScratchPaymentForm() {
           args: [pool, maxUint256],
           chainId: arcTestnet.id,
         });
+        setStatusHint("Waiting for approval confirmation…");
         await client.waitForTransactionReceipt({hash: approveHash});
       }
 
+      setStatusHint("Confirm deposit in your wallet…");
       setStep("depositing");
       const hash = await writeContractAsync({
         address: pool,
@@ -203,6 +243,7 @@ export function ScratchPaymentForm() {
         args: [tokenAddr, units, commitment],
         chainId: arcTestnet.id,
       });
+      setStatusHint("Waiting for deposit confirmation…");
       await client.waitForTransactionReceipt({hash});
 
       upsertPendingSend({
@@ -217,6 +258,7 @@ export function ScratchPaymentForm() {
         tokenSymbol: selectedToken.symbol,
       });
 
+      setStatusHint("Sealing gift into their inbox…");
       setStep("posting");
       const created = await postNote(authToken, {
         recipientUsername: resolved.username,
@@ -244,6 +286,7 @@ export function ScratchPaymentForm() {
 
       setClaimUrl(finalClaimUrl);
       rememberRecipient(resolved.username);
+      setStatusHint("");
       setSuccess({
         title,
         theme,
@@ -259,6 +302,7 @@ export function ScratchPaymentForm() {
       const msg = formatError(e);
       setError(msg);
       toast.error(msg);
+      setStatusHint("");
       setStep("idle");
     }
   }
@@ -291,35 +335,41 @@ export function ScratchPaymentForm() {
             {error ? <ErrorBanner message={error} /> : null}
 
             <div className="space-y-3">
-              <div className="flex items-end justify-between gap-3">
-                <FieldLabel>Live preview</FieldLabel>
-                <p className="pb-0.5 text-[11px] text-graphite">
-                  Updates as you edit
+              <div className="flex items-end justify-between gap-3 px-0.5">
+                <div>
+                  <FieldLabel>Live preview</FieldLabel>
+                  <p className="mt-0.5 text-[12px] text-graphite">
+                    {previewAmount} {selectedToken.symbol}
+                    {previewRecipient ? ` → @${previewRecipient}` : ""}
+                  </p>
+                </div>
+                <p className="pb-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-graphite/70">
+                  Lottery ticket
                 </p>
               </div>
               <ScratchRevealCard
                 meta={{
-                  title: cardName.trim() || "Scratch & Win",
+                  title: previewTitle,
                   theme,
                 }}
-                amountLabel={String(amount ?? AMOUNT_PRESETS[1] ?? 10)}
+                amountLabel={previewAmount}
                 tokenSymbol={selectedToken.symbol}
                 recipientLabel={
-                  recipient.trim()
-                    ? `@${recipient.replace(/^@/, "")}`
-                    : undefined
+                  previewRecipient ? `@${previewRecipient}` : undefined
                 }
                 disabled
+                tilt
+                stage
               />
-              <p className="text-[13px] leading-relaxed text-graphite">
-                They open it under Gift cards, scratch the silver panel, then
-                claim.
+              <p className="px-0.5 text-[12px] leading-relaxed text-graphite">
+                They scratch the silver panel on the ticket, then claim
+                privately.
               </p>
             </div>
 
             <div className="space-y-2">
               <FieldLabel>Send to username</FieldLabel>
-              <div className="field !py-0">
+              <div className={`field !py-0 ${busy ? "opacity-60" : ""}`}>
                 <div className="flex items-center gap-2">
                   <span className="pl-1 text-lg font-semibold text-graphite">
                     @
@@ -334,7 +384,8 @@ export function ScratchPaymentForm() {
                       window.setTimeout(() => setRecipientFocused(false), 120)
                     }
                     placeholder="username"
-                    className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none"
+                    disabled={busy}
+                    className="min-w-0 flex-1 bg-transparent py-3.5 text-lg text-ink outline-none disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -365,7 +416,8 @@ export function ScratchPaymentForm() {
                 onChange={(e) => setCardName(e.target.value)}
                 placeholder="Scratch & Win"
                 maxLength={32}
-                className="field"
+                disabled={busy}
+                className="field disabled:cursor-not-allowed disabled:opacity-60"
               />
               <p className="text-[11px] text-graphite">
                 Left side of the card — short names look best.
@@ -381,18 +433,25 @@ export function ScratchPaymentForm() {
                     <button
                       key={opt.id}
                       type="button"
+                      disabled={busy}
                       onClick={() => setTheme(opt.id)}
-                      className={`flex min-w-0 items-center justify-center gap-1.5 rounded-2xl border px-2 py-3 text-xs font-semibold transition-colors sm:gap-2 sm:text-sm ${
+                      className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-2 py-3 transition-all disabled:opacity-50 ${
                         on
-                          ? "border-ink bg-ink text-paper"
+                          ? `border-ink bg-white shadow-[0_8px_20px_-14px_rgba(10,10,10,0.45)] ring-2 ${opt.ring}`
                           : "border-fog bg-white text-graphite hover:border-graphite"
                       }`}
                     >
                       <span
-                        className={`h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3 ${opt.swatch}`}
+                        className={`h-8 w-8 rounded-full shadow-inner ${opt.swatch}`}
                         aria-hidden
                       />
-                      <span className="truncate">{opt.label}</span>
+                      <span
+                        className={`truncate text-xs font-semibold sm:text-sm ${
+                          on ? "text-ink" : "text-graphite"
+                        }`}
+                      >
+                        {opt.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -427,10 +486,10 @@ export function ScratchPaymentForm() {
               className="btn-primary"
             >
               {busy ? <LoaderIcon className="h-5 w-5 animate-spin" /> : null}
-              {busy ? "Sending scratch card…" : "Send scratch card"}
+              {busy ? "Creating scratch card…" : "Send scratch card"}
             </button>
 
-            {claimUrl ? (
+            {claimUrl && !busy ? (
               <div className="rounded-2xl border border-fog bg-paper/80 px-3.5 py-3 sm:px-4">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[10px] uppercase tracking-[0.14em] text-graphite">
@@ -457,6 +516,19 @@ export function ScratchPaymentForm() {
           </>
         )}
       </Panel>
+
+      {busy ? (
+        <ScratchSendProgressModal
+          step={step as ProgressStep}
+          includeApprove={includeApprove}
+          statusHint={statusHint}
+          title={previewTitle}
+          theme={theme}
+          amountLabel={previewAmount}
+          tokenSymbol={selectedToken.symbol}
+          recipientUsername={previewRecipient}
+        />
+      ) : null}
 
       {success ? (
         <ScratchSendSuccessModal

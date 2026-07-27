@@ -107,7 +107,7 @@ export function ClaimView({encoded}: {encoded: string}) {
       <Panel className="space-y-4 !p-4 sm:!p-5">
         <div className="space-y-2 text-center">
           <p className="text-[11px] uppercase tracking-[0.18em] text-graphite">
-            Gift card
+            Lottery ticket
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             {done ? "You won" : "Scratch to claim"}
@@ -130,6 +130,8 @@ export function ClaimView({encoded}: {encoded: string}) {
           }
           disabled={done}
           revealed={done}
+          stage
+          tilt={done}
           onThreshold={() => setArmed(true)}
         />
 
