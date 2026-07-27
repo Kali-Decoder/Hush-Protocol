@@ -213,7 +213,7 @@ export function ScratchRevealCard({
   const ticket = (
     <div
       className={`relative mx-auto w-full max-w-[28rem] ${
-        tilt ? "-rotate-[8deg] sm:-rotate-[11deg]" : ""
+        tilt ? "-rotate-[6deg] sm:-rotate-[8deg]" : ""
       }`}
     >
       <div
