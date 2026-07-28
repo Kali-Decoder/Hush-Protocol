@@ -56,6 +56,14 @@ export function AppChrome({children}: {children: ReactNode}) {
             </p>
           </div>
           <nav className="flex items-center gap-6 text-sm tracking-[-0.01em] text-graphite">
+            <a
+              href="/whitepaper.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-ink"
+            >
+              Whitepaper
+            </a>
             <Link href="/privacy" className="transition-colors hover:text-ink">
               Privacy
             </Link>
