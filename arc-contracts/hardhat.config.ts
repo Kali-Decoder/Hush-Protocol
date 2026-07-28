@@ -50,7 +50,8 @@ const config: HardhatUserConfig = {
   etherscan: {
     enabled: true,
     apiKey: {
-      arcTestnet: process.env.ARCSCAN_API_KEY || "empty",
+      // Arcscan (Blockscout) does not require a real key
+      arcTestnet: process.env.ARCSCAN_API_KEY || "no-api-key-needed",
     },
     customChains: [
       {

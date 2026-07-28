@@ -24,6 +24,7 @@
     "pool:unpause": "ACTION=unpause hardhat run scripts/ops/pause.ts --network arcTestnet",
     "status": "hardhat run scripts/ops/status.ts --network arcTestnet",
     "verify": "hardhat verify --network arcTestnet",
+    "verify:all": "hardhat run scripts/deploy/verify-all.ts --network arcTestnet",
 
     "zk:install": "pnpm --dir zk install --ignore-workspace",
     "zk:build": "pnpm --dir zk run build",
