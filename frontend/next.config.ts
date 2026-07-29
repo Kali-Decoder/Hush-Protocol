@@ -25,8 +25,8 @@ const connectSrc = [
         "http://localhost:4010",
       ]
     : []),
-  "https://rpc.testnet.arc.network",
-  "https://arc-testnet.drpc.org",
+  "https://coston2-api.flare.network",
+  "https://flare-api.flare.network",
   "https://hush-protocol-backend.onrender.com",
   "https://hush-protocol-indexer.onrender.com",
   "https://*.walletconnect.com",

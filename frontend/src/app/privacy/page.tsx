@@ -83,20 +83,20 @@ export default function Privacy() {
           <span className="font-semibold text-ink">
             Trusted setup is demo-grade.
           </span>{" "}
-          Groth16 needs a ceremony. The current keys are fine for Arc Testnet
+          Groth16 needs a ceremony. The current keys are fine for testnet
           demos, not for production mainnet custody of large funds.
         </li>
       </ul>
 
       <p className="mt-12 text-sm text-graphite">
-        Network: Arc Testnet (chain id 5042002). Explorer:{" "}
+        Network: Flare Testnet Coston2 (chain id 114). Explorer:{" "}
         <a
-          href="https://testnet.arcscan.app"
+          href="https://coston2-explorer.flare.network"
           target="_blank"
           rel="noopener noreferrer"
           className="text-ink underline-offset-2 hover:underline"
         >
-          testnet.arcscan.app
+          coston2-explorer.flare.network
         </a>
         .
       </p>

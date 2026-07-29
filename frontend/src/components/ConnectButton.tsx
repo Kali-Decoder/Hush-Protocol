@@ -7,7 +7,7 @@ import {
   useConnect,
   useDisconnect,
 } from "wagmi";
-import {arcTestnet} from "@/lib/chains";
+import {activeChain} from "@/lib/chains";
 import {toast} from "@/lib/toast";
 import {useSignOut} from "@/hooks/useSignOut";
 import {LoaderIcon, WalletIcon} from "@/components/icons";
@@ -78,14 +78,14 @@ export function ConnectButton({
     setBusyLocal(true);
     reset();
     try {
-      await connectAsync({connector, chainId: arcTestnet.id});
+      await connectAsync({connector, chainId: activeChain.id});
       if (!compact) toast.success("Wallet connected.");
     } catch (err) {
       if (shouldRetryConnect(err)) {
         try {
           await disconnectAsync().catch(() => undefined);
           reset();
-          await connectAsync({connector, chainId: arcTestnet.id});
+          await connectAsync({connector, chainId: activeChain.id});
           if (!compact) toast.success("Wallet connected.");
           return;
         } catch (retryErr) {

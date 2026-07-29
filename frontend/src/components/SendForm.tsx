@@ -11,7 +11,7 @@ import {recipientDigestForWallet} from "@/lib/chain";
 import {
   AMOUNT_PRESETS,
   addresses,
-  arcTestnet,
+  activeChain,
   DEFAULT_POOL_TOKEN,
   explorerTx,
   getPoolToken,
@@ -388,7 +388,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
       setCommitment(commitmentBytes32);
 
       const client = createPublicClient({
-        chain: arcTestnet,
+        chain: activeChain,
         transport: http(),
       });
       const allowance = await client.readContract({
@@ -412,7 +412,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
           abi: erc20Abi,
           functionName: "approve",
           args: [pool, maxUint256],
-          chainId: arcTestnet.id,
+          chainId: activeChain.id,
         });
         setApproveHash(nextApproveHash);
         setStatusHint("Waiting for approval confirmation…");
@@ -428,10 +428,10 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         abi: bulletPoolAbi,
         functionName: "deposit",
         args: [tokenAddr, units, commitmentBytes32],
-        chainId: arcTestnet.id,
+        chainId: activeChain.id,
       });
       setTxHash(depositHash);
-      setStatusHint("Waiting for deposit confirmation on Arc…");
+      setStatusHint("Waiting for deposit confirmation on Flare Coston2…");
       await client.waitForTransactionReceipt({hash: depositHash});
 
       // Persist sealed note before POST so delivery can be retried without
@@ -532,7 +532,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
         {!isConnected ? (
           <div className="space-y-4 py-2 text-center">
             <p className="text-sm text-graphite">
-              Connect an Arc wallet to deposit a private note.
+              Connect a Flare wallet to deposit a private note.
             </p>
             <ConnectButton label="Connect wallet" />
           </div>

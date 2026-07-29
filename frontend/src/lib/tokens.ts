@@ -6,39 +6,17 @@ export type PoolToken = {
   symbol: string;
   decimals: number;
   enabled: boolean;
-  /** Public path to token logo (SVG/PNG). */
   logo: string;
 };
 
-/** Tokens enabled on BulletPool (from deployments/arcTestnet.json). */
+/** Tokens enabled on BulletPool (Flare Coston2). */
 export const POOL_TOKENS: readonly PoolToken[] = [
   {
-    address: "0x7d7aF5715e5671e0E3126b2428Dc2629bD9061e3",
+    address: "0x2049581cb5169881FAE7ed568465b97B51F7Dc6E",
     symbol: "USDC",
     decimals: 6,
     enabled: true,
     logo: "/tokens/usdc.png",
-  },
-  {
-    address: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",
-    symbol: "EURC",
-    decimals: 6,
-    enabled: true,
-    logo: "/tokens/eurc.png",
-  },
-  {
-    address: "0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",
-    symbol: "cirBTC",
-    decimals: 8,
-    enabled: true,
-    logo: "/tokens/cirbtc.png",
-  },
-  {
-    address: "0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C",
-    symbol: "USYC",
-    decimals: 6,
-    enabled: true,
-    logo: "/tokens/usyc.png",
   },
 ] as const;
 
@@ -73,7 +51,6 @@ export function fromTokenUnits(
     .replace(/0+$/, "")}`;
 }
 
-/** Resolve pool token from note metadata (symbol and/or Poseidon tokenHash). */
 export function resolvePoolToken(opts: {
   tokenSymbol?: string | null;
   tokenHash?: string | bigint | null;

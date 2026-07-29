@@ -2,7 +2,7 @@
   "name": "@hush/frontend",
   "version": "0.0.0",
   "private": true,
-  "description": "Hushh Protocol frontend: Next.js + Tailwind on Arc Testnet (EVM) with ZK withdraw proofs.",
+  "description": "Hushh Protocol frontend: Next.js + Tailwind on Flare Coston2 (EVM) with ZK withdraw proofs.",
   "scripts": {
     "dev": "next dev",
     "sdk:build": "pnpm --dir ../arc-contracts/sdk install --ignore-workspace && pnpm --dir ../arc-contracts/sdk build",

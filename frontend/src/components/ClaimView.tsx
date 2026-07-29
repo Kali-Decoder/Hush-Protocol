@@ -9,7 +9,7 @@ import {ScratchRevealCard} from "@/components/ScratchRevealCard";
 import {CheckIcon, ExternalLinkIcon, LoaderIcon} from "@/components/icons";
 import {ErrorBanner, Panel} from "@/components/ui";
 import {claimNote} from "@/lib/api";
-import {addresses, arcTestnet, explorerTx} from "@/lib/config";
+import {addresses, activeChain, explorerTx} from "@/lib/config";
 import {formatError} from "@/lib/errors";
 import {getToken} from "@/lib/session";
 import {decodeScratchClaimPayload} from "@/lib/scratchGift";
@@ -56,11 +56,11 @@ export function ClaimView({encoded}: {encoded: string}) {
             args.token,
             args.amount,
           ],
-          chainId: arcTestnet.id,
+          chainId: activeChain.id,
         });
 
         const client = createPublicClient({
-          chain: arcTestnet,
+          chain: activeChain,
           transport: http(),
         });
         await client.waitForTransactionReceipt({hash});
@@ -115,7 +115,7 @@ export function ClaimView({encoded}: {encoded: string}) {
           <p className="mx-auto max-w-md text-sm leading-relaxed text-graphite">
             {done
               ? "Funds are in your wallet. Keep the revealed card as your receipt."
-              : "Scratch the silver panel. Once revealed, your wallet proves and withdraws on Arc."}
+              : "Scratch the silver panel. Once revealed, your wallet proves and withdraws on Flare Coston2."}
           </p>
         </div>
 

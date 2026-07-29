@@ -155,7 +155,7 @@ export function LookoutForm() {
               rel="noreferrer"
               className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-ink transition-opacity hover:opacity-70"
             >
-              View on arcscan
+              View on explorer
               <ExternalLinkIcon className="h-3.5 w-3.5" />
             </a>
           </div>

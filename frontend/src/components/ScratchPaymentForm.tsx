@@ -11,7 +11,7 @@ import {recipientDigestForWallet} from "@/lib/chain";
 import {
   AMOUNT_PRESETS,
   addresses,
-  arcTestnet,
+  activeChain,
   DEFAULT_POOL_TOKEN,
   toTokenUnits,
   type PoolToken,
@@ -205,7 +205,7 @@ export function ScratchPaymentForm() {
       const sealed = sealPayload(plaintext, resolved.bulletPublicKey);
 
       const client = createPublicClient({
-        chain: arcTestnet,
+        chain: activeChain,
         transport: http(),
       });
       const allowance = await client.readContract({
@@ -228,7 +228,7 @@ export function ScratchPaymentForm() {
           abi: erc20Abi,
           functionName: "approve",
           args: [pool, maxUint256],
-          chainId: arcTestnet.id,
+          chainId: activeChain.id,
         });
         setStatusHint("Waiting for approval confirmation…");
         await client.waitForTransactionReceipt({hash: approveHash});
@@ -241,7 +241,7 @@ export function ScratchPaymentForm() {
         abi: bulletPoolAbi,
         functionName: "deposit",
         args: [tokenAddr, units, commitment],
-        chainId: arcTestnet.id,
+        chainId: activeChain.id,
       });
       setStatusHint("Waiting for deposit confirmation…");
       await client.waitForTransactionReceipt({hash});

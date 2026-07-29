@@ -1,23 +1,24 @@
 import {defineChain} from "viem";
 
 const rpcUrl =
-  process.env.NEXT_PUBLIC_RPC_URL || "https://rpc.testnet.arc.network";
+  process.env.NEXT_PUBLIC_RPC_URL
+  || "https://coston2-api.flare.network/ext/C/rpc";
 const explorerUrl =
-  process.env.NEXT_PUBLIC_EXPLORER_URL || "https://testnet.arcscan.app";
+  process.env.NEXT_PUBLIC_EXPLORER_URL
+  || "https://coston2-explorer.flare.network";
 
-/** Arc Testnet (chainId 5042002) */
-export const arcTestnet = defineChain({
-  id: 5042002,
-  name: "Arc Testnet",
-  nativeCurrency: {name: "USDC", symbol: "USDC", decimals: 18},
+export const activeChain = defineChain({
+  id: Number(process.env.NEXT_PUBLIC_CHAIN_ID) || 114,
+  name: "Flare Testnet Coston2",
+  nativeCurrency: {name: "C2FLR", symbol: "C2FLR", decimals: 18},
   rpcUrls: {
     default: {
       http: [rpcUrl],
-      webSocket: ["wss://rpc.testnet.arc.network"],
+      webSocket: ["wss://coston2-api.flare.network/ext/C/ws"],
     },
   },
   blockExplorers: {
-    default: {name: "ArcScan", url: explorerUrl},
+    default: {name: "Coston2 Explorer", url: explorerUrl},
   },
   testnet: true,
 });

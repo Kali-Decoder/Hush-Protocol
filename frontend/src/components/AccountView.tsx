@@ -194,7 +194,7 @@ function ProfileBalances() {
         <h2 className="text-[10px] font-medium uppercase tracking-[0.14em] text-graphite">
           Balances
         </h2>
-        <p className="font-mono text-[11px] text-graphite">Arc Testnet</p>
+        <p className="font-mono text-[11px] text-graphite">Flare Coston2</p>
       </div>
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <BalanceTile
@@ -206,7 +206,7 @@ function ProfileBalances() {
           onRefresh={() => void arc.refetch()}
           logo={
             <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-ink text-[9px] font-bold text-paper">
-              A
+              F
             </span>
           }
         />
@@ -471,7 +471,7 @@ export function AccountView() {
                       rel="noreferrer"
                       className="rounded-full border border-fog bg-white p-2 text-ink transition-colors hover:border-graphite"
                       aria-label="View on explorer"
-                      title="View on arcscan"
+                      title="View on explorer"
                     >
                       <ExternalLinkIcon className="h-3.5 w-3.5" />
                     </a>

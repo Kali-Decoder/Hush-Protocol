@@ -201,7 +201,7 @@ export default function LandingHero() {
           ready ? "" : "opacity-0"
         }`}
       >
-        {["Arc Testnet", "Groth16", "Fixed notes"].map((label, i) => (
+        {["Flare Testnet Coston2", "Groth16", "Fixed notes"].map((label, i) => (
           <span key={label} className="contents">
             {i > 0 ? (
               <span className="hidden text-fog sm:inline" aria-hidden>

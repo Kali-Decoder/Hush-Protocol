@@ -1,7 +1,7 @@
 "use client";
 
 import {useAccount, useSwitchChain} from "wagmi";
-import {arcTestnet} from "@/lib/chains";
+import {activeChain} from "@/lib/chains";
 import {toast} from "@/lib/toast";
 import {GlobeIcon, LoaderIcon} from "@/components/icons";
 
@@ -10,9 +10,9 @@ export function useIsCorrectChain() {
   return {
     isConnected,
     chainId,
-    isCorrectChain: isConnected && chainId === arcTestnet.id,
-    targetChainId: arcTestnet.id,
-    targetName: arcTestnet.name,
+    isCorrectChain: isConnected && chainId === activeChain.id,
+    targetChainId: activeChain.id,
+    targetName: activeChain.name,
   };
 }
 
@@ -35,7 +35,7 @@ export function SwitchNetworkButton({
         disabled={isPending}
         onClick={() =>
           switchChain(
-            {chainId: arcTestnet.id},
+            {chainId: activeChain.id},
             {
               onSuccess: () => toast.success(`Switched to ${targetName}.`),
               onError: (err) => toast.error(err),
@@ -81,7 +81,7 @@ export function NetworkGate({
       <div className="rounded-xl border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-ink">
         <p className="font-medium">Wrong network</p>
         <p className="mt-1 text-graphite">
-          Hushh Protocol runs on {targetName} (chain {arcTestnet.id}). Switch your wallet
+           Hushh Protocol runs on {targetName} (chain {activeChain.id}). Switch your wallet
           to continue.
         </p>
       </div>

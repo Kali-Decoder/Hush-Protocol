@@ -1,6 +1,6 @@
 # Hushh Protocol frontend
 
-Self-contained Next.js app for Arc Testnet. Wired to backend auth / notes and on-chain deposit.
+Self-contained Next.js app for Flare Coston2. Wired to backend auth / notes and on-chain deposit.
 
 ```bash
 # 1. Backend
@@ -14,7 +14,7 @@ pnpm dev                               # :3000
 
 ## Wallet
 
-Browser extension wallets via wagmi `injected` (MetaMask, etc.). Arc Testnet `5042002`.
+Browser extension wallets via wagmi `injected` (MetaMask, etc.). Flare Coston2 `114`.
 
 Optional WalletConnect Cloud id (unused while we stay injected-only):
 
@@ -23,7 +23,7 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=367e7033f1d106ae8bdbbd60e7c478a9
 ```
 
 
-1. Open `/register` → connect MetaMask (Arc Testnet 5042002) → pick `@username` → sign.
+1. Open `/register` → connect MetaMask (Flare Coston2 114) → pick `@username` → sign.
 2. Mint test USDC to your wallet:
    ```bash
    cd arc-contracts

@@ -2,7 +2,7 @@
  * API types used by the frontend against backend + indexer.
  *
  * Crypto / proving: Hushh Protocol SDK (linked later).
- * Chain calls: viem / contracts on Arc.
+ * Chain calls: viem / contracts on Flare.
  */
 
 // ─── Users / auth (arc-contracts/backend) ─────────────────────────────
@@ -144,9 +144,9 @@ export interface WitnessResponse {
 
 // ─── Network / deployments ───────────────────────────────────────────
 
-export interface ArcNetworkConfig {
-  chainId: 5042002;
-  name: "Arc Testnet";
+export interface FlareNetworkConfig {
+  chainId: 114;
+  name: "Flare Testnet Coston2";
   rpcUrl: string;
   explorerUrl: string;
 }
@@ -158,20 +158,20 @@ export interface HushDeployments {
   mockUsdc?: `0x${string}`;
 }
 
-/** Arc Testnet deploy — mirrors arc-contracts/deployments/arcTestnet.json */
-export const ARC_TESTNET_DEPLOYMENT = {
-  chainId: 5042002,
-  deployer: "0xdAF0182De86F904918Db8d07c7340A1EfcDF8244",
-  bulletPool: "0x9E65584C6ACE76cEFde4FD5f50E6bB9763999dCe",
-  merkleRootManager: "0x6D6530A1fC908792DA2aa533a5F299283E6F062a",
-  verifier: "0x0A95c430Bf6AA3140A4Bf04C8D5982472331008d",
-  mockUsdc: "0x7d7aF5715e5671e0E3126b2428Dc2629bD9061e3",
+/** Coston2 deploy — mirrors arc-contracts/deployments/coston2.json */
+export const COSTON2_DEPLOYMENT = {
+  chainId: 114,
+  deployer: "0x587A253330826dDE12A91f9071084575B865E855",
+  bulletPool: "0x587A253330826dDE12A91f9071084575B865E855",
+  merkleRootManager: "0x5Ef5B083C14d97aaBD693C914Ed6a46E068585b9",
+  verifier: "0x0F1a6ef28a4783dBCc4bb602aF67AB253eb869b9",
+  mockUsdc: "0x2049581cb5169881FAE7ed568465b97B51F7Dc6E",
 } as const satisfies HushDeployments & {
   chainId: number;
   deployer: `0x${string}`;
 };
 
-/** Prefer NEXT_PUBLIC_* env, fall back to ARC_TESTNET_DEPLOYMENT. */
+/** Prefer NEXT_PUBLIC_* env, fall back to COSTON2_DEPLOYMENT. */
 export function getDeployments(): HushDeployments {
   const env = (key: string, fallback: `0x${string}`): `0x${string}` => {
     const v = process.env[key];
@@ -180,19 +180,19 @@ export function getDeployments(): HushDeployments {
   return {
     bulletPool: env(
       "NEXT_PUBLIC_BULLET_POOL_ADDRESS",
-      ARC_TESTNET_DEPLOYMENT.bulletPool
+      COSTON2_DEPLOYMENT.bulletPool
     ),
     merkleRootManager: env(
       "NEXT_PUBLIC_MERKLE_ROOT_MANAGER_ADDRESS",
-      ARC_TESTNET_DEPLOYMENT.merkleRootManager
+      COSTON2_DEPLOYMENT.merkleRootManager
     ),
     verifier: env(
       "NEXT_PUBLIC_VERIFIER_ADDRESS",
-      ARC_TESTNET_DEPLOYMENT.verifier
+      COSTON2_DEPLOYMENT.verifier
     ),
     mockUsdc: env(
       "NEXT_PUBLIC_USDC_ADDRESS",
-      ARC_TESTNET_DEPLOYMENT.mockUsdc
+      COSTON2_DEPLOYMENT.mockUsdc
     ),
   };
 }

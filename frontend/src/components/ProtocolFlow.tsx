@@ -172,7 +172,7 @@ export default function ProtocolFlow() {
                   tone={nodeTone("wallet")}
                   kicker="MetaMask"
                   title="Wallet"
-                  detail="Arc Testnet"
+                  detail="Flare Testnet Coston2"
                   onClick={() => selectNode("wallet", "identity")}
                 />
                 <DownArrow
@@ -244,7 +244,7 @@ export default function ProtocolFlow() {
                 <ArchNode
                   tone={nodeTone("arc")}
                   kicker="Chain"
-                  title="Arc Testnet"
+                  title="Flare Testnet Coston2"
                   detail="Sees hash + size only"
                   onClick={() => selectNode("arc", "hold")}
                 />
@@ -295,7 +295,7 @@ export default function ProtocolFlow() {
                     tone={nodeTone("wallet")}
                     kicker="MetaMask"
                     title="Wallet"
-                    detail="Arc Testnet"
+                    detail="Flare Testnet Coston2"
                     onClick={() => selectNode("wallet", "identity")}
                   />
                   <ArchNode
@@ -371,7 +371,7 @@ export default function ProtocolFlow() {
                   tone={nodeTone("wallet")}
                   kicker="MetaMask"
                   title="Wallet"
-                  detail="Arc Testnet"
+                  detail="Flare Testnet Coston2"
                   onClick={() => selectNode("wallet", "identity")}
                 />
                 <DownArrow lit={edgeLit("you-hussh")} label="connect · send" />

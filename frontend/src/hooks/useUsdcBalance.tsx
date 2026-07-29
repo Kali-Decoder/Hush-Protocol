@@ -4,7 +4,7 @@ import {formatUnits} from "viem";
 import {useAccount, useBalance, useReadContract} from "wagmi";
 import {erc20Abi} from "@/abi/erc20";
 import {
-  arcTestnet,
+  activeChain,
   DEFAULT_POOL_TOKEN,
   fromTokenUnits,
   POOL_TOKENS,
@@ -25,7 +25,7 @@ export function useTokenBalance(
     abi: erc20Abi,
     functionName: "balanceOf",
     args: account ? [account] : undefined,
-    chainId: arcTestnet.id,
+    chainId: activeChain.id,
     query: {
       enabled: !!account && isConnected && !!token.address,
       refetchInterval: 12_000,
@@ -55,14 +55,14 @@ export function useUsdcBalance(owner?: `0x${string}`) {
   return useTokenBalance(DEFAULT_POOL_TOKEN, owner);
 }
 
-/** Native Arc Testnet balance (gas token). */
+/** Native Coston2 balance (gas token). */
 export function useArcBalance(owner?: `0x${string}`) {
   const {address, isConnected} = useAccount();
   const account = owner ?? address;
 
   const {data, isLoading, isFetching, refetch, error} = useBalance({
     address: account,
-    chainId: arcTestnet.id,
+    chainId: activeChain.id,
     query: {
       enabled: !!account && isConnected,
       refetchInterval: 12_000,
@@ -70,8 +70,8 @@ export function useArcBalance(owner?: `0x${string}`) {
   });
 
   const raw = data?.value ?? 0n;
-  const decimals = data?.decimals ?? arcTestnet.nativeCurrency.decimals;
-  const symbol = data?.symbol ?? arcTestnet.nativeCurrency.symbol;
+  const decimals = data?.decimals ?? activeChain.nativeCurrency.decimals;
+  const symbol = data?.symbol ?? activeChain.nativeCurrency.symbol;
   const formatted = formatNative(raw, decimals);
 
   return {
@@ -177,8 +177,8 @@ export function TokenBalance({
   );
 }
 
-export function ArcBalance({
-  label = "Arc balance",
+export function Coston2Balance({
+  label = "C2FLR balance",
   className = "",
   compact = false,
 }: {
@@ -205,14 +205,14 @@ export function ArcBalance({
   );
 }
 
-/** Native Arc + all pool ERC-20 balances for the account screen. */
+/** Native C2FLR + all pool ERC-20 balances for the account screen. */
 export function AccountBalances({className = ""}: {className?: string}) {
   const {isConnected} = useAccount();
   if (!isConnected) return null;
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      <ArcBalance />
+      <Coston2Balance />
       {POOL_TOKENS.filter((t) => t.enabled).map((t) => (
         <TokenBalance key={t.address} token={t} label={`Pool ${t.symbol}`} />
       ))}

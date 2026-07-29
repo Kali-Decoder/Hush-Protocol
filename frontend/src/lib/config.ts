@@ -1,5 +1,5 @@
-import {ARC_TESTNET_DEPLOYMENT, getDeployments} from "@/shared";
-import {arcTestnet} from "@/lib/chains";
+import {COSTON2_DEPLOYMENT, getDeployments} from "@/shared";
+import {activeChain} from "@/lib/chains";
 import {
   DEFAULT_POOL_TOKEN,
   fromTokenUnits,
@@ -9,7 +9,7 @@ import {
   toTokenUnits,
 } from "@/lib/tokens";
 
-export {arcTestnet};
+export {activeChain};
 export {
   POOL_TOKENS,
   DEFAULT_POOL_TOKEN,
@@ -25,7 +25,7 @@ export const BACKEND_URL =
 export const INDEXER_URL =
   process.env.NEXT_PUBLIC_INDEXER_URL || "http://127.0.0.1:4010";
 export const EXPLORER_URL =
-  process.env.NEXT_PUBLIC_EXPLORER_URL || "https://testnet.arcscan.app";
+  process.env.NEXT_PUBLIC_EXPLORER_URL || "https://coston2-explorer.flare.network";
 
 /** @deprecated Prefer token.decimals from POOL_TOKENS */
 export const USDC_DECIMALS = 6;
@@ -39,7 +39,7 @@ export function addresses() {
     verifier: d.verifier,
     usdc: (d.mockUsdc ||
       DEFAULT_POOL_TOKEN.address ||
-      ARC_TESTNET_DEPLOYMENT.mockUsdc) as `0x${string}`,
+      COSTON2_DEPLOYMENT.mockUsdc) as `0x${string}`,
   };
 }
 

@@ -8,7 +8,7 @@ import {bulletPoolAbi} from "@/abi/BulletPool";
 import {claimNote, listNotes} from "@/lib/api";
 import {
   addresses,
-  arcTestnet,
+  activeChain,
   explorerTx,
   fromTokenUnits,
   resolvePoolToken,
@@ -190,11 +190,11 @@ export function Inbox() {
           args.token,
           args.amount,
         ],
-        chainId: arcTestnet.id,
+        chainId: activeChain.id,
       });
 
       const client = createPublicClient({
-        chain: arcTestnet,
+        chain: activeChain,
         transport: http(),
       });
       await client.waitForTransactionReceipt({hash});
@@ -294,7 +294,7 @@ export function Inbox() {
       <div className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <p className="text-sm leading-relaxed text-graphite">
-            Decrypt notes, then claim on Arc. Needs the indexer for a
+            Decrypt notes, then claim on Flare Coston2. Needs the indexer for a
             Merkle witness.
           </p>
           <button
