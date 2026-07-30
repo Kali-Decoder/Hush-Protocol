@@ -33,14 +33,9 @@ export function PaymentSharePreview({
             <p className="text-[11px] text-graphite">{HUSH_HANDLE}</p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-center gap-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/arc-logo.png"
-            alt="Arc"
-            className="h-8 w-8 rounded-[9px] ring-1 ring-ink/5"
-          />
-          <span className="text-[10px] font-medium text-graphite">Arc</span>
+        <div className="flex shrink-0 flex-col items-center gap-1 rounded-[9px] bg-[#f0efe9] px-2.5 py-1">
+          <span className="text-[10px] font-bold tracking-tight text-ink">Coston2</span>
+          <span className="text-[9px] text-graphite">Flare</span>
         </div>
       </div>
 

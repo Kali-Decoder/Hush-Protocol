@@ -1,7 +1,7 @@
 /**
- * Verify BulletVerifier, MerkleRootManager, and BulletPool on Arcscan (testnet).
+ * Verify WithdrawVerifier, MerkleRootManager, and BulletPool on Flare Coston2.
  *
- * Reads addresses + constructor args from deployments/arcTestnet.json.
+ * Reads addresses + constructor args from deployments/coston2.json.
  * MerkleRootManager owner defaults to the recorded deployer (RELAYER_ADDRESS
  * override via env if a different owner was used at deploy time).
  *
@@ -39,21 +39,14 @@ async function verify(
 
 async function main() {
   const network = hre.network.name;
-  if (network !== "arcTestnet") {
-    throw new Error(`Run with --network arcTestnet (got ${network})`);
-  }
-
-  const dep = loadDeployment("arcTestnet");
-  if (!dep?.contracts.BulletVerifier || !dep.contracts.MerkleRootManager || !dep.contracts.BulletPool) {
-    throw new Error("deployments/arcTestnet.json missing required contract addresses");
+  const dep = loadDeployment(network);
+  if (!dep?.contracts.WithdrawVerifier || !dep.contracts.MerkleRootManager || !dep.contracts.BulletPool) {
+    throw new Error(`deployments/${network}.json missing required contract addresses`);
   }
 
   const deployer = parseAddress("deployer", dep.deployer);
-  const verifier = parseAddress("BulletVerifier", dep.contracts.BulletVerifier);
-  const rootManager = parseAddress(
-    "MerkleRootManager",
-    dep.contracts.MerkleRootManager
-  );
+  const verifier = parseAddress("WithdrawVerifier", dep.contracts.WithdrawVerifier);
+  const rootManager = parseAddress("MerkleRootManager", dep.contracts.MerkleRootManager);
   const pool = parseAddress("BulletPool", dep.contracts.BulletPool);
 
   const rootOwner = parseAddress(
@@ -65,12 +58,12 @@ async function main() {
   console.log(`Deployer: ${deployer}`);
   console.log(`Root owner (MerkleRootManager): ${rootOwner}`);
 
-  await verify("BulletVerifier", verifier, []);
+  await verify("WithdrawVerifier", verifier, []);
   await verify("MerkleRootManager", rootManager, [rootOwner]);
   await verify("BulletPool", pool, [deployer, verifier, rootManager]);
 
   console.log("\nDone.");
-  console.log(`Explorer: https://testnet.arcscan.app/address/${pool}`);
+  console.log(`Explorer: https://coston2-explorer.flare.network/address/${pool}`);
 }
 
 main().catch((err) => {

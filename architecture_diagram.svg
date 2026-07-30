@@ -76,7 +76,7 @@
   <text x="1015" y="205" class="box-detail" text-anchor="middle">deposit(token, amt, C)</text>
   <text x="1015" y="220" class="box-detail" text-anchor="middle">withdraw(proof, root, …)</text>
   <text x="1015" y="235" class="box-detail" text-anchor="middle">nullifiers · token registry</text>
-  <text x="1015" y="250" class="box-detail" text-anchor="middle">chainId 5042002</text>
+  <text x="1015" y="250" class="box-detail" text-anchor="middle">chainId 114</text>
 
   <!-- ══════════════════════════ ROW 2 ══════════════════════════ -->
 

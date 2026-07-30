@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# stop-services.sh — Stop Docker Compose stack and clean up.
+#
+# Usage: ./scripts/stop-services.sh
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+cd "$PROJECT_DIR"
+docker compose down --remove-orphans
+
+echo "Services stopped."

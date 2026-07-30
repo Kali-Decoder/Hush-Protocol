@@ -1,5 +1,5 @@
-> **Status:** ACTIVE. Binding for the Arc / EVM rebuild.
-> **Network:** Arc Testnet (chainId `5042002`).
+> **Status:** ACTIVE. Binding for the Flare / EVM rebuild.
+> **Network:** Flare Coston2 Testnet (chainId `114`).
 > **Binding scope:** P0 below. P1/P2/P3 are out of scope unless the owner
 > says otherwise in writing.
 >
@@ -10,7 +10,7 @@
 
 ## 1. What Hush is
 
-Hush is a **ZK-private payment rail on Arc (EVM)**. It lets a sender deposit
+Hush is a **ZK-private payment rail on Flare Coston2 (EVM)**. It lets a sender deposit
 USDC (and other registered ERC-20s) as fixed-denomination notes, and lets a
 recipient withdraw with a zero-knowledge proof, while hiding the
 **deposit↔withdraw link** on-chain.
@@ -139,15 +139,15 @@ needs the indexer.
 
 ### P0.6 Frontend integration — NEXT
 
-- Arc wallet connect (EVM).
+- Flare/Coston2 wallet connect (EVM).
 - Deposit: SDK note → approve → `deposit` → `POST /notes`.
 - Withdraw: `GET /notes` → decrypt → indexer witness → prove → `withdraw`.
 - Local note storage fallback for unregistered recipients.
 
-### P0.7 E2E on Arc Testnet
+### P0.7 E2E on Flare Coston2
 
 - Explorer links for deposit tx + withdraw tx with no shared commitment.
-- Document addresses in `deployments/arcTestnet.json`.
+- Document addresses in `deployments/coston2.json`.
 
 ---
 
@@ -181,7 +181,7 @@ Reaching for any of these = stop and ask.
 
 | Layer | Tech | Notes |
 |-------|------|-------|
-| Network | Arc Testnet | chainId `5042002`, RPC `https://rpc.testnet.arc.network`, explorer [testnet.arcscan.app](https://testnet.arcscan.app) |
+| Network | Flare Coston2 Testnet | chainId `114`, RPC `https://coston2-api.flare.network/ext/C/rpc`, explorer [coston2-explorer.flare.network](https://coston2-explorer.flare.network) |
 | Contracts | Solidity 0.8.28, Hardhat, OpenZeppelin | `arc-contracts/contracts/` |
 | ZK | Circom + snarkjs, Groth16 / BN254 | `arc-contracts/zk/` |
 | SDK | TypeScript, circomlibjs, snarkjs | `arc-contracts/sdk/` |
@@ -272,7 +272,7 @@ Token registry is embedded in `BulletPool` (`addToken` / `removeToken` /
 
 ## 10. Workflow & rules
 
-Implementation work for the Arc stack lives under `arc-contracts/`. Prefer small
+Implementation work for the Flare stack lives under `arc-contracts/`. Prefer small
 reviewable commits.
 
 Hard rules:
@@ -290,11 +290,11 @@ Hard rules:
 ## 11. Network config (Hardhat)
 
 ```
-Network name:  arcTestnet
-Chain ID:      5042002
+Network name:  coston2
+Chain ID:      114
 Currency:      USDC
-RPC:           https://rpc.testnet.arc.network
-Explorer:      https://testnet.arcscan.app
+RPC:           https://coston2-api.flare.network/ext/C/rpc
+Explorer:      https://coston2-explorer.flare.network
 ```
 
-Deploy: `pnpm deploy:all --network arcTestnet` from `arc-contracts/`.
+Deploy: `pnpm deploy:all --network coston2` from `arc-contracts/`.

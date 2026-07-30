@@ -8,7 +8,7 @@
  *
  * Usage:
  *   pnpm status
- *   pnpm status --network somniaTestnet
+ *   pnpm status --network coston2
  */
 import hre from "hardhat";
 import {loadDeployment} from "../lib/deployments";

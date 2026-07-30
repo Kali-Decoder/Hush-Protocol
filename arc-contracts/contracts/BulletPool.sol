@@ -9,12 +9,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IVerifier} from "./interfaces/IVerifier.sol";
 import {IMerkleRootManager} from "./interfaces/IMerkleRootManager.sol";
+import {ITeeAttestationVerifier, TeeAttestation} from "./interfaces/ITeeAttestationVerifier.sol";
 
-/// @title BulletPool
-/// @notice ZK-private payment pool: deposit notes, withdraw with membership proofs.
-/// @dev Option B — Merkle tree is off-chain. Public inputs match zk/PROTOCOL.md:
-///      [root, nullifier, recipientDigest, amount, tokenHash]
-///      where tokenHash = uint256(uint160(token)).
 contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -26,6 +22,7 @@ contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
 
     IVerifier public verifier;
     IMerkleRootManager public rootManager;
+    ITeeAttestationVerifier public teeVerifier;
 
     mapping(address => TokenInfo) public supportedTokens;
     mapping(bytes32 => bool) public nullifierSpent;
@@ -36,11 +33,13 @@ contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
     error InvalidCommitment();
     error InvalidRecipient();
     error InvalidProof();
+    error InvalidTeeAttestation();
     error RootNotFound();
     error NullifierAlreadyUsed();
     error ZeroAddress();
     error TokenAlreadySupported();
     error TokenNotSupported();
+    error TeeVerifierNotSet();
 
     event Deposit(
         bytes32 indexed commitment,
@@ -55,6 +54,8 @@ contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
     event TokenRemoved(address indexed token);
     event VerifierUpdated(address indexed previous, address indexed current);
     event RootManagerUpdated(address indexed previous, address indexed current);
+    event TeeVerifierUpdated(address indexed previous, address indexed current);
+    event TeeWithdrawal(bytes32 indexed nullifier, address indexed recipient, uint256 nonce);
 
     constructor(
         address initialOwner,
@@ -88,7 +89,6 @@ contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
         return supportedTokens[token].enabled;
     }
 
-    /// @notice Field encoding of an ERC-20 address for the circuit `tokenHash` input.
     function tokenHashOf(address token) public pure returns (uint256) {
         return uint256(uint160(token));
     }
@@ -112,9 +112,6 @@ contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
         emit Deposit(commitment, leafIndex, token, amount);
     }
 
-    /// @notice Withdraw a note by proving membership under a known root.
-    /// @param recipientDigest Stealth digest bound in the note commitment (public input).
-    /// @param recipient Address that receives the ERC-20 payout.
     function withdraw(
         bytes calldata proof,
         bytes32 root,
@@ -151,6 +148,40 @@ contract BulletPool is Ownable2Step, Pausable, ReentrancyGuard {
         IERC20(token).safeTransfer(recipient, amount);
 
         emit Withdrawal(nullifier, recipient);
+    }
+
+    function withdrawWithTee(
+        TeeAttestation calldata att,
+        bytes calldata teeSignature,
+        bytes32 root,
+        address token,
+        uint256 amount
+    ) external nonReentrant whenNotPaused {
+        if (address(teeVerifier) == address(0)) revert TeeVerifierNotSet();
+        if (att.userAddress == address(0)) revert InvalidRecipient();
+        if (amount == 0) revert InvalidAmount();
+        if (att.nullifier == bytes32(0)) revert InvalidProof();
+        if (!supportedTokens[token].registered) revert InvalidToken();
+        if (!rootManager.isKnownRoot(root)) revert RootNotFound();
+        if (nullifierSpent[att.nullifier]) revert NullifierAlreadyUsed();
+
+        if (!teeVerifier.verifyAttestation(att, teeSignature)) {
+            revert InvalidTeeAttestation();
+        }
+
+        nullifierSpent[att.nullifier] = true;
+
+        IERC20(token).safeTransfer(att.userAddress, amount);
+
+        emit TeeWithdrawal(att.nullifier, att.userAddress, att.nonce);
+        emit Withdrawal(att.nullifier, att.userAddress);
+    }
+
+    function setTeeVerifier(address teeVerifier_) external onlyOwner {
+        if (teeVerifier_ == address(0)) revert ZeroAddress();
+        address previous = address(teeVerifier);
+        teeVerifier = ITeeAttestationVerifier(teeVerifier_);
+        emit TeeVerifierUpdated(previous, teeVerifier_);
     }
 
     function pause() external onlyOwner {

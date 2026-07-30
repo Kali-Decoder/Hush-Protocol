@@ -1,0 +1,22 @@
+{
+  "network": "coston2",
+  "chainId": 114,
+  "deployer": "0x2b750c56f09178487F9A96FbA240Ea91Ac6F77fD",
+  "contracts": {
+    "WithdrawVerifier": "0xafef8386eBEd79B4E26b1D1B6FE81F0820fc0EF4",
+    "MerkleRootManager": "0xa200Ccf20131D2c8dd8E1e2EEa4Ff843f3e9F895",
+    "BulletPool": "0x69cA45fA698A77Ccff0Be64319ae6e9B94C74774",
+    "MockUSDC": "0xEC94237573f4239e1eFb277C19d68203e70B491a",
+    "TeeAttestationVerifier": "0xb3f4EF8BBaE1Bc154efE2517f7F9F1e0c3847292",
+    "InstructionSender": "0xF6BfF6d7d872836D73C68A0B5e8BF3be452A2CDc"
+  },
+  "tokens": [
+    {
+      "address": "0xEC94237573f4239e1eFb277C19d68203e70B491a",
+      "symbol": "USDC",
+      "decimals": 6,
+      "enabled": true
+    }
+  ],
+  "updatedAt": "2026-07-30T12:05:50.345Z"
+}

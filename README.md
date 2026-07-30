@@ -1,6 +1,6 @@
 # Hushh Protocol
 
-ZK-private payment rail on **Arc Testnet** (EVM). Send USDC without leaving an on-chain link between deposit and withdraw.
+ZK-private payment rail on **Flare Coston2** (EVM). Send USDC without leaving an on-chain link between deposit and withdraw.
 
 Tagline: send silently.
 
@@ -11,8 +11,8 @@ Tagline: send silently.
 | **App** | [https://hush-protocol-zeta.vercel.app](https://hush-protocol-zeta.vercel.app) |
 | **Backend** | [https://hush-protocol-backend.onrender.com](https://hush-protocol-backend.onrender.com) |
 | **Indexer** | [https://hush-protocol-indexer.onrender.com](https://hush-protocol-indexer.onrender.com) |
-| **Explorer** | [https://testnet.arcscan.app](https://testnet.arcscan.app) |
-| **RPC** | `https://rpc.testnet.arc.network` (chain id `5042002`) |
+| **Explorer** | [https://coston2-explorer.flare.network](https://coston2-explorer.flare.network) |
+| **RPC** | `https://coston2-api.flare.network/ext/C/rpc` (chain id `114`) |
 
 ---
 
@@ -134,11 +134,11 @@ Privacy model (v1, stated plainly):
 
 | Setting | Value |
 |---------|--------|
-| Network | Arc Testnet |
-| Chain ID | `5042002` |
+| Network | Flare Coston2 Testnet |
+| Chain ID | `114` |
 | Currency | USDC |
-| RPC | `https://rpc.testnet.arc.network` |
-| Explorer | [testnet.arcscan.app](https://testnet.arcscan.app) |
+| RPC | `https://coston2-api.flare.network/ext/C/rpc` |
+| Explorer | [coston2-explorer.flare.network](https://coston2-explorer.flare.network) |
 
 ## Architecture
 
@@ -214,7 +214,7 @@ bullet/
     └── deployments/   Per-network addresses
 ```
 
-Legacy Stellar/Soroban packages (`contracts/`, `circuits/`, root `backend/`) are not the current target. Development continues on Arc + Solidity.
+Legacy Stellar/Soroban packages (`contracts/`, `circuits/`, root `backend/`) are not the current target. Development continues on Flare Coston2 + Solidity.
 
 ---
 
@@ -237,21 +237,23 @@ pnpm zk:install && pnpm zk:build
 pnpm sdk:install && pnpm sdk:build && pnpm sdk:test
 ```
 
-### Deploy to Arc Testnet
+### Deploy to Flare Coston2 Testnet
 
 ```bash
-pnpm deploy          # Arc Testnet (needs PRIVATE_KEY in .env)
+pnpm deploy          # Flare Coston2 Testnet (needs PRIVATE_KEY in .env)
 pnpm status
 ```
 
-Writes `deployments/arcTestnet.json` (pool, root manager, verifier, MockUSDC).
+Writes `deployments/coston2.json` (pool, root manager, verifier, MockUSDC).
 
 | Contract | Address |
 |----------|---------|
-| BulletPool | `0x9E65584C6ACE76cEFde4FD5f50E6bB9763999dCe` |
-| MerkleRootManager | `0x6D6530A1fC908792DA2aa533a5F299283E6F062a` |
-| BulletVerifier | `0x0A95c430Bf6AA3140A4Bf04C8D5982472331008d` |
-| MockUSDC | `0x7d7aF5715e5671e0E3126b2428Dc2629bD9061e3` |
+| BulletPool | `0x69cA45fA698A77Ccff0Be64319ae6e9B94C74774` |
+| MerkleRootManager | `0xa200Ccf20131D2c8dd8E1e2EEa4Ff843f3e9F895` |
+| WithdrawVerifier | `0xafef8386eBEd79B4E26b1D1B6FE81F0820fc0EF4` |
+| MockUSDC | `0xEC94237573f4239e1eFb277C19d68203e70B491a` |
+| TeeAttestationVerifier | `0xb3f4EF8BBaE1Bc154efE2517f7F9F1e0c3847292` |
+| InstructionSender | `0xF6BfF6d7d872836D73C68A0B5e8BF3be452A2CDc` |
 
 ### Indexer
 
@@ -260,7 +262,7 @@ pnpm indexer:install
 cp indexer/.env.example indexer/.env
 # BULLET_POOL_ADDRESS, MERKLE_ROOT_MANAGER_ADDRESS, RELAYER_PRIVATE_KEY
 # DATABASE_URL=mongodb+srv://…/hushh_indexer
-# RPC_URL=https://rpc.testnet.arc.network  CHAIN_ID=5042002
+# RPC_URL=https://coston2-api.flare.network/ext/C/rpc  CHAIN_ID=114
 
 pnpm indexer:migrate
 pnpm indexer:dev                 # API :4010
@@ -283,7 +285,7 @@ Auth / resolve / inbox only. No proving. No Merkle. No chain calls.
 
 ```bash
 cp frontend/.env.example frontend/.env
-# addresses already filled from deployments/arcTestnet.json
+# addresses already filled from deployments/coston2.json
 # Local:
 # NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 # NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4020
@@ -342,8 +344,8 @@ Frontend should call the SDK. Never reimplement Poseidon / proving in the app.
 | Command | Purpose |
 |---------|---------|
 | `pnpm test` | Hardhat contract tests |
-| `pnpm deploy` | Full stack deploy to Arc Testnet |
-| `pnpm deploy:token` | Deploy / register MockUSDC on Arc |
+| `pnpm deploy` | Full stack deploy to Flare Coston2 Testnet |
+| `pnpm deploy:token` | Deploy / register MockUSDC on Flare Coston2 |
 | `pnpm add:token` / `remove:token` | Token registry |
 | `pnpm mint:token` | Mint MockUSDC |
 | `pnpm post:root` | Manual root post |

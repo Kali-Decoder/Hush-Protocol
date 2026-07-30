@@ -1,6 +1,6 @@
 /**
  * Deploy the full Bullet stack:
- *   BulletVerifier → MerkleRootManager → BulletPool → MockUSDC → addToken(+mint)
+ *   WithdrawVerifier → MerkleRootManager → BulletPool → MockUSDC → addToken(+mint)
  *
  * Env (optional):
  *   RELAYER_ADDRESS  — owns MerkleRootManager (defaults to deployer)
@@ -11,7 +11,7 @@
  *
  * Usage:
  *   pnpm deploy:all
- *   pnpm deploy:all --network somniaTestnet
+ *   pnpm deploy:all --network coston2
  */
 import hre from "hardhat";
 import {
@@ -40,12 +40,12 @@ async function main() {
   const relayer = parseAddress("RELAYER_ADDRESS", relayerRaw);
 
   // ── Verifier ──────────────────────────────────────────────────────────────
-  console.log("\n[1/5] Deploying BulletVerifier (mock)...");
-  const Verifier = await hre.ethers.getContractFactory("BulletVerifier");
+  console.log("\n[1/5] Deploying WithdrawVerifier (Groth16)...");
+  const Verifier = await hre.ethers.getContractFactory("WithdrawVerifier");
   const verifier = await Verifier.deploy();
   await verifier.waitForDeployment();
   const verifierAddr = await verifier.getAddress();
-  console.log(`  BulletVerifier:     ${verifierAddr}`);
+  console.log(`  WithdrawVerifier:   ${verifierAddr}`);
 
   // ── Root manager ──────────────────────────────────────────────────────────
   console.log("\n[2/5] Deploying MerkleRootManager...");
@@ -70,7 +70,7 @@ async function main() {
     chainId: cid,
     deployer: deployer.address,
     contracts: {
-      BulletVerifier: verifierAddr,
+      WithdrawVerifier: verifierAddr,
       MerkleRootManager: rootManagerAddr,
       BulletPool: poolAddr,
     },

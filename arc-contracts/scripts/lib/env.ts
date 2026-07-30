@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
 
-/** Active network name from Hardhat (e.g. hardhat, somniaTestnet). */
+/** Active network name from Hardhat (e.g. hardhat, coston2). */
 export function networkName(): string {
   return hre.network.name;
 }

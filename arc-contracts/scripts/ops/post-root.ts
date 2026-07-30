@@ -6,7 +6,7 @@
  *   ROOT_MANAGER_ADDRESS — optional override
  *
  * Usage:
- *   ROOT=0xabc... pnpm post:root --network somniaTestnet
+ *   ROOT=0xabc... pnpm post:root --network coston2
  */
 import hre from "hardhat";
 import {requireDeployment} from "../lib/deployments";

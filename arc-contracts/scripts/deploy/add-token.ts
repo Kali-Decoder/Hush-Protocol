@@ -9,7 +9,7 @@
  *
  * Usage:
  *   TOKEN_ADDRESS=0x... pnpm add:token
- *   TOKEN_ADDRESS=0x... TOKEN_DECIMALS=6 pnpm add:token --network somniaTestnet
+ *   TOKEN_ADDRESS=0x... TOKEN_DECIMALS=6 pnpm add:token --network coston2
  */
 import hre from "hardhat";
 import {

@@ -10,7 +10,7 @@
  *
  * Usage:
  *   pnpm deploy:token
- *   pnpm deploy:token --network somniaTestnet
+ *   pnpm deploy:token --network coston2
  */
 import hre from "hardhat";
 import {

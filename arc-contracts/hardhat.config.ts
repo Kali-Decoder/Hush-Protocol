@@ -6,14 +6,16 @@ import "dotenv/config";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const accounts = PRIVATE_KEY ? [PRIVATE_KEY] : [];
 
-const ARC_TESTNET_RPC =
-  process.env.ARC_TESTNET_RPC_URL || "https://rpc.testnet.arc.network";
+const COSTON2_RPC =
+  process.env.COSTON2_RPC_URL || "https://coston2-api.flare.network/ext/C/rpc";
+const FLARE_RPC =
+  process.env.FLARE_MAINNET_RPC_URL || "https://flare-api.flare.network/ext/C/rpc";
 
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.28",
     settings: {
-      evmVersion: "paris",
+      evmVersion: "cancun",
       optimizer: {
         enabled: true,
         runs: 200,
@@ -35,11 +37,19 @@ const config: HardhatUserConfig = {
     localhost: {
       url: "http://127.0.0.1:8545",
     },
-    /** Arc Testnet — chainId 5042002, native symbol USDC */
-    arcTestnet: {
-      url: ARC_TESTNET_RPC,
+    /** Flare Testnet Coston2 — chainId 114, native C2FLR */
+    coston2: {
+      url: COSTON2_RPC,
       accounts,
-      chainId: 5042002,
+      chainId: 114,
+      timeout: 120_000,
+      httpHeaders: {},
+    },
+    /** Flare Mainnet — chainId 14, native FLR */
+    flare: {
+      url: FLARE_RPC,
+      accounts,
+      chainId: 14,
       timeout: 120_000,
       httpHeaders: {},
     },
@@ -50,16 +60,24 @@ const config: HardhatUserConfig = {
   etherscan: {
     enabled: true,
     apiKey: {
-      // Arcscan (Blockscout) does not require a real key
-      arcTestnet: process.env.ARCSCAN_API_KEY || "no-api-key-needed",
+      coston2: process.env.COSTON2_API_KEY || "no-api-key-needed",
+      flare: process.env.FLARE_API_KEY || "no-api-key-needed",
     },
     customChains: [
       {
-        network: "arcTestnet",
-        chainId: 5042002,
+        network: "coston2",
+        chainId: 114,
         urls: {
-          apiURL: "https://testnet.arcscan.app/api",
-          browserURL: "https://testnet.arcscan.app",
+          apiURL: "https://coston2-explorer.flare.network/api",
+          browserURL: "https://coston2-explorer.flare.network",
+        },
+      },
+      {
+        network: "flare",
+        chainId: 14,
+        urls: {
+          apiURL: "https://flare-explorer.flare.network/api",
+          browserURL: "https://flare-explorer.flare.network",
         },
       },
     ],

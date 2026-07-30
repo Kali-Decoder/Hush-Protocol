@@ -8,7 +8,7 @@
  *
  * Usage:
  *   pnpm mint:token
- *   MINT_TO=0x... MINT_AMOUNT=5000 pnpm mint:token --network somniaTestnet
+ *   MINT_TO=0x... MINT_AMOUNT=5000 pnpm mint:token --network coston2
  */
 import hre from "hardhat";
 import {requireDeployment} from "../lib/deployments";
