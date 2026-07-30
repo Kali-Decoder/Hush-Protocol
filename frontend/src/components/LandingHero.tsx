@@ -93,7 +93,7 @@ export default function LandingHero() {
         }`}
       >
         <span className="h-px w-8 bg-fog" aria-hidden />
-        Private payments on Arc
+        Private payments on Flare
         <span className="h-px w-8 bg-fog" aria-hidden />
       </p>
 
@@ -162,7 +162,7 @@ export default function LandingHero() {
           ready ? "" : "opacity-0"
         }`}
       >
-        ZK-private USDC on Arc. Deposit a fixed note. They withdraw with a
+        ZK-private USDC on Flare. Deposit a fixed note. They withdraw with a
         proof. Nothing on-chain connects the two.
       </p>
 

@@ -8,7 +8,7 @@ const PHASES = [
     id: "identity",
     n: "01",
     title: "Connect & claim",
-    body: "Wallet signs in on Arc. You claim an @username so others can pay you without seeing your address.",
+    body: "Wallet signs in on Flare. You claim an @username so others can pay you without seeing your address.",
     nodes: ["wallet", "app", "identity"],
     edges: ["you-hussh", "within-hussh"],
     lane: "Client",
@@ -116,7 +116,7 @@ export default function ProtocolFlow() {
           From wallet to withdraw.
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-graphite sm:text-base">
-          Client, off-chain note, Arc pool, and ZK claim. Hover or tap a box to
+          Client, off-chain note, Bullet Pool, and ZK claim. Hover or tap a box to
           follow the path. Nothing on-chain links deposit to claim.
         </p>
       </div>
@@ -224,7 +224,7 @@ export default function ProtocolFlow() {
                 label={active <= 2 ? "deposit" : "prove"}
               />
 
-              <Column label="Arc pool">
+              <Column label="Bullet Pool">
                 <ArchNode
                   tone={nodeTone("pool")}
                   kicker="Contract"
@@ -242,11 +242,11 @@ export default function ProtocolFlow() {
                 />
                 <DownArrow lit={edgeLit("within-pool") && active === 2} label="on-chain only" />
                 <ArchNode
-                  tone={nodeTone("arc")}
+                  tone={nodeTone("pool")}
                   kicker="Chain"
                   title="Flare Testnet Coston2"
                   detail="Sees hash + size only"
-                  onClick={() => selectNode("arc", "hold")}
+                  onClick={() => selectNode("pool", "hold")}
                 />
                 <DownArrow
                   lit={edgeLit("within-pool") && active === 3}
@@ -322,7 +322,7 @@ export default function ProtocolFlow() {
                     onClick={() => selectNode("note", "deposit")}
                   />
                 </Column>
-                <Column label="Arc pool">
+                <Column label="Bullet Pool">
                   <ArchNode
                     tone={nodeTone("pool")}
                     kicker="Contract"
@@ -401,8 +401,8 @@ export default function ProtocolFlow() {
                   onClick={() => selectNode("note", "deposit")}
                 />
               </Lane>
-              <DownArrow lit={edgeLit("hussh-pool")} label="to Arc pool" />
-              <Lane label="Arc pool">
+              <DownArrow lit={edgeLit("hussh-pool")} label="to Pool" />
+              <Lane label="Bullet Pool">
                 <ArchNode
                   tone={nodeTone("pool")}
                   kicker="Contract"

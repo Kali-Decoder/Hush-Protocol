@@ -72,7 +72,7 @@ const CONTRACT_HINTS: Array<{match: RegExp; message: string}> = [
   },
   {
     match: /execution reverted/i,
-    message: "Transaction reverted on Arc. Check balance, network, and try again.",
+    message: "Transaction reverted. Check balance, network, and try again.",
   },
 ];
 

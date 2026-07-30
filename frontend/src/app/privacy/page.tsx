@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy · Hushh Protocol",
   description:
-    "What Hushh Protocol hides on Arc, and what it does not. ZK membership proofs, fixed notes, honest limits.",
+    "What Hushh Protocol hides on Flare Coston2, and what it does not. ZK membership proofs, fixed notes, honest limits.",
 };
 
 export default function Privacy() {
@@ -11,7 +11,7 @@ export default function Privacy() {
     <div className="mx-auto max-w-2xl py-12 text-left">
       <h1 className="text-4xl font-bold tracking-tight">Privacy</h1>
       <p className="mt-4 text-lg text-graphite">
-        What Hushh Protocol hides on Arc, and what it does not. Stated plainly, because
+        What Hushh Protocol hides on Flare Coston2, and what it does not. Stated plainly, because
         privacy claims you can not check are worthless.
       </p>
 

@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hushh Protocol · send silently.",
   description:
-    "ZK-private USDC payments on Arc. Deposit a note, withdraw with a Groth16 proof. Nothing on-chain connects the two.",
+    "ZK-private USDC payments on Flare Coston2. Deposit a note, withdraw with a Groth16 proof. Nothing on-chain connects the two.",
 };
 
 export const viewport: Viewport = {

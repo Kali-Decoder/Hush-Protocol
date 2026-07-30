@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Pass-through until Arc wallet session middleware lands. */
+/** Pass-through. */
 export function middleware(_request: NextRequest) {
   return NextResponse.next();
 }

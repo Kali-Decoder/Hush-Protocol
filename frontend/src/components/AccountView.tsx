@@ -22,7 +22,7 @@ import {
 } from "@/components/icons";
 import {Panel} from "@/components/ui";
 import {
-  useArcBalance,
+  useBalance,
   useTokenBalance,
 } from "@/hooks/useUsdcBalance";
 import {TransactionHistory} from "@/components/TransactionHistory";
@@ -183,7 +183,7 @@ function BalanceTile({
 
 function ProfileBalances() {
   const {isConnected} = useAccount();
-  const arc = useArcBalance();
+  const bal = useBalance();
   const tokens = POOL_TOKENS.filter((t) => t.enabled);
 
   if (!isConnected) return null;
@@ -199,11 +199,11 @@ function ProfileBalances() {
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <BalanceTile
           label="Gas"
-          amount={arc.formatted}
-          symbol={arc.symbol}
-          isLoading={arc.isLoading}
-          isFetching={arc.isFetching}
-          onRefresh={() => void arc.refetch()}
+          amount={bal.formatted}
+          symbol={bal.symbol}
+          isLoading={bal.isLoading}
+          isFetching={bal.isFetching}
+          onRefresh={() => void bal.refetch()}
           logo={
             <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-ink text-[9px] font-bold text-paper">
               F

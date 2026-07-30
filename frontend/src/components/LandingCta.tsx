@@ -56,7 +56,7 @@ export default function LandingCta() {
           Ready when you are.
         </h2>
         <p className="relative mx-auto mt-5 max-w-md text-sm leading-relaxed text-graphite sm:text-base">
-          Connect Twitter, link an Arc wallet, and send a silent note.
+          Connect Twitter, link a wallet, and send a silent note.
         </p>
         <div className="relative mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link

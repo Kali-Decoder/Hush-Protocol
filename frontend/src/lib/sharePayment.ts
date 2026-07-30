@@ -34,7 +34,7 @@ export function paymentShareTweetText(d: PaymentShareDetails): string {
       "",
       `${from} → ${to}`,
       "",
-      "Private by design on Arc. #HushhProtocol #Arc",
+      "Private by design on Flare. #HushhProtocol #Flare",
     ].join("\n");
   }
   return [
@@ -42,7 +42,7 @@ export function paymentShareTweetText(d: PaymentShareDetails): string {
     "",
     `${from} → ${to}`,
     "",
-    "Private by design on Arc. #HushhProtocol #Arc",
+    "Private by design on Flare. #HushhProtocol #Flare",
   ].join("\n");
 }
 
@@ -118,7 +118,7 @@ export async function renderPaymentSharePng(
   roundRect(ctx, 72, 96, size - 144, size - 192, 48);
   ctx.stroke();
 
-  // Brand row — Hushh + Arc
+  // Brand row — Hushh + Flare
   if (logo) {
     ctx.drawImage(logo, 120, 140, 72, 72);
   } else {

@@ -16,7 +16,7 @@ const SEQUENCE_CHART = `
 sequenceDiagram
   participant You
   participant App as Hushh Protocol app
-  participant Pool as Arc pool
+  participant Pool
   participant Them as Recipient
 
   You->>App: Pick @username and amount
@@ -29,7 +29,7 @@ sequenceDiagram
 
 const PRIVACY_CHART = `
 flowchart TB
-  subgraph public ["Visible on Arc"]
+  subgraph public ["Visible on Flare Coston2"]
     D["Deposit of fixed USDC"]
     C["Commitment hash"]
     W["Later withdraw of same size"]

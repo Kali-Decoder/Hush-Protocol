@@ -52,7 +52,7 @@ export function AppChrome({children}: {children: ReactNode}) {
               <img src="/wordmark.svg" alt="Hushh Protocol" className="h-4 w-auto" />
             </Link>
             <p className="text-xs tracking-[-0.01em] text-graphite">
-              send silently. · on Arc
+              send silently. · Flare Coston2
             </p>
           </div>
           <nav className="flex items-center gap-6 text-sm tracking-[-0.01em] text-graphite">

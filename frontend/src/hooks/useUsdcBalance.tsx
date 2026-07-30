@@ -56,7 +56,7 @@ export function useUsdcBalance(owner?: `0x${string}`) {
 }
 
 /** Native Coston2 balance (gas token). */
-export function useArcBalance(owner?: `0x${string}`) {
+export function useBalance(owner?: `0x${string}`) {
   const {address, isConnected} = useAccount();
   const account = owner ?? address;
 
@@ -187,7 +187,7 @@ export function Coston2Balance({
   compact?: boolean;
 }) {
   const {isConnected} = useAccount();
-  const {formatted, symbol, isLoading, refetch, isFetching} = useArcBalance();
+  const {formatted, symbol, isLoading, refetch, isFetching} = useBalance();
 
   if (!isConnected) return null;
 

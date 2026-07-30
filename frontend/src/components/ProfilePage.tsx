@@ -88,7 +88,7 @@ export function ProfilePage({username: raw}: {username: string}) {
     return (
       <AppShell
         title={`@${profile.username}`}
-        subtitle="Your identity, balances, and silent payment history on Arc."
+        subtitle="Your identity, balances, and silent payment history on Flare."
       >
         <AccountView />
       </AppShell>

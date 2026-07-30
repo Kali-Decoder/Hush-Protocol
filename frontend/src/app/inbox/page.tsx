@@ -7,7 +7,7 @@ export default function InboxPage() {
   return (
     <AppShell
       title="Inbox"
-      subtitle="Decrypt notes sealed to your key, then claim tokens on Arc."
+      subtitle="Decrypt notes sealed to your key, then claim tokens on Flare Coston2."
     >
       <Inbox />
     </AppShell>

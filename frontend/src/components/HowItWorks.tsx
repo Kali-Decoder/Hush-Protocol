@@ -14,7 +14,7 @@ const STEPS = [
   },
   {
     title: "Pick an amount. Deposit.",
-    body: "Fixed USDC sizes only, so no amount stands out. Sign once with your Arc wallet.",
+    body: "Fixed USDC sizes only, so no amount stands out. Sign once with your wallet.",
   },
   {
     title: "A note lands in the pool.",
