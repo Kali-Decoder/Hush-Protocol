@@ -1,6 +1,6 @@
 # Hushh Protocol
 
-ZK-private payment rail on **Arc Testnet** (EVM). Send USDC without leaving an on-chain link between deposit and withdraw.
+ZK-private payment rail on **Arc Testnet** (EVM). Any ERC-20 enters as **`$HUSHH`**, mixes in a single shielded pool, then exits as the receiver’s token — with no on-chain link between deposit and withdraw.
 
 Tagline: send silently.
 
@@ -16,53 +16,147 @@ Tagline: send silently.
 
 ---
 
-## User flow
+## Core model
 
-Domain model for a silent USDC payment: who acts, what is stored, and what never links on-chain.
+```
+Sender ($BUM) → swap → $HUSHH → [ BulletPool · ZK ] → $HUSHH → swap → Receiver ($BUM)
+```
+
+| Stage | What happens |
+|-------|----------------|
+| **Swap in** | User token → `$HUSHH` via DEX / AMM (direct or via USDC / WETH) |
+| **Private pool** | Fixed-denomination `$HUSHH` notes; Poseidon commitments; Groth16 withdraw |
+| **Swap out** | `$HUSHH` → intent token for the receiver |
+| **Revenue** | Protocol fee on router swaps (+ optional pool fee) → treasury |
+
+Privacy set is **one asset** (`$HUSHH`). Multi-token UX lives at the router, not inside the pool.
+
+---
+
+## Architecture overview
+
+```mermaid
+flowchart LR
+  subgraph Users
+    S[Sender]
+    R[Receiver · X Auth]
+  end
+
+  subgraph App
+    UI[Frontend]
+    Q[Quote service]
+  end
+
+  subgraph OnChain
+    HR[HushRouter]
+    DEX[DEX / AMM]
+    BP[BulletPool · $HUSHH]
+    MR[MerkleRootManager]
+    TV[FeeSink / Treasury]
+  end
+
+  subgraph OffChain
+    IX[Indexer]
+    BE[Backend · auth · notes]
+    SDK[ZK Proof SDK]
+  end
+
+  S --> UI
+  UI --> Q
+  Q --> DEX
+  UI --> HR
+  HR -->|swap + fee| DEX
+  HR -->|deposit $HUSHH| BP
+  HR -->|protocol fee| TV
+  BP --> IX
+  IX -->|postRoot| MR
+  UI -->|encrypted note| BE
+  R --> UI
+  UI --> BE
+  UI --> SDK
+  UI -->|withdraw / swap-out| HR
+  HR --> BP
+  HR --> DEX
+  DEX --> R
+```
+
+### Layer stack
+
+```
+HushRouter + DEX          ← multi-token in/out, fees, quotes
+      ↓
+BulletPool ($HUSHH only)  ← ZK privacy core
+      ↓
+ZK Circuit (Circom / BN254 Groth16)
+      ↓
+Proof SDK (TypeScript)
+      ↓
+Indexer (Merkle tree + postRoot + witness API)
+      ↓
+Backend (auth, usernames, encrypted notes)
+      ↓
+Frontend (send / inbox / claim)
+```
+
+| Component | Responsibility |
+|-----------|----------------|
+| **`$HUSHH`** | Protocol rail ERC-20; only asset inside the shielded pool |
+| **HushRouter** | `swapAndDeposit` / `withdrawAndSwap`; takes protocol bps → FeeSink |
+| **DEX / AMM** | Liquidity for `$TOKEN ↔ $HUSHH` (direct or via USDC / WETH) |
+| **BulletPool** | Hold `$HUSHH`, verify proofs, nullifiers, deposit events |
+| **MerkleRootManager** | Rolling window of valid Merkle roots |
+| **Indexer** | Watch deposits, Poseidon tree, `postRoot`, serve witnesses |
+| **SDK** | Secrets, commitments, nullifiers, Groth16 proving |
+| **Backend** | Wallet auth, `@username` → keys, encrypted inbox |
+| **Quote service** | Path discovery, amounts-out, fee + slippage, note snap |
+| **Frontend** | Multi-token send, inbox, claim-as-token or keep `$HUSHH` |
+
+---
+
+## User flow
 
 ```mermaid
 ---
 title: Hushh Protocol · user flow
 ---
 classDiagram
-    note "From connect wallet till ZK withdraw"
+    note "Any token in → $HUSHH pool → any token out"
     User <|-- Sender
     User <|-- Recipient
-    note for Sender "connects wallet<br>claims @username<br>deposits fixed USDC note"
-    note for Recipient "opens inbox<br>proves membership<br>withdraws USDC"
+    note for Sender "connects wallet<br>picks $TOKEN + amount<br>swapAndDeposit via HushRouter"
+    note for Recipient "X Auth / inbox<br>ZK prove + withdraw<br>optional swap-out to $TOKEN"
     User : +String username
     User : +Address wallet
     User : +Bytes32 hushhPublicKey
-    User : +connect()
-    User : +signIn()
     class Sender{
         +Address from
         +pickRecipient()
-        +approveUsdc()
-        +depositNote()
+        +quoteTokenToHushh()
+        +swapAndDeposit()
     }
     class Recipient{
         +Address to
         +decryptInbox()
         +proveWithdraw()
-        +claimUsdc()
+        +claimHushhOrToken()
     }
     Sender --> App : pays via
     Recipient --> App : claims via
     App --> Backend : auth · resolve · notes
-    App --> BulletPool : deposit · withdraw
+    App --> HushRouter : swap · deposit · withdraw
+    HushRouter --> DEX : TOKEN ↔ HUSHH
+    HushRouter --> BulletPool : deposit · withdraw $HUSHH
     App --> Indexer : witness
     Sender ..> EncryptedNote : seals
-    EncryptedNote --> Backend : stored ciphertext
+    EncryptedNote --> Backend : ciphertext + intent token
     Backend --> Recipient : inbox delivery
     Sender --> Commitment : creates
-    Commitment --> BulletPool : on-chain leaf event
+    Commitment --> BulletPool : on-chain leaf
     BulletPool --> Indexer : Deposit watched
     Indexer --> MerkleRootManager : postRoot
     Recipient --> Groth16Proof : builds
     Groth16Proof --> BulletPool : verify + nullifier
-    note for Commitment "Poseidon hash only<br>fixed amount visible<br>no sender↔claim link"
-    note for Groth16Proof "membership + nullifier<br>breaks deposit↔withdraw link"
+    note for Commitment "Poseidon · fixed $HUSHH size<br>no sender↔claim link"
     class App{
         +Send
         +Inbox
@@ -78,35 +172,35 @@ classDiagram
     class EncryptedNote{
         +Bytes32 commitment
         +String ciphertext
+        +Address intentToken
         +bool claimed
     }
-    class Commitment{
-        +Bytes32 hash
-        +uint amount
-        +Address token
+    class HushRouter{
+        +swapAndDeposit()
+        +withdrawAndSwap()
+        +protocolFeeBps
     }
-    class Indexer{
-        +insertLeaf()
-        +postRoot()
-        +getWitness()
+    class DEX{
+        +getAmountsOut()
+        +swapExactTokens()
     }
     class BulletPool{
         +deposit()
         +withdraw()
         +nullifiers
     }
-    class MerkleRootManager{
+    class Indexer{
+        +insertLeaf()
         +postRoot()
-        +isKnownRoot()
+        +getWitness()
     }
-    class Groth16Proof{
-        +Bytes32 root
-        +Bytes32 nullifier
-        +verify()
+    class FeeSink{
+        +accrue()
+        +withdrawFees()
     }
 ```
 
-Nothing on-chain links the sender's deposit transaction to the recipient's withdraw.
+Nothing on-chain links the sender’s deposit to the recipient’s withdraw. Swaps around the pool are public; the pool breaks the link.
 
 ---
 
@@ -116,19 +210,103 @@ Public blockchains leave a visible trail. Every transfer creates a `sender → r
 
 ## What Hushh Protocol is
 
-Hushh Protocol is a **shielded note pool**:
+Hushh is a **`$HUSHH`-centric shielded note pool** with a multi-token edge:
 
-1. Sender deposits a fixed-size ERC-20 note under a Poseidon commitment.
-2. An off-chain indexer inserts the commitment into a Merkle tree and posts the root on-chain.
-3. Recipient withdraws with a Groth16 proof of membership. The nullifier prevents double-spend.
-4. Nothing on-chain connects the deposit transaction to the withdraw transaction.
+1. Sender picks any supported ERC-20 and amount. The app quotes a path to `$HUSHH`.
+2. **HushRouter** swaps in, takes a protocol fee, and deposits fixed-size `$HUSHH` note(s) under a Poseidon commitment.
+3. Indexer inserts the commitment into a Merkle tree and posts the root on-chain.
+4. Recipient authenticates (e.g. X), decrypts the inbox note, withdraws with a Groth16 proof, then optionally swaps `$HUSHH` → their intent token.
+5. Nothing on-chain connects the deposit transaction to the withdraw transaction.
 
-Privacy model (v1, stated plainly):
+### Privacy model (stated plainly)
 
-- **Unlinkability** of deposit ↔ withdraw (Tornado-style membership + nullifier).
+- **Unlinkability** of deposit ↔ withdraw (membership + nullifier).
+- **Unified anonymity set** — all notes are `$HUSHH` of fixed denominations.
 - **Fixed denominations** for amount-matching resistance. Amounts are standardized, not encrypted.
-- **Not** a full shielded pool with hidden balances. That is future work.
-- Merkle roots are posted by a relayer (Option B). Decentralizing the indexer is future work.
+- **Not** a full shielded pool with hidden balances (future work).
+- Swap-in / swap-out txs are visible; timing analysis is mitigated by volume + fixed sizes.
+- Merkle roots are posted by a relayer. Decentralizing the indexer is future work.
+
+### Honest privacy limits
+
+- Fixed denominations, not encrypted balances.
+- Anonymity scales with pool size.
+- Root posting is permissioned (indexer / relayer).
+- Trusted setup is single-contributor until an MPC ceremony.
+- Off-chain delivery (claim links, X) can leak metadata; on-chain unlinkability still holds.
+- Intent token on the note is **UX metadata**, not part of the ZK statement.
+
+---
+
+## Token & quote paths
+
+User-facing tokens are arbitrary ERC-20s. The pool only ever sees `$HUSHH`.
+
+| Preference | Path | Pools needed |
+|------------|------|----------------|
+| **Best** | Direct | `TOKEN / HUSHH` |
+| **Payments hub** | Via USDC | `TOKEN / USDC` + `HUSHH / USDC` |
+| **Fallback** | Via WETH | `TOKEN / WETH` + `HUSHH / WETH` |
+
+**Send quote**
+
+```
+amountIn ($BUM)
+  → best path getAmountsOut
+  → apply protocolFeeBps
+  → floor to fixed $HUSHH note size(s)
+  → return path, hushhOut, fee, minOut, slippage
+```
+
+**Claim quote** — reverse: `$HUSHH` → intent token (`$BUM`).
+
+Bulk sends compose several fixed `$HUSHH` notes.
+
+---
+
+## End-to-end flows
+
+### Send
+
+```
+1. UI: recipient + tokenIn + amount
+2. Quote: path · fee · snap to $HUSHH denominations
+3. SDK: secret → commitment; encrypt note (incl. intentToken)
+4. HushRouter.swapAndDeposit(...)
+     ├─ DEX: tokenIn → $HUSHH
+     ├─ FeeSink: protocol bps
+     └─ BulletPool.deposit($HUSHH, noteAmount, commitment)
+5. Indexer: insert leaf → postRoot
+6. Backend: POST /notes (ciphertext + intent metadata)
+```
+
+### Claim
+
+```
+1. Recipient: X Auth / wallet session
+2. Backend: GET /notes → decrypt locally
+3. Indexer: GET /witness/:commitment
+4. SDK: generateProof(note, merklePath)
+5. HushRouter.withdrawAndSwap(...)  (or withdraw then optional swap)
+     ├─ BulletPool.withdraw → $HUSHH
+     └─ DEX: $HUSHH → intentToken  (or keep $HUSHH)
+6. Backend: PATCH /notes/:id/claim
+```
+
+---
+
+## Revenue
+
+| Leg | Mechanism | Recipient |
+|-----|-----------|-----------|
+| Swap in | DEX LP fee | Liquidity providers |
+| Swap in | HushRouter `protocolFeeBps` | FeeSink / treasury |
+| Pool (optional) | deposit / withdraw bps | FeeSink / treasury |
+| Swap out | DEX LP + protocol bps | LPs + treasury |
+
+Platform take is primarily on the **router**. Owning LP positions on `$HUSHH` pairs is optional extra yield.
+
+---
 
 ## Network
 
@@ -136,41 +314,23 @@ Privacy model (v1, stated plainly):
 |---------|--------|
 | Network | Arc Testnet |
 | Chain ID | `5042002` |
-| Currency | USDC |
+| Rail token | `$HUSHH` (pool asset) |
+| Edge tokens | Any supported ERC-20 via router + DEX |
 | RPC | `https://rpc.testnet.arc.network` |
 | Explorer | [testnet.arcscan.app](https://testnet.arcscan.app) |
 
-## Architecture
+---
+
+## On-chain contracts
 
 ```
-Contracts (Solidity)
-      ↓
-ZK Circuit (Circom / BN254 Groth16)
-      ↓
-Proof SDK (TypeScript)
-      ↓
-Indexer (Merkle tree + postRoot + witness API)
-      ↓
-Backend (auth, usernames, encrypted notes)
-      ↓
-Frontend
-```
-
-| Component | Responsibility |
-|-----------|----------------|
-| **Smart contracts** | Hold funds, verify proofs, track nullifiers, accept roots |
-| **Indexer** | Watch deposits, build Poseidon Merkle tree, post roots, serve witnesses |
-| **SDK** | Secrets, commitments, nullifiers, Merkle proofs, Groth16 proving |
-| **Backend** | Wallet auth, `@username` → wallet + Bullet key, encrypted inbox |
-| **Frontend** | Deposit / withdraw UX, calls SDK + backend + contracts |
-
-### Contracts
-
-```
-BulletPool.sol           deposit / withdraw, nullifiers, embedded token registry
+HushRouter.sol           swapAndDeposit / withdrawAndSwap, protocol fee
+FeeSink.sol              accrue + withdraw protocol revenue
+BulletPool.sol           deposit / withdraw $HUSHH, nullifiers
 MerkleRootManager.sol    rolling window of 64 valid roots
-WithdrawVerifier.sol     Groth16 verifier (replaces mock after zk:build)
-MockUSDC.sol             test ERC-20
+WithdrawVerifier.sol     Groth16 verifier
+Hushh.sol                protocol ERC-20 rail token
+MockUSDC.sol             test ERC-20 (and other mocks as needed)
 ```
 
 ### ZK circuit
@@ -184,15 +344,23 @@ commitment = Poseidon([secret, recipientDigest, amount, tokenHash])
 
 Public inputs (locked): `[root, nullifier, recipientDigest, amount, tokenHash]`
 
-`tokenHash = uint256(uint160(tokenAddress))`
+`tokenHash = uint256(uint160(tokenAddress))` — for the pool rail, this is **`$HUSHH`**.
 
-### Honest privacy limits
+---
 
-- Fixed denominations, not encrypted balances.
-- Anonymity scales with pool size. Demo volume is thin.
-- Root posting is permissioned (indexer / relayer).
-- Trusted setup is single-contributor until an MPC ceremony.
-- Off-chain delivery (claim links, email) can leak metadata; on-chain unlinkability still holds.
+## Note payload (app layer)
+
+Encrypted note carries ZK fields plus claim UX:
+
+| Field | On-chain / ZK | Purpose |
+|-------|---------------|---------|
+| `secret` | private | Derive nullifier + open note |
+| `recipientDigest` | public in proof | Bind recipient stealth digest |
+| `hushhAmount` | public in proof | Fixed denomination |
+| `tokenHash` | public in proof | Always `$HUSHH` in pool |
+| `commitment` | deposit event | Merkle leaf |
+| `intentToken` | off-chain only | What receiver wants out (e.g. `$BUM`) |
+| `intentAmountHint` | off-chain only | Quote at send time (informational) |
 
 ---
 
@@ -201,10 +369,10 @@ Public inputs (locked): `[root, nullifier, recipientDigest, amount, tokenHash]`
 Active stack lives in `arc-contracts/`:
 
 ```
-bullet/
-├── frontend/          Next.js app (self-contained; types in src/shared/)
+Hush-Protocol/
+├── frontend/          Next.js app (types in src/shared/)
 └── arc-contracts/
-    ├── contracts/     Solidity (Hardhat)
+    ├── contracts/     Solidity (Hardhat) — pool, router, rail token
     ├── zk/            Circom withdraw circuit + snarkjs
     ├── sdk/           Proof SDK (@bullet/sdk)
     ├── indexer/       Deposit watcher + witness API
@@ -214,13 +382,27 @@ bullet/
     └── deployments/   Per-network addresses
 ```
 
-Legacy Stellar/Soroban packages (`contracts/`, `circuits/`, root `backend/`) are not the current target. Development continues on Arc + Solidity.
+Legacy Stellar/Soroban packages are not the current target. Development continues on Arc + Solidity.
+
+---
+
+## Implementation status
+
+| Piece | Status |
+|-------|--------|
+| BulletPool + MerkleRootManager + Groth16 withdraw | **Live** (multi-token registry today) |
+| Indexer + Backend + Frontend send/claim | **Live** |
+| `$HUSHH` rail + pool restricted to `$HUSHH` | **Architecture target** |
+| HushRouter + FeeSink + quote service | **Architecture target** |
+| DEX liquidity (`HUSHH/USDC` hub) | **Architecture target** |
+
+Current testnet still deposits registered ERC-20s (USDC, EURC, …) directly into BulletPool. The architecture above is the product direction: **router edge + single-asset `$HUSHH` pool**.
 
 ---
 
 ## Quick start
 
-Requirements: Node 22+, pnpm 9+, Circom (for circuit builds), Postgres (for indexer).
+Requirements: Node 22+, pnpm 9+, Circom (for circuit builds), MongoDB (indexer / backend).
 
 ```bash
 cd arc-contracts
@@ -296,11 +478,13 @@ cp frontend/.env.example frontend/.env
 
 ---
 
-## Protocol flow
+## Protocol flow (current SDK path)
+
+Until HushRouter lands, the live path deposits the chosen pool token directly:
 
 ```
 Deposit
-  SDK: secret → commitment + encrypt note to recipient bulletPublicKey
+  SDK: secret → commitment + encrypt note to recipient hushhPublicKey
   BulletPool.deposit(token, amount, commitment)
   Indexer: insert leaf → postRoot
   Backend: POST /notes (ciphertext only)
@@ -312,6 +496,8 @@ Withdraw
   BulletPool.withdraw(proof, root, nullifier, recipientDigest, recipient, token, amount)
   Backend: PATCH /notes/:id/claim
 ```
+
+Target path wraps deposit/withdraw with `HushRouter` + DEX as in **End-to-end flows** above.
 
 ### SDK usage
 
@@ -326,14 +512,29 @@ import {
 
 const note = await createNote({
   recipientDigest,
-  amount: 10_000_000n, // 10 USDC (6 decimals)
-  token: usdcAddress,
+  amount: 10_000_000n, // fixed $HUSHH (or current pool token) units
+  token: hushhAddress,
 });
 // deposit(note.commitmentBytes32) …
 // later: generateProof(note, witness, { wasmPath, zkeyPath })
 ```
 
 Frontend should call the SDK. Never reimplement Poseidon / proving in the app.
+
+---
+
+## Build phases (architecture rollout)
+
+| Phase | Deliverable |
+|-------|-------------|
+| **A** | Deploy `$HUSHH` + seed `$HUSHH/USDC` (or WETH) liquidity |
+| **B** | Restrict BulletPool to `$HUSHH`; fixed denoms in `$HUSHH` |
+| **C** | `HushRouter.swapAndDeposit` + FeeSink |
+| **D** | Quote API + Send UI (any token → `$HUSHH`) |
+| **E** | `withdrawAndSwap` + Claim “get original token” |
+| **F** | Treasury dashboards / fee withdraw |
+
+ZK circuit, indexer, and auth do **not** need a rewrite for this architecture.
 
 ---
 
@@ -350,5 +551,3 @@ Frontend should call the SDK. Never reimplement Poseidon / proving in the app.
 | `pnpm status` | Print deployment file + on-chain status |
 | `pnpm zk:build` | Circuit → zkey → Verifier.sol |
 | `pnpm indexer:dev` | Run indexer API |
-
----
