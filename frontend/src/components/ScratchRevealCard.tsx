@@ -296,6 +296,11 @@ export function ScratchRevealCard({
                   <p className="mt-1 text-sm font-extrabold uppercase tracking-[0.16em] text-black">
                     {tokenSymbol}
                   </p>
+                  {meta.message?.trim() ? (
+                    <p className="mt-2 line-clamp-2 max-w-[14rem] text-[10px] font-semibold leading-snug text-black/70">
+                      {meta.message.trim()}
+                    </p>
+                  ) : null}
                   {recipientLabel ? (
                     <p className="mt-2 truncate text-[10px] font-bold uppercase tracking-[0.14em] text-black/60">
                       for {recipientLabel}
@@ -313,6 +318,11 @@ export function ScratchRevealCard({
                   <p className="mt-1 text-xs font-extrabold uppercase tracking-[0.14em] text-black/20">
                     {tokenSymbol}
                   </p>
+                  {meta.message?.trim() ? (
+                    <p className="mt-2 line-clamp-2 max-w-[13rem] text-[9px] font-semibold leading-snug text-black/25">
+                      {meta.message.trim()}
+                    </p>
+                  ) : null}
                 </div>
               )}
 
