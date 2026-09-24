@@ -69,6 +69,9 @@ export function createScratchGiftPayload(params: {
       ...params.meta,
       theme: normalizeTheme(params.meta.theme),
       title: params.meta.title.trim() || "Scratch & Win",
+      ...(params.meta.message?.trim()
+        ? {message: params.meta.message.trim()}
+        : {}),
     },
   };
   return {kind: "scratch", note: params.note, claim};
