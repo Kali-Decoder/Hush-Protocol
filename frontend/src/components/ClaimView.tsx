@@ -147,7 +147,7 @@ export function ClaimView({encoded}: {encoded: string}) {
               Prize revealed. Connect the recipient wallet to prove and withdraw.
             </p>
             <ConnectButton
-              label="Connect wallet to claim"
+              label="Sign in to claim"
               className="btn-primary"
             />
           </div>

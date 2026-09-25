@@ -9,6 +9,10 @@ import {ConnectButton} from "@/components/ConnectButton";
 import {NetworkGate} from "@/components/NetworkGate";
 import {UserAvatar} from "@/components/UserAvatar";
 import {
+  WalletCashPanel,
+  LoginMethodsHint,
+} from "@/components/WalletCashPanel";
+import {
   CopyIcon,
   CheckIcon,
   ExternalLinkIcon,
@@ -19,6 +23,7 @@ import {
   InboxIcon,
   WalletIcon,
   ShieldCheckIcon,
+  MailIcon,
 } from "@/components/icons";
 import {Panel} from "@/components/ui";
 import {
@@ -30,6 +35,7 @@ import {ConnectTwitterCard} from "@/components/ConnectTwitterCard";
 import {useState} from "react";
 import {getAvatarByAddress} from "@/utils/getAvatarByAddress";
 import {shortAddr} from "@/lib/address";
+import type {Address} from "viem";
 
 function CopyChip({
   value,
@@ -287,17 +293,21 @@ export function AccountView() {
     return (
       <Panel className="space-y-5 text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-paper ring-1 ring-fog">
-          <WalletIcon className="h-7 w-7 text-graphite" />
+          <MailIcon className="h-7 w-7 text-graphite" />
         </div>
         <div>
           <p className="text-lg font-semibold tracking-tight text-ink">
-            Connect to view your profile
+            Sign in to view your profile
           </p>
           <p className="mt-1.5 text-sm text-graphite">
-            Your username, balances, and silent notes live with this wallet.
+            Continue with email or X. Privy creates a wallet address for you —
+            no extension needed.
           </p>
         </div>
-        <ConnectButton />
+        <div className="flex flex-col items-center gap-3">
+          <ConnectButton label="Sign in with email or X" />
+          <LoginMethodsHint />
+        </div>
       </Panel>
     );
   }
@@ -316,7 +326,7 @@ export function AccountView() {
               {address ? shortAddr(address) : "—"}
             </p>
             <p className="mt-1 text-xs text-graphite">
-              {getAvatarByAddress(address).name} avatar
+              {getAvatarByAddress(address).name} · Privy wallet
             </p>
           </div>
         </div>
@@ -325,20 +335,22 @@ export function AccountView() {
           title={
             needsUsername
               ? "Connect Twitter to claim your username"
-              : "Sign in to unlock your account"
+              : "Sign a message to unlock your account"
           }
           body={
             needsUsername
-              ? "Connect Twitter, then sign with this wallet. Your X handle becomes your @username."
-              : "Wallet is connected. Sign a message to unlock send, inbox, and history."
+              ? "Link X, then sign once. Your handle becomes your @username."
+              : "Your Privy wallet is ready. Sign a message to unlock send, inbox, and history."
           }
-          cta={needsUsername ? "Connect Twitter" : "Sign in now"}
+          cta={needsUsername ? "Continue setup" : "Sign in now"}
           href="/register"
         />
 
+        {address ? <WalletCashPanel address={address as Address} /> : null}
+
         <DetailRow
           icon={<WalletIcon className="h-4 w-4" />}
-          label="Connected wallet"
+          label="Privy wallet"
           value={address ? shortAddr(address) : "—"}
           trailing={
             address ? (
@@ -352,7 +364,7 @@ export function AccountView() {
           }
         />
 
-        <ConnectButton label="Disconnect" className="btn-ghost" />
+        <ConnectButton label="Sign out" className="btn-ghost" />
       </Panel>
     );
   }
@@ -440,6 +452,12 @@ export function AccountView() {
           ) : null}
 
           <NetworkGate>
+            {address ? (
+              <div className="mb-6">
+                <WalletCashPanel address={address as Address} />
+              </div>
+            ) : null}
+
             <ProfileBalances />
 
             <section className="mt-6 space-y-2.5">
@@ -455,7 +473,7 @@ export function AccountView() {
               </h2>
               <DetailRow
                 icon={<WalletIcon className="h-4 w-4" />}
-                label="Wallet"
+                label="Privy wallet"
                 value={shortAddr(user.wallet)}
                 trailing={
                   <>

@@ -112,7 +112,7 @@ export default function IslandNav() {
 
           <ConnectButton
             compact
-            label="Connect"
+            label="Sign in"
             className="shrink-0 rounded-full border border-paper/20 bg-white/[0.04] px-2.5 py-1.5 text-[13px] font-medium tracking-[-0.01em] text-paper transition-all duration-200 hover:border-paper/35 hover:bg-white/[0.1] sm:px-3 sm:text-sm"
           />
         </div>

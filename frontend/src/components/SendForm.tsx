@@ -534,7 +534,7 @@ export function SendForm({initialRecipient}: {initialRecipient?: string}) {
             <p className="text-sm text-graphite">
               Connect an Arc wallet to deposit a private note.
             </p>
-            <ConnectButton label="Connect wallet" />
+            <ConnectButton label="Sign in with email or X" />
           </div>
         ) : (
           <NetworkGate>

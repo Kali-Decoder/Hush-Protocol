@@ -61,7 +61,7 @@ export function AuthSync() {
           clearWalletLookup();
           if (hadSession) {
             clearLiveSession();
-            toast.info("Wallet disconnected. Reconnect to continue.");
+            toast.info("Wallet disconnected. Sign in again to continue.");
           } else {
             notifySession();
           }
