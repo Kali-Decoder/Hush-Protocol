@@ -7,7 +7,7 @@ export default function RegisterPage() {
   return (
     <AppShell
       title="Sign in"
-      subtitle="Connect wallet → connect Twitter → sign. Your X handle is your Hushh username."
+      subtitle="Sign in with email or X → claim username → sign. Privy creates your wallet."
     >
       <RegisterFlow />
     </AppShell>

@@ -5,6 +5,7 @@ import {type ReactNode, useState} from "react";
 import {WagmiProvider} from "wagmi";
 import {AppLoader} from "@/components/AppLoader";
 import {AuthSync} from "@/components/AuthSync";
+import {PrivyWalletBridge} from "@/components/PrivyWalletBridge";
 import {ToastHost} from "@/components/ToastHost";
 import {PrivyAppProvider} from "@/providers/PrivyAppProvider";
 import {wagmiConfig} from "@/lib/wagmi";
@@ -16,6 +17,7 @@ export function Web3Provider({children}: {children: ReactNode}) {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <AppLoader />
+          <PrivyWalletBridge />
           <AuthSync />
           {children}
           <ToastHost />

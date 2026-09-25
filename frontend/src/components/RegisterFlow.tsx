@@ -40,11 +40,11 @@ function AuthSteps({
 }) {
   const steps = skipTwitter
     ? [
-        {n: 1 as const, label: "Wallet"},
+        {n: 1 as const, label: "Account"},
         {n: 3 as const, label: "Sign"},
       ]
     : [
-        {n: 1 as const, label: "Wallet"},
+        {n: 1 as const, label: "Account"},
         {n: 2 as const, label: "Twitter"},
         {n: 3 as const, label: "Sign"},
       ];
@@ -141,8 +141,8 @@ function RegisterFlowInner() {
   async function signInOrRegister(mode: "signin" | "register") {
     setError("");
     if (!address) {
-      toast.info("Connect your wallet first.");
-      setError("Connect a wallet first.");
+      toast.info("Sign in first.");
+      setError("Sign in with email or X first.");
       return;
     }
 
@@ -327,10 +327,10 @@ function RegisterFlowInner() {
       {!isConnected ? (
         <div className="space-y-4 py-1 text-center">
           <p className="text-sm leading-relaxed text-graphite">
-            Connect your wallet, then connect Twitter. Your X handle becomes
-            your Hushh username after you sign.
+            Sign in with email or X. Privy creates a wallet for you. Link
+            Twitter so your handle becomes your Hushh username after you sign.
           </p>
-          <ConnectButton label="Connect wallet" />
+          <ConnectButton label="Sign in with email or X" />
         </div>
       ) : (
         <NetworkGate>
@@ -341,7 +341,7 @@ function RegisterFlowInner() {
           ) : (
             <>
               <div className="rounded-xl bg-paper/80 px-4 py-3">
-                <p className="text-xs text-graphite">Wallet connected</p>
+                <p className="text-xs text-graphite">Privy wallet</p>
                 <p className="mt-0.5 truncate font-mono text-xs text-ink" title={address}>
                   {shortAddr(address)}
                 </p>

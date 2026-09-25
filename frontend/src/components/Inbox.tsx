@@ -282,7 +282,7 @@ export function Inbox() {
         <p className="text-sm text-graphite">
           Connect the wallet that owns your Hushh Protocol key to decrypt notes.
         </p>
-        <ConnectButton label="Connect wallet" />
+        <ConnectButton label="Sign in with email or X" />
       </Panel>
     );
   }

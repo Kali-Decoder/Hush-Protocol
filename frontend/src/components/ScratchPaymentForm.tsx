@@ -387,14 +387,14 @@ export function ScratchPaymentForm() {
             Wallet required
           </p>
           <p className="relative mt-2 text-lg font-bold tracking-tight text-white">
-            Connect to open the gift studio
+            Sign in to open the gift studio
           </p>
           <p className="relative mx-auto mt-2 max-w-xs text-[13px] leading-relaxed text-white/55">
-            You’ll design the ticket, fund a private note, and send it to an
-            @username.
+            Continue with email or X. Privy creates a wallet so you can fund a
+            private note and send it to an @username.
           </p>
           <div className="relative mt-5 flex justify-center">
-            <ConnectButton label="Connect wallet" />
+            <ConnectButton label="Sign in with email or X" />
           </div>
         </div>
       </div>
